@@ -26,7 +26,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "dosen", "mahasiswa"] },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin"] },
   { title: "Chat Logs", href: "/chat-logs", icon: MessageSquare, roles: ["admin"] },
   { title: "AI Intents", href: "/intents", icon: BrainCircuit, roles: ["admin"] },
   { title: "Jadwal Kuliah", href: "/jadwal", icon: Calendar, roles: ["admin", "dosen"] },

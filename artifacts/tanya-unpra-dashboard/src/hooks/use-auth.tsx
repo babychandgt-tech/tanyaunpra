@@ -42,11 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [error, logoutAction]);
 
-  const loginAction = (newToken: string, refreshToken: string, _userData: UserProfile) => {
+  const ROLE_DEFAULT_PATH: Record<string, string> = {
+    admin: "/dashboard",
+    dosen: "/jadwal",
+    mahasiswa: "/kalender",
+  };
+
+  const loginAction = (newToken: string, refreshToken: string, userData: UserProfile) => {
     localStorage.setItem("token", newToken);
     localStorage.setItem("refreshToken", refreshToken);
     setToken(newToken);
-    setLocation("/dashboard");
+    const dest = ROLE_DEFAULT_PATH[userData.role] ?? "/kalender";
+    setLocation(dest);
   };
 
   return (
