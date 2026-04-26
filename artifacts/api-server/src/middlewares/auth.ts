@@ -126,6 +126,68 @@ export function requireApiKey() {
   };
 }
 
+export function requireApiKeyOrAuth() {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const apiKey = req.headers["x-api-key"] as string | undefined;
+    const authHeader = req.headers.authorization;
+
+    if (apiKey) {
+      try {
+        const { db, apiKeysTable } = await import("@workspace/db");
+        const { eq, and } = await import("drizzle-orm");
+        const crypto = await import("crypto");
+
+        const keyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
+        const [found] = await db
+          .select()
+          .from(apiKeysTable)
+          .where(and(eq(apiKeysTable.keyHash, keyHash), eq(apiKeysTable.isActive, true)));
+
+        if (!found) {
+          res.status(401).json({ error: "API key tidak valid" });
+          return;
+        }
+
+        if (found.expiresAt && found.expiresAt < new Date()) {
+          res.status(401).json({ error: "API key sudah kadaluarsa" });
+          return;
+        }
+
+        await db
+          .update(apiKeysTable)
+          .set({ lastUsedAt: new Date() })
+          .where(eq(apiKeysTable.id, found.id));
+
+        next();
+        return;
+      } catch (err) {
+        (req as Request & { log?: { error: (...args: unknown[]) => void } }).log?.error?.({ err }, "Error validating API key");
+        res.status(500).json({ error: "Internal server error" });
+        return;
+      }
+    }
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      try {
+        const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+        if (payload.type === "refresh") {
+          res.status(401).json({ error: "Gunakan access token, bukan refresh token" });
+          return;
+        }
+        req.user = payload;
+        next();
+        return;
+      } catch {
+        res.status(401).json({ error: "Token tidak valid atau sudah kadaluarsa" });
+        return;
+      }
+    }
+
+    res.status(401).json({ error: "Autentikasi diperlukan (API key atau token JWT)" });
+  };
+}
+
 export function generateAccessToken(payload: Omit<JwtPayload, "type">): string {
   return jwt.sign({ ...payload, type: "access" }, JWT_SECRET, { expiresIn: "1d" });
 }

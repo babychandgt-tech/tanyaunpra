@@ -21,6 +21,7 @@ import Matkul from "@/pages/matkul";
 import ApiKeys from "@/pages/api-keys";
 import Users from "@/pages/users";
 import ApiDocs from "@/pages/api-docs";
+import ChatTest from "@/pages/chat-test";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/settings/api-keys" component={() => <ProtectedRoute component={ApiKeys} allowedRoles={["admin"]} />} />
       <Route path="/users" component={() => <ProtectedRoute component={Users} allowedRoles={["admin"]} superAdminOnly />} />
       <Route path="/api-docs" component={() => <ProtectedRoute component={ApiDocs} allowedRoles={["admin"]} superAdminOnly />} />
+      <Route path="/chat-test" component={() => <ProtectedRoute component={ChatTest} allowedRoles={["admin", "dosen", "mahasiswa"]} />} />
 
       <Route component={NotFound} />
     </Switch>

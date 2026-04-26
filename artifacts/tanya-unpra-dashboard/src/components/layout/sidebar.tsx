@@ -14,7 +14,8 @@ import {
   Key, 
   LogOut,
   Menu,
-  FileText
+  FileText,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -33,6 +34,7 @@ const navItems: NavItem[] = [
   { title: "AI Intents", href: "/intents", icon: BrainCircuit, roles: ["admin"] },
   { title: "Jadwal Kuliah", href: "/jadwal", icon: Calendar, roles: ["admin", "dosen"] },
   { title: "Kalender Akademik", href: "/kalender", icon: CalendarDays, roles: ["admin", "dosen", "mahasiswa"] },
+  { title: "Test Chatbot", href: "/chat-test", icon: Bot, roles: ["admin", "dosen", "mahasiswa"] },
   { title: "Pengumuman", href: "/pengumuman", icon: Bell, roles: ["admin", "dosen"] },
   { title: "Data Mahasiswa", href: "/mahasiswa", icon: GraduationCap, roles: ["admin", "dosen"] },
   { title: "Data Dosen", href: "/dosen", icon: Users, roles: ["admin"] },

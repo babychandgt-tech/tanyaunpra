@@ -7,7 +7,7 @@ import {
   usersTable,
 } from "@workspace/db";
 import { eq, desc, and, or, gte, lte, sql, count, SQL, ilike } from "drizzle-orm";
-import { requireAuth, requireApiKey } from "../middlewares/auth";
+import { requireAuth, requireApiKey, requireApiKeyOrAuth } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
 
@@ -21,7 +21,7 @@ const askSchema = z.object({
 
 const LOW_CONFIDENCE_THRESHOLD = 0.4;
 
-router.post("/chat/ask", requireApiKey(), async (req: Request, res: Response) => {
+router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Response) => {
   const parsed = askSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
