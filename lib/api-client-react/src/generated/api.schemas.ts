@@ -317,6 +317,461 @@ export interface UpdateIntentRequest {
   isActive?: boolean;
 }
 
+export interface Course {
+  id: string;
+  kode: string;
+  nama: string;
+  sks: number;
+  semester: number;
+  prodi: string;
+  deskripsi?: string | null;
+  lecturerId?: string | null;
+  lecturerName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseResponse {
+  course: Course;
+}
+
+export interface CoursesResponse {
+  courses: Course[];
+  pagination: Pagination;
+}
+
+export interface CreateCourseRequest {
+  /**
+   * @minLength 2
+   * @maxLength 20
+   */
+  kode: string;
+  /**
+   * @minLength 3
+   * @maxLength 200
+   */
+  nama: string;
+  /**
+   * @minimum 1
+   * @maximum 6
+   */
+  sks: number;
+  /**
+   * @minimum 1
+   * @maximum 14
+   */
+  semester: number;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  prodi: string;
+  /** @maxLength 1000 */
+  deskripsi?: string;
+  lecturerId?: string;
+}
+
+export interface UpdateCourseRequest {
+  kode?: string;
+  nama?: string;
+  sks?: number;
+  semester?: number;
+  prodi?: string;
+  deskripsi?: string;
+  lecturerId?: string;
+}
+
+export type ScheduleHari = (typeof ScheduleHari)[keyof typeof ScheduleHari];
+
+export const ScheduleHari = {
+  Senin: "Senin",
+  Selasa: "Selasa",
+  Rabu: "Rabu",
+  Kamis: "Kamis",
+  Jumat: "Jumat",
+  Sabtu: "Sabtu",
+} as const;
+
+export interface Schedule {
+  id: string;
+  courseId: string;
+  courseKode?: string | null;
+  courseNama?: string | null;
+  lecturerId?: string | null;
+  lecturerName?: string | null;
+  hari: ScheduleHari;
+  /** Format HH:MM */
+  jamMulai: string;
+  /** Format HH:MM */
+  jamSelesai: string;
+  ruangan: string;
+  semester: string;
+  tahunAjaran: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleResponse {
+  schedule: Schedule;
+}
+
+export interface SchedulesResponse {
+  schedules: Schedule[];
+  pagination: Pagination;
+}
+
+export type CreateScheduleRequestHari =
+  (typeof CreateScheduleRequestHari)[keyof typeof CreateScheduleRequestHari];
+
+export const CreateScheduleRequestHari = {
+  Senin: "Senin",
+  Selasa: "Selasa",
+  Rabu: "Rabu",
+  Kamis: "Kamis",
+  Jumat: "Jumat",
+  Sabtu: "Sabtu",
+} as const;
+
+export interface CreateScheduleRequest {
+  courseId: string;
+  lecturerId?: string;
+  hari: CreateScheduleRequestHari;
+  /** Format HH:MM (contoh 08:00) */
+  jamMulai: string;
+  /** Format HH:MM (contoh 10:00) */
+  jamSelesai: string;
+  /** @maxLength 50 */
+  ruangan: string;
+  semester: string;
+  tahunAjaran: string;
+}
+
+export type UpdateScheduleRequestHari =
+  (typeof UpdateScheduleRequestHari)[keyof typeof UpdateScheduleRequestHari];
+
+export const UpdateScheduleRequestHari = {
+  Senin: "Senin",
+  Selasa: "Selasa",
+  Rabu: "Rabu",
+  Kamis: "Kamis",
+  Jumat: "Jumat",
+  Sabtu: "Sabtu",
+} as const;
+
+export interface UpdateScheduleRequest {
+  courseId?: string;
+  lecturerId?: string;
+  hari?: UpdateScheduleRequestHari;
+  jamMulai?: string;
+  jamSelesai?: string;
+  ruangan?: string;
+  semester?: string;
+  tahunAjaran?: string;
+}
+
+export interface Lecturer {
+  id: string;
+  userId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  nidn: string;
+  prodi: string;
+  fakultas: string;
+  jabatan?: string | null;
+  phone?: string | null;
+  expertise?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LecturerResponse {
+  lecturer: Lecturer;
+}
+
+export interface LecturersResponse {
+  lecturers: Lecturer[];
+  pagination: Pagination;
+}
+
+export interface UpdateLecturerRequest {
+  prodi?: string;
+  fakultas?: string;
+  jabatan?: string;
+  phone?: string;
+  expertise?: string;
+}
+
+export interface Student {
+  id: string;
+  userId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  nim: string;
+  prodi: string;
+  fakultas: string;
+  semester: number;
+  angkatan: number;
+  phone?: string | null;
+  address?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudentResponse {
+  student: Student;
+}
+
+export interface StudentsResponse {
+  students: Student[];
+  pagination: Pagination;
+}
+
+export interface UpdateStudentRequest {
+  prodi?: string;
+  fakultas?: string;
+  /**
+   * @minimum 1
+   * @maximum 14
+   */
+  semester?: number;
+  phone?: string;
+  address?: string;
+}
+
+export interface UpdateMyStudentRequest {
+  /** @maxLength 20 */
+  phone?: string;
+  /** @maxLength 500 */
+  address?: string;
+}
+
+export type AnnouncementKategori =
+  (typeof AnnouncementKategori)[keyof typeof AnnouncementKategori];
+
+export const AnnouncementKategori = {
+  Akademik: "Akademik",
+  Kemahasiswaan: "Kemahasiswaan",
+  Keuangan: "Keuangan",
+  Umum: "Umum",
+  Beasiswa: "Beasiswa",
+} as const;
+
+export interface Announcement {
+  id: string;
+  judul: string;
+  konten: string;
+  kategori: AnnouncementKategori;
+  authorId?: string | null;
+  authorName?: string | null;
+  isActive: boolean;
+  publishedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnnouncementResponse {
+  announcement: Announcement;
+}
+
+export interface AnnouncementsResponse {
+  announcements: Announcement[];
+  pagination: Pagination;
+}
+
+export type CreateAnnouncementRequestKategori =
+  (typeof CreateAnnouncementRequestKategori)[keyof typeof CreateAnnouncementRequestKategori];
+
+export const CreateAnnouncementRequestKategori = {
+  Akademik: "Akademik",
+  Kemahasiswaan: "Kemahasiswaan",
+  Keuangan: "Keuangan",
+  Umum: "Umum",
+  Beasiswa: "Beasiswa",
+} as const;
+
+export interface CreateAnnouncementRequest {
+  /**
+   * @minLength 5
+   * @maxLength 300
+   */
+  judul: string;
+  /**
+   * @minLength 10
+   * @maxLength 10000
+   */
+  konten: string;
+  kategori?: CreateAnnouncementRequestKategori;
+  isActive?: boolean;
+  publishedAt?: string;
+}
+
+export type UpdateAnnouncementRequestKategori =
+  (typeof UpdateAnnouncementRequestKategori)[keyof typeof UpdateAnnouncementRequestKategori];
+
+export const UpdateAnnouncementRequestKategori = {
+  Akademik: "Akademik",
+  Kemahasiswaan: "Kemahasiswaan",
+  Keuangan: "Keuangan",
+  Umum: "Umum",
+  Beasiswa: "Beasiswa",
+} as const;
+
+export interface UpdateAnnouncementRequest {
+  judul?: string;
+  konten?: string;
+  kategori?: UpdateAnnouncementRequestKategori;
+  isActive?: boolean;
+  publishedAt?: string;
+}
+
+export type CalendarEventTipe =
+  (typeof CalendarEventTipe)[keyof typeof CalendarEventTipe];
+
+export const CalendarEventTipe = {
+  UTS: "UTS",
+  UAS: "UAS",
+  Libur: "Libur",
+  Registrasi: "Registrasi",
+  KRS: "KRS",
+  Wisuda: "Wisuda",
+  Lainnya: "Lainnya",
+} as const;
+
+export interface CalendarEvent {
+  id: string;
+  namaEvent: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  tipe: CalendarEventTipe;
+  deskripsi?: string | null;
+  tahunAjaran: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarEventResponse {
+  event: CalendarEvent;
+}
+
+export interface AcademicCalendarListResponse {
+  events: CalendarEvent[];
+  pagination: Pagination;
+}
+
+export type CreateCalendarEventRequestTipe =
+  (typeof CreateCalendarEventRequestTipe)[keyof typeof CreateCalendarEventRequestTipe];
+
+export const CreateCalendarEventRequestTipe = {
+  UTS: "UTS",
+  UAS: "UAS",
+  Libur: "Libur",
+  Registrasi: "Registrasi",
+  KRS: "KRS",
+  Wisuda: "Wisuda",
+  Lainnya: "Lainnya",
+} as const;
+
+export interface CreateCalendarEventRequest {
+  /**
+   * @minLength 3
+   * @maxLength 200
+   */
+  namaEvent: string;
+  /** Format YYYY-MM-DD */
+  tanggalMulai: string;
+  /** Format YYYY-MM-DD */
+  tanggalSelesai: string;
+  tipe: CreateCalendarEventRequestTipe;
+  /** @maxLength 1000 */
+  deskripsi?: string;
+  tahunAjaran: string;
+}
+
+export type UpdateCalendarEventRequestTipe =
+  (typeof UpdateCalendarEventRequestTipe)[keyof typeof UpdateCalendarEventRequestTipe];
+
+export const UpdateCalendarEventRequestTipe = {
+  UTS: "UTS",
+  UAS: "UAS",
+  Libur: "Libur",
+  Registrasi: "Registrasi",
+  KRS: "KRS",
+  Wisuda: "Wisuda",
+  Lainnya: "Lainnya",
+} as const;
+
+export interface UpdateCalendarEventRequest {
+  namaEvent?: string;
+  tanggalMulai?: string;
+  tanggalSelesai?: string;
+  tipe?: UpdateCalendarEventRequestTipe;
+  deskripsi?: string;
+  tahunAjaran?: string;
+}
+
+export type DashboardSummaryResponseCounts = {
+  students: number;
+  lecturers: number;
+  courses: number;
+  activeAnnouncements: number;
+};
+
+export type DashboardSummaryResponseRecentAnnouncementsItem = {
+  id: string;
+  judul: string;
+  kategori: string;
+  publishedAt: string;
+  authorName?: string | null;
+};
+
+export interface DashboardSummaryResponse {
+  counts: DashboardSummaryResponseCounts;
+  recentAnnouncements: DashboardSummaryResponseRecentAnnouncementsItem[];
+  upcomingEvents: CalendarEvent[];
+  chatSessionsToday: number;
+}
+
+export type DashboardActivityResponseRecentChatMessagesItem = {
+  id: string;
+  sessionId: string;
+  content: string;
+  answerSource?: string | null;
+  confidence?: number | null;
+  needsReview: boolean;
+  createdAt: string;
+};
+
+export type DashboardActivityResponseRecentUsersItemRole =
+  (typeof DashboardActivityResponseRecentUsersItemRole)[keyof typeof DashboardActivityResponseRecentUsersItemRole];
+
+export const DashboardActivityResponseRecentUsersItemRole = {
+  mahasiswa: "mahasiswa",
+  dosen: "dosen",
+  admin: "admin",
+} as const;
+
+export type DashboardActivityResponseRecentUsersItem = {
+  id: string;
+  name: string;
+  email: string;
+  role: DashboardActivityResponseRecentUsersItemRole;
+  createdAt: string;
+};
+
+export type DashboardActivityResponseMessagesNeedingReviewItem = {
+  id: string;
+  sessionId: string;
+  content: string;
+  confidence?: number | null;
+  createdAt: string;
+};
+
+export interface DashboardActivityResponse {
+  recentChatMessages: DashboardActivityResponseRecentChatMessagesItem[];
+  recentUsers: DashboardActivityResponseRecentUsersItem[];
+  messagesNeedingReview: DashboardActivityResponseMessagesNeedingReviewItem[];
+}
+
 export type GetMe200 = {
   user: UserProfile;
 };
@@ -352,4 +807,107 @@ export type ListIntentsIsActive =
 export const ListIntentsIsActive = {
   true: "true",
   false: "false",
+} as const;
+
+export type ListCoursesParams = {
+  page?: number;
+  limit?: number;
+  prodi?: string;
+  semester?: number;
+  search?: string;
+};
+
+export type ListSchedulesParams = {
+  page?: number;
+  limit?: number;
+  prodi?: string;
+  semester?: string;
+  tahunAjaran?: string;
+  lecturerId?: string;
+  courseId?: string;
+  hari?: ListSchedulesHari;
+};
+
+export type ListSchedulesHari =
+  (typeof ListSchedulesHari)[keyof typeof ListSchedulesHari];
+
+export const ListSchedulesHari = {
+  Senin: "Senin",
+  Selasa: "Selasa",
+  Rabu: "Rabu",
+  Kamis: "Kamis",
+  Jumat: "Jumat",
+  Sabtu: "Sabtu",
+} as const;
+
+export type ListLecturersParams = {
+  page?: number;
+  limit?: number;
+  prodi?: string;
+  fakultas?: string;
+  search?: string;
+};
+
+export type ListStudentsParams = {
+  page?: number;
+  limit?: number;
+  prodi?: string;
+  fakultas?: string;
+  angkatan?: number;
+  search?: string;
+};
+
+export type ListAnnouncementsParams = {
+  page?: number;
+  limit?: number;
+  kategori?: ListAnnouncementsKategori;
+  isActive?: ListAnnouncementsIsActive;
+  search?: string;
+};
+
+export type ListAnnouncementsKategori =
+  (typeof ListAnnouncementsKategori)[keyof typeof ListAnnouncementsKategori];
+
+export const ListAnnouncementsKategori = {
+  Akademik: "Akademik",
+  Kemahasiswaan: "Kemahasiswaan",
+  Keuangan: "Keuangan",
+  Umum: "Umum",
+  Beasiswa: "Beasiswa",
+} as const;
+
+export type ListAnnouncementsIsActive =
+  (typeof ListAnnouncementsIsActive)[keyof typeof ListAnnouncementsIsActive];
+
+export const ListAnnouncementsIsActive = {
+  true: "true",
+  false: "false",
+} as const;
+
+export type ListAcademicCalendarParams = {
+  page?: number;
+  limit?: number;
+  tahunAjaran?: string;
+  tipe?: ListAcademicCalendarTipe;
+  /**
+   * Filter event mulai dari tanggal ini (YYYY-MM-DD)
+   */
+  from?: string;
+  /**
+   * Filter event sampai tanggal ini (YYYY-MM-DD)
+   */
+  to?: string;
+};
+
+export type ListAcademicCalendarTipe =
+  (typeof ListAcademicCalendarTipe)[keyof typeof ListAcademicCalendarTipe];
+
+export const ListAcademicCalendarTipe = {
+  UTS: "UTS",
+  UAS: "UAS",
+  Libur: "Libur",
+  Registrasi: "Registrasi",
+  KRS: "KRS",
+  Wisuda: "Wisuda",
+  Lainnya: "Lainnya",
 } as const;

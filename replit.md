@@ -101,13 +101,57 @@ Tables:
 - `PUT /intents/:id` — update intent (admin only)
 - `DELETE /intents/:id` — hapus intent (admin only)
 
+### Courses (`/api/courses/`) — JWT auth
+- `GET /courses` — list dengan filter prodi/semester/search (semua role)
+- `POST /courses` — tambah mata kuliah (admin & dosen)
+- `GET /courses/:id` — detail mata kuliah (semua role)
+- `PUT /courses/:id` — update mata kuliah (admin & dosen)
+- `DELETE /courses/:id` — hapus mata kuliah (admin only)
+
+### Schedules (`/api/schedules/`) — JWT auth
+- `GET /schedules` — list dengan filter prodi/semester/hari/lecturerId (semua role)
+- `POST /schedules` — tambah jadwal (admin & dosen)
+- `GET /schedules/:id` — detail jadwal (semua role)
+- `PUT /schedules/:id` — update jadwal (admin & dosen)
+- `DELETE /schedules/:id` — hapus jadwal (admin & dosen)
+
+### Lecturers (`/api/lecturers/`) — JWT auth
+- `GET /lecturers` — list dengan filter prodi/fakultas/search (semua role)
+- `GET /lecturers/:id` — detail dosen (semua role)
+- `PUT /lecturers/:id` — update dosen (dosen edit sendiri, admin edit semua)
+- `DELETE /lecturers/:id` — hapus dosen (admin only)
+
+### Students (`/api/students/`) — JWT auth
+- `GET /students` — list mahasiswa dengan filter (admin & dosen)
+- `GET /students/me` — profil mahasiswa yang sedang login (mahasiswa only)
+- `PUT /students/me` — update phone & address sendiri (mahasiswa only)
+- `GET /students/:id` — detail mahasiswa (admin & dosen)
+- `PUT /students/:id` — update mahasiswa (admin only)
+- `DELETE /students/:id` — hapus mahasiswa (admin only)
+
+### Announcements (`/api/announcements/`) — JWT auth
+- `GET /announcements` — list dengan filter kategori/isActive/search (semua role)
+- `POST /announcements` — buat pengumuman (admin & dosen)
+- `GET /announcements/:id` — detail pengumuman (semua role)
+- `PUT /announcements/:id` — update (admin edit semua, dosen edit milik sendiri)
+- `DELETE /announcements/:id` — hapus (admin edit semua, dosen hapus milik sendiri)
+
+### Academic Calendar (`/api/academic-calendar/`) — JWT auth
+- `GET /academic-calendar` — list dengan filter tahunAjaran/tipe/from/to (semua role)
+- `POST /academic-calendar` — tambah event (admin only)
+- `GET /academic-calendar/:id` — detail event (semua role)
+- `PUT /academic-calendar/:id` — update event (admin only)
+- `DELETE /academic-calendar/:id` — hapus event (admin only)
+
+### Dashboard (`/api/dashboard/`) — JWT auth (admin only)
+- `GET /dashboard/summary` — statistik mahasiswa/dosen/matkul/pengumuman + upcoming events
+- `GET /dashboard/activity` — aktivitas terbaru: pesan chat, user baru, pesan butuh review
+
 ### Health
 - `GET /healthz` — health check
 
 ## Pending Tasks
 
-- Task #2: AI/NLP Chat Engine (Qwen Dashscope)
-- Task #3: CRUD API endpoints data akademik
 - Task #4: Admin Dashboard web (React)
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.

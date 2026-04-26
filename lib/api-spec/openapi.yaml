@@ -16,6 +16,20 @@ tags:
     description: Chat AI & sesi percakapan
   - name: intents
     description: Manajemen intent/FAQ database
+  - name: courses
+    description: Manajemen mata kuliah
+  - name: schedules
+    description: Jadwal kuliah
+  - name: lecturers
+    description: Data dosen
+  - name: students
+    description: Data mahasiswa
+  - name: announcements
+    description: Pengumuman kampus
+  - name: academic-calendar
+    description: Kalender akademik
+  - name: dashboard
+    description: Statistik & aktivitas dashboard admin
 
 paths:
   /healthz:
@@ -588,6 +602,931 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List mata kuliah (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: prodi
+          in: query
+          schema: { type: string }
+        - name: semester
+          in: query
+          schema: { type: integer }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Daftar mata kuliah
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesResponse"
+        "401":
+          description: Tidak terautentikasi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Tambah mata kuliah baru (admin & dosen)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "201":
+          description: Mata kuliah berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Kode mata kuliah sudah digunakan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /courses/{id}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Detail mata kuliah (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail mata kuliah
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "404":
+          description: Mata kuliah tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update mata kuliah (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCourseRequest"
+      responses:
+        "200":
+          description: Mata kuliah berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseResponse"
+        "404":
+          description: Mata kuliah tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Hapus mata kuliah (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Mata kuliah berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Mata kuliah tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /schedules:
+    get:
+      operationId: listSchedules
+      tags: [schedules]
+      summary: List jadwal kuliah (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: prodi
+          in: query
+          schema: { type: string }
+        - name: semester
+          in: query
+          schema: { type: string }
+        - name: tahunAjaran
+          in: query
+          schema: { type: string }
+        - name: lecturerId
+          in: query
+          schema: { type: string }
+        - name: courseId
+          in: query
+          schema: { type: string }
+        - name: hari
+          in: query
+          schema:
+            type: string
+            enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+      responses:
+        "200":
+          description: Daftar jadwal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchedulesResponse"
+    post:
+      operationId: createSchedule
+      tags: [schedules]
+      summary: Tambah jadwal kuliah (admin & dosen)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScheduleRequest"
+      responses:
+        "201":
+          description: Jadwal berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /schedules/{id}:
+    get:
+      operationId: getSchedule
+      tags: [schedules]
+      summary: Detail jadwal kuliah (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail jadwal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleResponse"
+        "404":
+          description: Jadwal tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSchedule
+      tags: [schedules]
+      summary: Update jadwal kuliah (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateScheduleRequest"
+      responses:
+        "200":
+          description: Jadwal berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleResponse"
+        "404":
+          description: Jadwal tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteSchedule
+      tags: [schedules]
+      summary: Hapus jadwal kuliah (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Jadwal berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Jadwal tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /lecturers:
+    get:
+      operationId: listLecturers
+      tags: [lecturers]
+      summary: List dosen (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: prodi
+          in: query
+          schema: { type: string }
+        - name: fakultas
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Daftar dosen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturersResponse"
+
+  /lecturers/{id}:
+    get:
+      operationId: getLecturer
+      tags: [lecturers]
+      summary: Detail data dosen (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail dosen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturerResponse"
+        "404":
+          description: Dosen tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateLecturer
+      tags: [lecturers]
+      summary: Update data dosen (dosen edit sendiri, admin edit semua)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLecturerRequest"
+      responses:
+        "200":
+          description: Data dosen berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturerResponse"
+        "403":
+          description: Dosen hanya bisa edit profil sendiri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Dosen tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteLecturer
+      tags: [lecturers]
+      summary: Hapus data dosen (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Data dosen berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Dosen tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /students:
+    get:
+      operationId: listStudents
+      tags: [students]
+      summary: List mahasiswa (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: prodi
+          in: query
+          schema: { type: string }
+        - name: fakultas
+          in: query
+          schema: { type: string }
+        - name: angkatan
+          in: query
+          schema: { type: integer }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Daftar mahasiswa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentsResponse"
+        "403":
+          description: Akses ditolak (mahasiswa tidak bisa list semua)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /students/me:
+    get:
+      operationId: getMyStudentProfile
+      tags: [students]
+      summary: Profil mahasiswa yang sedang login (mahasiswa only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profil mahasiswa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "404":
+          description: Data mahasiswa tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateMyStudentProfile
+      tags: [students]
+      summary: Update profil mahasiswa sendiri (mahasiswa only — hanya phone & address)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyStudentRequest"
+      responses:
+        "200":
+          description: Profil berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+
+  /students/{id}:
+    get:
+      operationId: getStudent
+      tags: [students]
+      summary: Detail mahasiswa (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail mahasiswa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "404":
+          description: Mahasiswa tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateStudent
+      tags: [students]
+      summary: Update data mahasiswa (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStudentRequest"
+      responses:
+        "200":
+          description: Data mahasiswa berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "404":
+          description: Mahasiswa tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteStudent
+      tags: [students]
+      summary: Hapus data mahasiswa (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Data mahasiswa berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Mahasiswa tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List pengumuman (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: kategori
+          in: query
+          schema:
+            type: string
+            enum: [Akademik, Kemahasiswaan, Keuangan, Umum, Beasiswa]
+        - name: isActive
+          in: query
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Daftar pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementsResponse"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Buat pengumuman baru (admin & dosen)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnouncementRequest"
+      responses:
+        "201":
+          description: Pengumuman berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /announcements/{id}:
+    get:
+      operationId: getAnnouncement
+      tags: [announcements]
+      summary: Detail pengumuman (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail pengumuman
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementResponse"
+        "404":
+          description: Pengumuman tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateAnnouncement
+      tags: [announcements]
+      summary: Update pengumuman (admin edit semua, dosen edit milik sendiri)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAnnouncementRequest"
+      responses:
+        "200":
+          description: Pengumuman berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementResponse"
+        "403":
+          description: Dosen hanya bisa edit pengumuman sendiri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Pengumuman tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Hapus pengumuman (admin semua, dosen milik sendiri)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pengumuman berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Pengumuman tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /academic-calendar:
+    get:
+      operationId: listAcademicCalendar
+      tags: [academic-calendar]
+      summary: List event kalender akademik (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: tahunAjaran
+          in: query
+          schema: { type: string }
+        - name: tipe
+          in: query
+          schema:
+            type: string
+            enum: [UTS, UAS, Libur, Registrasi, KRS, Wisuda, Lainnya]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter event mulai dari tanggal ini (YYYY-MM-DD)
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter event sampai tanggal ini (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Daftar event kalender
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicCalendarListResponse"
+    post:
+      operationId: createCalendarEvent
+      tags: [academic-calendar]
+      summary: Tambah event kalender akademik (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCalendarEventRequest"
+      responses:
+        "201":
+          description: Event berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEventResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /academic-calendar/{id}:
+    get:
+      operationId: getCalendarEvent
+      tags: [academic-calendar]
+      summary: Detail event kalender (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEventResponse"
+        "404":
+          description: Event tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateCalendarEvent
+      tags: [academic-calendar]
+      summary: Update event kalender (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCalendarEventRequest"
+      responses:
+        "200":
+          description: Event berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEventResponse"
+        "404":
+          description: Event tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCalendarEvent
+      tags: [academic-calendar]
+      summary: Hapus event kalender (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Event berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Event tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Statistik ringkasan dashboard (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Statistik dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummaryResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Aktivitas terbaru di sistem (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Log aktivitas terbaru
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardActivityResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1026,3 +1965,648 @@ components:
         totalPages:
           type: integer
       required: [page, limit, total, totalPages]
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        kode:
+          type: string
+        nama:
+          type: string
+        sks:
+          type: integer
+        semester:
+          type: integer
+        prodi:
+          type: string
+        deskripsi:
+          type: string
+          nullable: true
+        lecturerId:
+          type: string
+          nullable: true
+        lecturerName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, kode, nama, sks, semester, prodi, createdAt, updatedAt]
+
+    CourseResponse:
+      type: object
+      properties:
+        course:
+          $ref: "#/components/schemas/Course"
+      required: [course]
+
+    CoursesResponse:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [courses, pagination]
+
+    CreateCourseRequest:
+      type: object
+      properties:
+        kode:
+          type: string
+          minLength: 2
+          maxLength: 20
+        nama:
+          type: string
+          minLength: 3
+          maxLength: 200
+        sks:
+          type: integer
+          minimum: 1
+          maximum: 6
+        semester:
+          type: integer
+          minimum: 1
+          maximum: 14
+        prodi:
+          type: string
+          minLength: 2
+          maxLength: 100
+        deskripsi:
+          type: string
+          maxLength: 1000
+        lecturerId:
+          type: string
+          format: uuid
+      required: [kode, nama, sks, semester, prodi]
+
+    UpdateCourseRequest:
+      type: object
+      properties:
+        kode:
+          type: string
+        nama:
+          type: string
+        sks:
+          type: integer
+        semester:
+          type: integer
+        prodi:
+          type: string
+        deskripsi:
+          type: string
+        lecturerId:
+          type: string
+          format: uuid
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        courseKode:
+          type: string
+          nullable: true
+        courseNama:
+          type: string
+          nullable: true
+        lecturerId:
+          type: string
+          nullable: true
+        lecturerName:
+          type: string
+          nullable: true
+        hari:
+          type: string
+          enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+        jamMulai:
+          type: string
+          description: Format HH:MM
+        jamSelesai:
+          type: string
+          description: Format HH:MM
+        ruangan:
+          type: string
+        semester:
+          type: string
+        tahunAjaran:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, courseId, hari, jamMulai, jamSelesai, ruangan, semester, tahunAjaran, createdAt, updatedAt]
+
+    ScheduleResponse:
+      type: object
+      properties:
+        schedule:
+          $ref: "#/components/schemas/Schedule"
+      required: [schedule]
+
+    SchedulesResponse:
+      type: object
+      properties:
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/Schedule"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [schedules, pagination]
+
+    CreateScheduleRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        lecturerId:
+          type: string
+          format: uuid
+        hari:
+          type: string
+          enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+        jamMulai:
+          type: string
+          description: Format HH:MM (contoh 08:00)
+        jamSelesai:
+          type: string
+          description: Format HH:MM (contoh 10:00)
+        ruangan:
+          type: string
+          maxLength: 50
+        semester:
+          type: string
+        tahunAjaran:
+          type: string
+      required: [courseId, hari, jamMulai, jamSelesai, ruangan, semester, tahunAjaran]
+
+    UpdateScheduleRequest:
+      type: object
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        lecturerId:
+          type: string
+          format: uuid
+        hari:
+          type: string
+          enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+        jamMulai:
+          type: string
+        jamSelesai:
+          type: string
+        ruangan:
+          type: string
+        semester:
+          type: string
+        tahunAjaran:
+          type: string
+
+    Lecturer:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        nidn:
+          type: string
+        prodi:
+          type: string
+        fakultas:
+          type: string
+        jabatan:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        expertise:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, nidn, prodi, fakultas, createdAt, updatedAt]
+
+    LecturerResponse:
+      type: object
+      properties:
+        lecturer:
+          $ref: "#/components/schemas/Lecturer"
+      required: [lecturer]
+
+    LecturersResponse:
+      type: object
+      properties:
+        lecturers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lecturer"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [lecturers, pagination]
+
+    UpdateLecturerRequest:
+      type: object
+      properties:
+        prodi:
+          type: string
+        fakultas:
+          type: string
+        jabatan:
+          type: string
+        phone:
+          type: string
+        expertise:
+          type: string
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        nim:
+          type: string
+        prodi:
+          type: string
+        fakultas:
+          type: string
+        semester:
+          type: integer
+        angkatan:
+          type: integer
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, nim, prodi, fakultas, semester, angkatan, createdAt, updatedAt]
+
+    StudentResponse:
+      type: object
+      properties:
+        student:
+          $ref: "#/components/schemas/Student"
+      required: [student]
+
+    StudentsResponse:
+      type: object
+      properties:
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/Student"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [students, pagination]
+
+    UpdateStudentRequest:
+      type: object
+      properties:
+        prodi:
+          type: string
+        fakultas:
+          type: string
+        semester:
+          type: integer
+          minimum: 1
+          maximum: 14
+        phone:
+          type: string
+        address:
+          type: string
+
+    UpdateMyStudentRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 500
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+        judul:
+          type: string
+        konten:
+          type: string
+        kategori:
+          type: string
+          enum: [Akademik, Kemahasiswaan, Keuangan, Umum, Beasiswa]
+        authorId:
+          type: string
+          nullable: true
+        authorName:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, judul, konten, kategori, isActive, publishedAt, createdAt, updatedAt]
+
+    AnnouncementResponse:
+      type: object
+      properties:
+        announcement:
+          $ref: "#/components/schemas/Announcement"
+      required: [announcement]
+
+    AnnouncementsResponse:
+      type: object
+      properties:
+        announcements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Announcement"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [announcements, pagination]
+
+    CreateAnnouncementRequest:
+      type: object
+      properties:
+        judul:
+          type: string
+          minLength: 5
+          maxLength: 300
+        konten:
+          type: string
+          minLength: 10
+          maxLength: 10000
+        kategori:
+          type: string
+          enum: [Akademik, Kemahasiswaan, Keuangan, Umum, Beasiswa]
+          default: Umum
+        isActive:
+          type: boolean
+          default: true
+        publishedAt:
+          type: string
+          format: date-time
+      required: [judul, konten]
+
+    UpdateAnnouncementRequest:
+      type: object
+      properties:
+        judul:
+          type: string
+        konten:
+          type: string
+        kategori:
+          type: string
+          enum: [Akademik, Kemahasiswaan, Keuangan, Umum, Beasiswa]
+        isActive:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        namaEvent:
+          type: string
+        tanggalMulai:
+          type: string
+          format: date
+        tanggalSelesai:
+          type: string
+          format: date
+        tipe:
+          type: string
+          enum: [UTS, UAS, Libur, Registrasi, KRS, Wisuda, Lainnya]
+        deskripsi:
+          type: string
+          nullable: true
+        tahunAjaran:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, namaEvent, tanggalMulai, tanggalSelesai, tipe, tahunAjaran, createdAt, updatedAt]
+
+    CalendarEventResponse:
+      type: object
+      properties:
+        event:
+          $ref: "#/components/schemas/CalendarEvent"
+      required: [event]
+
+    AcademicCalendarListResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEvent"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [events, pagination]
+
+    CreateCalendarEventRequest:
+      type: object
+      properties:
+        namaEvent:
+          type: string
+          minLength: 3
+          maxLength: 200
+        tanggalMulai:
+          type: string
+          format: date
+          description: Format YYYY-MM-DD
+        tanggalSelesai:
+          type: string
+          format: date
+          description: Format YYYY-MM-DD
+        tipe:
+          type: string
+          enum: [UTS, UAS, Libur, Registrasi, KRS, Wisuda, Lainnya]
+        deskripsi:
+          type: string
+          maxLength: 1000
+        tahunAjaran:
+          type: string
+      required: [namaEvent, tanggalMulai, tanggalSelesai, tipe, tahunAjaran]
+
+    UpdateCalendarEventRequest:
+      type: object
+      properties:
+        namaEvent:
+          type: string
+        tanggalMulai:
+          type: string
+          format: date
+        tanggalSelesai:
+          type: string
+          format: date
+        tipe:
+          type: string
+          enum: [UTS, UAS, Libur, Registrasi, KRS, Wisuda, Lainnya]
+        deskripsi:
+          type: string
+        tahunAjaran:
+          type: string
+
+    DashboardSummaryResponse:
+      type: object
+      properties:
+        counts:
+          type: object
+          properties:
+            students:
+              type: integer
+            lecturers:
+              type: integer
+            courses:
+              type: integer
+            activeAnnouncements:
+              type: integer
+          required: [students, lecturers, courses, activeAnnouncements]
+        recentAnnouncements:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              judul:
+                type: string
+              kategori:
+                type: string
+              publishedAt:
+                type: string
+                format: date-time
+              authorName:
+                type: string
+                nullable: true
+            required: [id, judul, kategori, publishedAt]
+        upcomingEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEvent"
+        chatSessionsToday:
+          type: integer
+      required: [counts, recentAnnouncements, upcomingEvents, chatSessionsToday]
+
+    DashboardActivityResponse:
+      type: object
+      properties:
+        recentChatMessages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              sessionId:
+                type: string
+              content:
+                type: string
+              answerSource:
+                type: string
+                nullable: true
+              confidence:
+                type: number
+                nullable: true
+              needsReview:
+                type: boolean
+              createdAt:
+                type: string
+                format: date-time
+            required: [id, sessionId, content, needsReview, createdAt]
+        recentUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+              role:
+                type: string
+                enum: [mahasiswa, dosen, admin]
+              createdAt:
+                type: string
+                format: date-time
+            required: [id, name, email, role, createdAt]
+        messagesNeedingReview:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              sessionId:
+                type: string
+              content:
+                type: string
+              confidence:
+                type: number
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+            required: [id, sessionId, content, createdAt]
+      required: [recentChatMessages, recentUsers, messagesNeedingReview]

@@ -459,3 +459,935 @@ export const DeleteIntentParams = zod.object({
 export const DeleteIntentResponse = zod.object({
   message: zod.string(),
 });
+
+/**
+ * @summary List mata kuliah (semua role)
+ */
+export const listCoursesQueryPageDefault = 1;
+export const listCoursesQueryLimitDefault = 20;
+
+export const ListCoursesQueryParams = zod.object({
+  page: zod.coerce.number().default(listCoursesQueryPageDefault),
+  limit: zod.coerce.number().default(listCoursesQueryLimitDefault),
+  prodi: zod.coerce.string().optional(),
+  semester: zod.coerce.number().optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const ListCoursesResponse = zod.object({
+  courses: zod.array(
+    zod.object({
+      id: zod.string(),
+      kode: zod.string(),
+      nama: zod.string(),
+      sks: zod.number(),
+      semester: zod.number(),
+      prodi: zod.string(),
+      deskripsi: zod.string().nullish(),
+      lecturerId: zod.string().nullish(),
+      lecturerName: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Tambah mata kuliah baru (admin & dosen)
+ */
+export const createCourseBodyKodeMin = 2;
+export const createCourseBodyKodeMax = 20;
+
+export const createCourseBodyNamaMin = 3;
+export const createCourseBodyNamaMax = 200;
+
+export const createCourseBodySksMax = 6;
+
+export const createCourseBodySemesterMax = 14;
+
+export const createCourseBodyProdiMin = 2;
+export const createCourseBodyProdiMax = 100;
+
+export const createCourseBodyDeskripsiMax = 1000;
+
+export const CreateCourseBody = zod.object({
+  kode: zod.string().min(createCourseBodyKodeMin).max(createCourseBodyKodeMax),
+  nama: zod.string().min(createCourseBodyNamaMin).max(createCourseBodyNamaMax),
+  sks: zod.number().min(1).max(createCourseBodySksMax),
+  semester: zod.number().min(1).max(createCourseBodySemesterMax),
+  prodi: zod
+    .string()
+    .min(createCourseBodyProdiMin)
+    .max(createCourseBodyProdiMax),
+  deskripsi: zod.string().max(createCourseBodyDeskripsiMax).optional(),
+  lecturerId: zod.string().uuid().optional(),
+});
+
+/**
+ * @summary Detail mata kuliah (semua role)
+ */
+export const GetCourseParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetCourseResponse = zod.object({
+  course: zod.object({
+    id: zod.string(),
+    kode: zod.string(),
+    nama: zod.string(),
+    sks: zod.number(),
+    semester: zod.number(),
+    prodi: zod.string(),
+    deskripsi: zod.string().nullish(),
+    lecturerId: zod.string().nullish(),
+    lecturerName: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update mata kuliah (admin & dosen)
+ */
+export const UpdateCourseParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateCourseBody = zod.object({
+  kode: zod.string().optional(),
+  nama: zod.string().optional(),
+  sks: zod.number().optional(),
+  semester: zod.number().optional(),
+  prodi: zod.string().optional(),
+  deskripsi: zod.string().optional(),
+  lecturerId: zod.string().uuid().optional(),
+});
+
+export const UpdateCourseResponse = zod.object({
+  course: zod.object({
+    id: zod.string(),
+    kode: zod.string(),
+    nama: zod.string(),
+    sks: zod.number(),
+    semester: zod.number(),
+    prodi: zod.string(),
+    deskripsi: zod.string().nullish(),
+    lecturerId: zod.string().nullish(),
+    lecturerName: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus mata kuliah (admin only)
+ */
+export const DeleteCourseParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteCourseResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List jadwal kuliah (semua role)
+ */
+export const listSchedulesQueryPageDefault = 1;
+export const listSchedulesQueryLimitDefault = 20;
+
+export const ListSchedulesQueryParams = zod.object({
+  page: zod.coerce.number().default(listSchedulesQueryPageDefault),
+  limit: zod.coerce.number().default(listSchedulesQueryLimitDefault),
+  prodi: zod.coerce.string().optional(),
+  semester: zod.coerce.string().optional(),
+  tahunAjaran: zod.coerce.string().optional(),
+  lecturerId: zod.coerce.string().optional(),
+  courseId: zod.coerce.string().optional(),
+  hari: zod
+    .enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"])
+    .optional(),
+});
+
+export const ListSchedulesResponse = zod.object({
+  schedules: zod.array(
+    zod.object({
+      id: zod.string(),
+      courseId: zod.string(),
+      courseKode: zod.string().nullish(),
+      courseNama: zod.string().nullish(),
+      lecturerId: zod.string().nullish(),
+      lecturerName: zod.string().nullish(),
+      hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+      jamMulai: zod.string().describe("Format HH:MM"),
+      jamSelesai: zod.string().describe("Format HH:MM"),
+      ruangan: zod.string(),
+      semester: zod.string(),
+      tahunAjaran: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Tambah jadwal kuliah (admin & dosen)
+ */
+export const createScheduleBodyRuanganMax = 50;
+
+export const CreateScheduleBody = zod.object({
+  courseId: zod.string().uuid(),
+  lecturerId: zod.string().uuid().optional(),
+  hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+  jamMulai: zod.string().describe("Format HH:MM (contoh 08:00)"),
+  jamSelesai: zod.string().describe("Format HH:MM (contoh 10:00)"),
+  ruangan: zod.string().max(createScheduleBodyRuanganMax),
+  semester: zod.string(),
+  tahunAjaran: zod.string(),
+});
+
+/**
+ * @summary Detail jadwal kuliah (semua role)
+ */
+export const GetScheduleParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetScheduleResponse = zod.object({
+  schedule: zod.object({
+    id: zod.string(),
+    courseId: zod.string(),
+    courseKode: zod.string().nullish(),
+    courseNama: zod.string().nullish(),
+    lecturerId: zod.string().nullish(),
+    lecturerName: zod.string().nullish(),
+    hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+    jamMulai: zod.string().describe("Format HH:MM"),
+    jamSelesai: zod.string().describe("Format HH:MM"),
+    ruangan: zod.string(),
+    semester: zod.string(),
+    tahunAjaran: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update jadwal kuliah (admin & dosen)
+ */
+export const UpdateScheduleParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateScheduleBody = zod.object({
+  courseId: zod.string().uuid().optional(),
+  lecturerId: zod.string().uuid().optional(),
+  hari: zod
+    .enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"])
+    .optional(),
+  jamMulai: zod.string().optional(),
+  jamSelesai: zod.string().optional(),
+  ruangan: zod.string().optional(),
+  semester: zod.string().optional(),
+  tahunAjaran: zod.string().optional(),
+});
+
+export const UpdateScheduleResponse = zod.object({
+  schedule: zod.object({
+    id: zod.string(),
+    courseId: zod.string(),
+    courseKode: zod.string().nullish(),
+    courseNama: zod.string().nullish(),
+    lecturerId: zod.string().nullish(),
+    lecturerName: zod.string().nullish(),
+    hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+    jamMulai: zod.string().describe("Format HH:MM"),
+    jamSelesai: zod.string().describe("Format HH:MM"),
+    ruangan: zod.string(),
+    semester: zod.string(),
+    tahunAjaran: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus jadwal kuliah (admin & dosen)
+ */
+export const DeleteScheduleParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteScheduleResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List dosen (semua role)
+ */
+export const listLecturersQueryPageDefault = 1;
+export const listLecturersQueryLimitDefault = 20;
+
+export const ListLecturersQueryParams = zod.object({
+  page: zod.coerce.number().default(listLecturersQueryPageDefault),
+  limit: zod.coerce.number().default(listLecturersQueryLimitDefault),
+  prodi: zod.coerce.string().optional(),
+  fakultas: zod.coerce.string().optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const ListLecturersResponse = zod.object({
+  lecturers: zod.array(
+    zod.object({
+      id: zod.string(),
+      userId: zod.string().nullish(),
+      name: zod.string().nullish(),
+      email: zod.string().nullish(),
+      nidn: zod.string(),
+      prodi: zod.string(),
+      fakultas: zod.string(),
+      jabatan: zod.string().nullish(),
+      phone: zod.string().nullish(),
+      expertise: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Detail data dosen (semua role)
+ */
+export const GetLecturerParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetLecturerResponse = zod.object({
+  lecturer: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nidn: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    jabatan: zod.string().nullish(),
+    phone: zod.string().nullish(),
+    expertise: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update data dosen (dosen edit sendiri, admin edit semua)
+ */
+export const UpdateLecturerParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateLecturerBody = zod.object({
+  prodi: zod.string().optional(),
+  fakultas: zod.string().optional(),
+  jabatan: zod.string().optional(),
+  phone: zod.string().optional(),
+  expertise: zod.string().optional(),
+});
+
+export const UpdateLecturerResponse = zod.object({
+  lecturer: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nidn: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    jabatan: zod.string().nullish(),
+    phone: zod.string().nullish(),
+    expertise: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus data dosen (admin only)
+ */
+export const DeleteLecturerParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteLecturerResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List mahasiswa (admin & dosen)
+ */
+export const listStudentsQueryPageDefault = 1;
+export const listStudentsQueryLimitDefault = 20;
+
+export const ListStudentsQueryParams = zod.object({
+  page: zod.coerce.number().default(listStudentsQueryPageDefault),
+  limit: zod.coerce.number().default(listStudentsQueryLimitDefault),
+  prodi: zod.coerce.string().optional(),
+  fakultas: zod.coerce.string().optional(),
+  angkatan: zod.coerce.number().optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const ListStudentsResponse = zod.object({
+  students: zod.array(
+    zod.object({
+      id: zod.string(),
+      userId: zod.string().nullish(),
+      name: zod.string().nullish(),
+      email: zod.string().nullish(),
+      nim: zod.string(),
+      prodi: zod.string(),
+      fakultas: zod.string(),
+      semester: zod.number(),
+      angkatan: zod.number(),
+      phone: zod.string().nullish(),
+      address: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Profil mahasiswa yang sedang login (mahasiswa only)
+ */
+export const GetMyStudentProfileResponse = zod.object({
+  student: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nim: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    semester: zod.number(),
+    angkatan: zod.number(),
+    phone: zod.string().nullish(),
+    address: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update profil mahasiswa sendiri (mahasiswa only — hanya phone & address)
+ */
+export const updateMyStudentProfileBodyPhoneMax = 20;
+
+export const updateMyStudentProfileBodyAddressMax = 500;
+
+export const UpdateMyStudentProfileBody = zod.object({
+  phone: zod.string().max(updateMyStudentProfileBodyPhoneMax).optional(),
+  address: zod.string().max(updateMyStudentProfileBodyAddressMax).optional(),
+});
+
+export const UpdateMyStudentProfileResponse = zod.object({
+  student: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nim: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    semester: zod.number(),
+    angkatan: zod.number(),
+    phone: zod.string().nullish(),
+    address: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Detail mahasiswa (admin & dosen)
+ */
+export const GetStudentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetStudentResponse = zod.object({
+  student: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nim: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    semester: zod.number(),
+    angkatan: zod.number(),
+    phone: zod.string().nullish(),
+    address: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update data mahasiswa (admin only)
+ */
+export const UpdateStudentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateStudentBodySemesterMax = 14;
+
+export const UpdateStudentBody = zod.object({
+  prodi: zod.string().optional(),
+  fakultas: zod.string().optional(),
+  semester: zod.number().min(1).max(updateStudentBodySemesterMax).optional(),
+  phone: zod.string().optional(),
+  address: zod.string().optional(),
+});
+
+export const UpdateStudentResponse = zod.object({
+  student: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nim: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    semester: zod.number(),
+    angkatan: zod.number(),
+    phone: zod.string().nullish(),
+    address: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus data mahasiswa (admin only)
+ */
+export const DeleteStudentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteStudentResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List pengumuman (semua role)
+ */
+export const listAnnouncementsQueryPageDefault = 1;
+export const listAnnouncementsQueryLimitDefault = 20;
+
+export const ListAnnouncementsQueryParams = zod.object({
+  page: zod.coerce.number().default(listAnnouncementsQueryPageDefault),
+  limit: zod.coerce.number().default(listAnnouncementsQueryLimitDefault),
+  kategori: zod
+    .enum(["Akademik", "Kemahasiswaan", "Keuangan", "Umum", "Beasiswa"])
+    .optional(),
+  isActive: zod.enum(["true", "false"]).optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const ListAnnouncementsResponse = zod.object({
+  announcements: zod.array(
+    zod.object({
+      id: zod.string(),
+      judul: zod.string(),
+      konten: zod.string(),
+      kategori: zod.enum([
+        "Akademik",
+        "Kemahasiswaan",
+        "Keuangan",
+        "Umum",
+        "Beasiswa",
+      ]),
+      authorId: zod.string().nullish(),
+      authorName: zod.string().nullish(),
+      isActive: zod.boolean(),
+      publishedAt: zod.coerce.date(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Buat pengumuman baru (admin & dosen)
+ */
+export const createAnnouncementBodyJudulMin = 5;
+export const createAnnouncementBodyJudulMax = 300;
+
+export const createAnnouncementBodyKontenMin = 10;
+export const createAnnouncementBodyKontenMax = 10000;
+
+export const createAnnouncementBodyKategoriDefault = `Umum`;
+export const createAnnouncementBodyIsActiveDefault = true;
+
+export const CreateAnnouncementBody = zod.object({
+  judul: zod
+    .string()
+    .min(createAnnouncementBodyJudulMin)
+    .max(createAnnouncementBodyJudulMax),
+  konten: zod
+    .string()
+    .min(createAnnouncementBodyKontenMin)
+    .max(createAnnouncementBodyKontenMax),
+  kategori: zod
+    .enum(["Akademik", "Kemahasiswaan", "Keuangan", "Umum", "Beasiswa"])
+    .default(createAnnouncementBodyKategoriDefault),
+  isActive: zod.boolean().default(createAnnouncementBodyIsActiveDefault),
+  publishedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Detail pengumuman (semua role)
+ */
+export const GetAnnouncementParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetAnnouncementResponse = zod.object({
+  announcement: zod.object({
+    id: zod.string(),
+    judul: zod.string(),
+    konten: zod.string(),
+    kategori: zod.enum([
+      "Akademik",
+      "Kemahasiswaan",
+      "Keuangan",
+      "Umum",
+      "Beasiswa",
+    ]),
+    authorId: zod.string().nullish(),
+    authorName: zod.string().nullish(),
+    isActive: zod.boolean(),
+    publishedAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update pengumuman (admin edit semua, dosen edit milik sendiri)
+ */
+export const UpdateAnnouncementParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateAnnouncementBody = zod.object({
+  judul: zod.string().optional(),
+  konten: zod.string().optional(),
+  kategori: zod
+    .enum(["Akademik", "Kemahasiswaan", "Keuangan", "Umum", "Beasiswa"])
+    .optional(),
+  isActive: zod.boolean().optional(),
+  publishedAt: zod.coerce.date().optional(),
+});
+
+export const UpdateAnnouncementResponse = zod.object({
+  announcement: zod.object({
+    id: zod.string(),
+    judul: zod.string(),
+    konten: zod.string(),
+    kategori: zod.enum([
+      "Akademik",
+      "Kemahasiswaan",
+      "Keuangan",
+      "Umum",
+      "Beasiswa",
+    ]),
+    authorId: zod.string().nullish(),
+    authorName: zod.string().nullish(),
+    isActive: zod.boolean(),
+    publishedAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus pengumuman (admin semua, dosen milik sendiri)
+ */
+export const DeleteAnnouncementParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteAnnouncementResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List event kalender akademik (semua role)
+ */
+export const listAcademicCalendarQueryPageDefault = 1;
+export const listAcademicCalendarQueryLimitDefault = 50;
+
+export const ListAcademicCalendarQueryParams = zod.object({
+  page: zod.coerce.number().default(listAcademicCalendarQueryPageDefault),
+  limit: zod.coerce.number().default(listAcademicCalendarQueryLimitDefault),
+  tahunAjaran: zod.coerce.string().optional(),
+  tipe: zod
+    .enum(["UTS", "UAS", "Libur", "Registrasi", "KRS", "Wisuda", "Lainnya"])
+    .optional(),
+  from: zod
+    .date()
+    .optional()
+    .describe("Filter event mulai dari tanggal ini (YYYY-MM-DD)"),
+  to: zod
+    .date()
+    .optional()
+    .describe("Filter event sampai tanggal ini (YYYY-MM-DD)"),
+});
+
+export const ListAcademicCalendarResponse = zod.object({
+  events: zod.array(
+    zod.object({
+      id: zod.string(),
+      namaEvent: zod.string(),
+      tanggalMulai: zod.coerce.date(),
+      tanggalSelesai: zod.coerce.date(),
+      tipe: zod.enum([
+        "UTS",
+        "UAS",
+        "Libur",
+        "Registrasi",
+        "KRS",
+        "Wisuda",
+        "Lainnya",
+      ]),
+      deskripsi: zod.string().nullish(),
+      tahunAjaran: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Tambah event kalender akademik (admin only)
+ */
+export const createCalendarEventBodyNamaEventMin = 3;
+export const createCalendarEventBodyNamaEventMax = 200;
+
+export const createCalendarEventBodyDeskripsiMax = 1000;
+
+export const CreateCalendarEventBody = zod.object({
+  namaEvent: zod
+    .string()
+    .min(createCalendarEventBodyNamaEventMin)
+    .max(createCalendarEventBodyNamaEventMax),
+  tanggalMulai: zod.coerce.date().describe("Format YYYY-MM-DD"),
+  tanggalSelesai: zod.coerce.date().describe("Format YYYY-MM-DD"),
+  tipe: zod.enum([
+    "UTS",
+    "UAS",
+    "Libur",
+    "Registrasi",
+    "KRS",
+    "Wisuda",
+    "Lainnya",
+  ]),
+  deskripsi: zod.string().max(createCalendarEventBodyDeskripsiMax).optional(),
+  tahunAjaran: zod.string(),
+});
+
+/**
+ * @summary Detail event kalender (semua role)
+ */
+export const GetCalendarEventParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetCalendarEventResponse = zod.object({
+  event: zod.object({
+    id: zod.string(),
+    namaEvent: zod.string(),
+    tanggalMulai: zod.coerce.date(),
+    tanggalSelesai: zod.coerce.date(),
+    tipe: zod.enum([
+      "UTS",
+      "UAS",
+      "Libur",
+      "Registrasi",
+      "KRS",
+      "Wisuda",
+      "Lainnya",
+    ]),
+    deskripsi: zod.string().nullish(),
+    tahunAjaran: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update event kalender (admin only)
+ */
+export const UpdateCalendarEventParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateCalendarEventBody = zod.object({
+  namaEvent: zod.string().optional(),
+  tanggalMulai: zod.coerce.date().optional(),
+  tanggalSelesai: zod.coerce.date().optional(),
+  tipe: zod
+    .enum(["UTS", "UAS", "Libur", "Registrasi", "KRS", "Wisuda", "Lainnya"])
+    .optional(),
+  deskripsi: zod.string().optional(),
+  tahunAjaran: zod.string().optional(),
+});
+
+export const UpdateCalendarEventResponse = zod.object({
+  event: zod.object({
+    id: zod.string(),
+    namaEvent: zod.string(),
+    tanggalMulai: zod.coerce.date(),
+    tanggalSelesai: zod.coerce.date(),
+    tipe: zod.enum([
+      "UTS",
+      "UAS",
+      "Libur",
+      "Registrasi",
+      "KRS",
+      "Wisuda",
+      "Lainnya",
+    ]),
+    deskripsi: zod.string().nullish(),
+    tahunAjaran: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus event kalender (admin only)
+ */
+export const DeleteCalendarEventParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteCalendarEventResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Statistik ringkasan dashboard (admin only)
+ */
+export const GetDashboardSummaryResponse = zod.object({
+  counts: zod.object({
+    students: zod.number(),
+    lecturers: zod.number(),
+    courses: zod.number(),
+    activeAnnouncements: zod.number(),
+  }),
+  recentAnnouncements: zod.array(
+    zod.object({
+      id: zod.string(),
+      judul: zod.string(),
+      kategori: zod.string(),
+      publishedAt: zod.coerce.date(),
+      authorName: zod.string().nullish(),
+    }),
+  ),
+  upcomingEvents: zod.array(
+    zod.object({
+      id: zod.string(),
+      namaEvent: zod.string(),
+      tanggalMulai: zod.coerce.date(),
+      tanggalSelesai: zod.coerce.date(),
+      tipe: zod.enum([
+        "UTS",
+        "UAS",
+        "Libur",
+        "Registrasi",
+        "KRS",
+        "Wisuda",
+        "Lainnya",
+      ]),
+      deskripsi: zod.string().nullish(),
+      tahunAjaran: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  chatSessionsToday: zod.number(),
+});
+
+/**
+ * @summary Aktivitas terbaru di sistem (admin only)
+ */
+export const GetDashboardActivityResponse = zod.object({
+  recentChatMessages: zod.array(
+    zod.object({
+      id: zod.string(),
+      sessionId: zod.string(),
+      content: zod.string(),
+      answerSource: zod.string().nullish(),
+      confidence: zod.number().nullish(),
+      needsReview: zod.boolean(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  recentUsers: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      email: zod.string(),
+      role: zod.enum(["mahasiswa", "dosen", "admin"]),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  messagesNeedingReview: zod.array(
+    zod.object({
+      id: zod.string(),
+      sessionId: zod.string(),
+      content: zod.string(),
+      confidence: zod.number().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
