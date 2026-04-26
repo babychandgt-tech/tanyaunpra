@@ -832,6 +832,34 @@ export interface DashboardActivityResponse {
   messagesNeedingReview: DashboardActivityResponseMessagesNeedingReviewItem[];
 }
 
+export type UserItemRole = (typeof UserItemRole)[keyof typeof UserItemRole];
+
+export const UserItemRole = {
+  mahasiswa: "mahasiswa",
+  dosen: "dosen",
+  admin: "admin",
+} as const;
+
+export interface UserItem {
+  id: string;
+  email: string;
+  name: string;
+  role: UserItemRole;
+  createdAt: string;
+}
+
+export type UsersListResponsePagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export interface UsersListResponse {
+  users: UserItem[];
+  pagination: UsersListResponsePagination;
+}
+
 export type GetMe200 = {
   user: UserProfile;
 };
@@ -847,6 +875,10 @@ export type ListChatSessionsParams = {
    * Filter berdasarkan tanggal (YYYY-MM-DD)
    */
   date?: string;
+  /**
+   * Filter berdasarkan device info pengguna
+   */
+  search?: string;
 };
 
 export type FlagChatMessageBody = {
@@ -970,4 +1002,19 @@ export const ListAcademicCalendarTipe = {
   KRS: "KRS",
   Wisuda: "Wisuda",
   Lainnya: "Lainnya",
+} as const;
+
+export type ListUsersParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: ListUsersRole;
+};
+
+export type ListUsersRole = (typeof ListUsersRole)[keyof typeof ListUsersRole];
+
+export const ListUsersRole = {
+  mahasiswa: "mahasiswa",
+  dosen: "dosen",
+  admin: "admin",
 } as const;

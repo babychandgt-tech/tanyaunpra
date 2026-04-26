@@ -211,6 +211,10 @@ export const ListChatSessionsQueryParams = zod.object({
     .date()
     .optional()
     .describe("Filter berdasarkan tanggal (YYYY-MM-DD)"),
+  search: zod.coerce
+    .string()
+    .optional()
+    .describe("Filter berdasarkan device info pengguna"),
 });
 
 export const ListChatSessionsResponse = zod.object({
@@ -1481,4 +1485,46 @@ export const GetDashboardActivityResponse = zod.object({
       createdAt: zod.coerce.date(),
     }),
   ),
+});
+
+/**
+ * @summary List semua user (admin only)
+ */
+export const listUsersQueryPageDefault = 1;
+export const listUsersQueryLimitDefault = 20;
+
+export const ListUsersQueryParams = zod.object({
+  page: zod.coerce.number().default(listUsersQueryPageDefault),
+  limit: zod.coerce.number().default(listUsersQueryLimitDefault),
+  search: zod.coerce.string().optional(),
+  role: zod.enum(["mahasiswa", "dosen", "admin"]).optional(),
+});
+
+export const ListUsersResponse = zod.object({
+  users: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      email: zod.string(),
+      name: zod.string(),
+      role: zod.enum(["mahasiswa", "dosen", "admin"]),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Hapus user (admin only, tidak dapat hapus akun admin)
+ */
+export const DeleteUserParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteUserResponse = zod.object({
+  message: zod.string(),
 });

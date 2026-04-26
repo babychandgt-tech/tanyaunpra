@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListIntents, useCreateIntent, useUpdateIntent, useDeleteIntent, getListIntentsQueryKey } from "@workspace/api-client-react";
+import { useListIntents, useCreateIntent, useUpdateIntent, useDeleteIntent, getListIntentsQueryKey, Intent } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,7 @@ export default function Intents() {
     }
   };
 
-  const handleEdit = (intent: any) => {
+  const handleEdit = (intent: Intent) => {
     setEditingId(intent.id);
     form.reset({
       pertanyaan: intent.pertanyaan,

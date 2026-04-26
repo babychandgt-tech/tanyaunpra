@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, getListSchedulesQueryKey, useListCourses } from "@workspace/api-client-react";
+import { useListSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, getListSchedulesQueryKey, useListCourses, Schedule } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,12 +12,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Clock, Calendar } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Clock, Calendar, Filter, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+const HARI_LIST = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 
 const scheduleSchema = z.object({
   courseId: z.string().min(1, "Pilih mata kuliah"),
   lecturerId: z.string().optional(),
-  hari: z.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+  hari: z.enum(HARI_LIST),
   jamMulai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
   jamSelesai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
   ruangan: z.string().min(1, "Wajib diisi").max(50),
@@ -30,9 +33,19 @@ export default function Jadwal() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListSchedules({ page, limit: 20 });
+  const [filterProdi, setFilterProdi] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
+  const [filterHari, setFilterHari] = useState<string>("");
+
+  const { data, isLoading } = useListSchedules({
+    page,
+    limit: 20,
+    prodi: filterProdi || undefined,
+    semester: filterSemester || undefined,
+    hari: (filterHari as (typeof HARI_LIST)[number]) || undefined,
+  });
   const { data: courses } = useListCourses({ limit: 100 });
-  
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -78,7 +91,7 @@ export default function Jadwal() {
     }
   };
 
-  const handleEdit = (schedule: any) => {
+  const handleEdit = (schedule: Schedule) => {
     setEditingId(schedule.id);
     form.reset({
       courseId: schedule.courseId,
@@ -96,6 +109,15 @@ export default function Jadwal() {
     if (confirm("Yakin ingin menghapus jadwal ini?")) {
       deleteSchedule.mutate({ id });
     }
+  };
+
+  const hasFilter = !!filterProdi || !!filterSemester || !!filterHari;
+
+  const clearFilters = () => {
+    setFilterProdi("");
+    setFilterSemester("");
+    setFilterHari("");
+    setPage(1);
   };
 
   return (
@@ -125,7 +147,7 @@ export default function Jadwal() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mata Kuliah</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger><SelectValue placeholder="Pilih Matkul" /></SelectTrigger>
                         </FormControl>
@@ -143,10 +165,10 @@ export default function Jadwal() {
                   <FormField control={form.control} name="hari" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Hari</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"].map(h => (
+                          {HARI_LIST.map(h => (
                             <SelectItem key={h} value={h}>{h}</SelectItem>
                           ))}
                         </SelectContent>
@@ -165,14 +187,14 @@ export default function Jadwal() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="jamMulai" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Jam Mulai (HH:MM)</FormLabel>
+                      <FormLabel>Jam Mulai</FormLabel>
                       <FormControl><Input {...field} type="time" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="jamSelesai" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Jam Selesai (HH:MM)</FormLabel>
+                      <FormLabel>Jam Selesai</FormLabel>
                       <FormControl><Input {...field} type="time" /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,7 +204,14 @@ export default function Jadwal() {
                   <FormField control={form.control} name="semester" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Semester</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {["Ganjil", "Genap"].map(s => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -195,6 +224,7 @@ export default function Jadwal() {
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={createSchedule.isPending || updateSchedule.isPending}>
+                  {(createSchedule.isPending || updateSchedule.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Simpan Jadwal
                 </Button>
               </form>
@@ -204,6 +234,43 @@ export default function Jadwal() {
       </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-4 w-4" /> Filter Jadwal
+          </CardTitle>
+          <div className="flex flex-col sm:flex-row gap-3 mt-2">
+            <Input
+              placeholder="Filter Prodi..."
+              value={filterProdi}
+              onChange={(e) => { setFilterProdi(e.target.value); setPage(1); }}
+              className="sm:max-w-[200px]"
+            />
+            <Select value={filterSemester} onValueChange={(v) => { setFilterSemester(v === "all" ? "" : v); setPage(1); }}>
+              <SelectTrigger className="sm:max-w-[160px]">
+                <SelectValue placeholder="Semua Semester" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Semester</SelectItem>
+                <SelectItem value="Ganjil">Ganjil</SelectItem>
+                <SelectItem value="Genap">Genap</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterHari} onValueChange={(v) => { setFilterHari(v === "all" ? "" : v); setPage(1); }}>
+              <SelectTrigger className="sm:max-w-[160px]">
+                <SelectValue placeholder="Semua Hari" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Hari</SelectItem>
+                {HARI_LIST.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {hasFilter && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="w-fit">
+                <X className="mr-1 h-4 w-4" /> Reset
+              </Button>
+            )}
+          </div>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -228,10 +295,11 @@ export default function Jadwal() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-3 w-3" /> {s.hari}
+                        <Calendar className="h-3 w-3" />
+                        <Badge variant="outline" className="text-xs">{s.hari}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm mt-1">
-                        <Clock className="h-3 w-3" /> {s.jamMulai} - {s.jamSelesai} | Rg: {s.ruangan}
+                        <Clock className="h-3 w-3" /> {s.jamMulai} - {s.jamSelesai} | {s.ruangan}
                       </div>
                     </TableCell>
                     <TableCell>

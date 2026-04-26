@@ -11,6 +11,7 @@ import studentsRouter from "./students";
 import announcementsRouter from "./announcements";
 import academicCalendarRouter from "./academic-calendar";
 import dashboardRouter from "./dashboard";
+import usersRouter from "./users";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(studentsRouter);
 router.use(announcementsRouter);
 router.use(academicCalendarRouter);
 router.use(dashboardRouter);
+router.use(usersRouter);
 
 export default router;

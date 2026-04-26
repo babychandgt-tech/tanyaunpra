@@ -350,6 +350,11 @@ paths:
             type: string
             format: date
           description: Filter berdasarkan tanggal (YYYY-MM-DD)
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Filter berdasarkan device info pengguna
       responses:
         "200":
           description: Daftar sesi percakapan
@@ -1601,6 +1606,81 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List semua user (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [mahasiswa, dosen, admin]
+      responses:
+        "200":
+          description: Daftar user berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}:
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Hapus user (admin only, tidak dapat hapus akun admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2750,3 +2830,42 @@ components:
                 format: date-time
             required: [id, sessionId, content, createdAt]
       required: [recentChatMessages, recentUsers, messagesNeedingReview]
+
+    UserItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [mahasiswa, dosen, admin]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, email, name, role, createdAt]
+
+    UsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserItem"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+          required: [page, limit, total, totalPages]
+      required: [users, pagination]

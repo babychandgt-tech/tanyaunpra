@@ -1,11 +1,19 @@
-import { useGetDashboardSummary, useGetDashboardActivity } from "@workspace/api-client-react";
+import { useGetDashboardSummary, useGetDashboardActivity, useGetChatStats } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Bell, MessageSquare, GraduationCap, Activity, Loader2 } from "lucide-react";
+import { Users, BookOpen, Bell, MessageSquare, GraduationCap, Activity, Loader2, TrendingUp, BrainCircuit } from "lucide-react";
 import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+
+const SOURCE_COLORS: Record<string, string> = {
+  intent: "#2563eb",
+  qwen: "#16a34a",
+  fallback: "#dc2626",
+};
 
 export default function Dashboard() {
   const { data: summary, isLoading: isSummaryLoading } = useGetDashboardSummary();
   const { data: activity, isLoading: isActivityLoading } = useGetDashboardActivity();
+  const { data: chatStats } = useGetChatStats();
 
   if (isSummaryLoading || isActivityLoading) {
     return (
@@ -14,6 +22,12 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const sourceChartData = chatStats?.sourceBreakdown
+    ? Object.entries(chatStats.sourceBreakdown).map(([source, value]) => ({ source, value }))
+    : [];
+
+  const popularTopics = chatStats?.popularTopics ?? [];
 
   return (
     <div className="space-y-8">
@@ -58,6 +72,79 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="stat-chats">{summary?.chatSessionsToday || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {chatStats?.today.messages || 0} pesan · {chatStats?.week.sessions || 0} sesi minggu ini
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Usage Charts */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Source Breakdown Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Sumber Jawaban AI
+            </CardTitle>
+            <CardDescription>Distribusi jawaban: intent DB vs AI generatif</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sourceChartData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Belum ada data aktivitas AI</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={sourceChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <XAxis dataKey="source" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip
+                    formatter={(v: number) => [v, "Jawaban"]}
+                    labelFormatter={(l: string) => `Source: ${l}`}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {sourceChartData.map((entry) => (
+                      <Cell key={entry.source} fill={SOURCE_COLORS[entry.source] ?? "#6b7280"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+            {chatStats && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="text-destructive font-medium">{chatStats.needsReview}</span> pesan perlu direview
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Popular Topics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BrainCircuit className="h-5 w-5" />
+              Topik Populer Minggu Ini
+            </CardTitle>
+            <CardDescription>Pertanyaan yang paling sering diajukan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {popularTopics.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">Belum ada data topik populer</p>
+            ) : (
+              <div className="space-y-3">
+                {popularTopics.slice(0, 6).map((topic, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" title={topic.question}>{topic.question}</p>
+                    </div>
+                    <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                      {topic.count}×
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -86,7 +173,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground gap-2">
                       <span className="bg-muted px-2 py-0.5 rounded-full">{item.kategori}</span>
-                      <span>Oleh: {item.authorName || 'Admin'}</span>
+                      <span>Oleh: {item.authorName || "Admin"}</span>
                     </div>
                   </div>
                 ))
@@ -161,7 +248,7 @@ export default function Dashboard() {
                         </span>
                       )}
                       {msg.confidence !== null && msg.confidence !== undefined && (
-                        <span className={`px-1.5 py-0.5 rounded ${msg.confidence > 0.8 ? 'text-green-600 bg-green-50' : 'text-yellow-600 bg-yellow-50'}`}>
+                        <span className={`px-1.5 py-0.5 rounded ${msg.confidence > 0.8 ? "text-green-600 bg-green-50" : "text-yellow-600 bg-yellow-50"}`}>
                           Conf: {(msg.confidence * 100).toFixed(0)}%
                         </span>
                       )}

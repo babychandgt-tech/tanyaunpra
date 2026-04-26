@@ -1,3 +1,4 @@
+import { ComponentType } from "react";
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -29,7 +30,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component, allowedRoles }: { component: any, allowedRoles?: string[] }) {
+function ProtectedRoute({ component: Component, allowedRoles }: { component: ComponentType, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {

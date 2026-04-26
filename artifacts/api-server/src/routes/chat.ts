@@ -6,7 +6,7 @@ import {
   chatMessagesTable,
   usersTable,
 } from "@workspace/db";
-import { eq, desc, and, gte, lte, sql, count, SQL } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, count, SQL, ilike } from "drizzle-orm";
 import { requireAuth, requireApiKey } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
@@ -134,6 +134,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
       .optional(),
+    search: z.string().optional(),
   });
 
   const parsed = pageSchema.safeParse(req.query);
@@ -142,7 +143,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
     return;
   }
 
-  const { page, limit, date } = parsed.data;
+  const { page, limit, date, search } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -154,6 +155,9 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
       endOfDay.setHours(23, 59, 59, 999);
       conditions.push(gte(chatSessionsTable.createdAt, startOfDay));
       conditions.push(lte(chatSessionsTable.createdAt, endOfDay));
+    }
+    if (search) {
+      conditions.push(ilike(chatSessionsTable.deviceInfo, `%${search}%`));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

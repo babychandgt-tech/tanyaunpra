@@ -15,10 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 export default function ChatLogs() {
   const [page, setPage] = useState(1);
   const [date, setDate] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   
   const { data: stats } = useGetChatStats();
-  const { data: sessionsData, isLoading } = useListChatSessions({ page, limit: 10, date: date || undefined });
+  const { data: sessionsData, isLoading } = useListChatSessions({ page, limit: 10, date: date || undefined, search: search || undefined });
 
   return (
     <div className="space-y-6">
@@ -68,19 +69,28 @@ export default function ChatLogs() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <div className="relative">
+              <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="date"
-                placeholder="Filter by date..."
                 value={date}
                 onChange={(e) => { setDate(e.target.value); setPage(1); }}
                 className="pl-9 w-full md:max-w-xs"
               />
             </div>
-            {date && (
-              <Button variant="ghost" onClick={() => { setDate(""); setPage(1); }}>
-                Clear Filter
+            <div className="relative flex-1 md:max-w-xs">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Cari device info..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            {(date || search) && (
+              <Button variant="ghost" onClick={() => { setDate(""); setSearch(""); setPage(1); }}>
+                Hapus Filter
               </Button>
             )}
           </div>

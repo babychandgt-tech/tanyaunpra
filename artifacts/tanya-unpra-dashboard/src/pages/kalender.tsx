@@ -172,7 +172,7 @@ export default function Kalender() {
                             namaEvent: e.namaEvent, 
                             tanggalMulai: format(new Date(e.tanggalMulai), "yyyy-MM-dd"), 
                             tanggalSelesai: format(new Date(e.tanggalSelesai), "yyyy-MM-dd"), 
-                            tipe: e.tipe as any, 
+                            tipe: e.tipe, 
                             deskripsi: e.deskripsi || '', 
                             tahunAjaran: e.tahunAjaran 
                           });
