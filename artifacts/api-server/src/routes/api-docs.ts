@@ -6,7 +6,10 @@ import { requireSuperAdmin } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-const specPath = resolve(process.cwd(), "../../lib/api-spec/openapi.yaml");
+const specPath =
+  process.env.NODE_ENV === "production"
+    ? resolve(process.cwd(), "lib/api-spec/openapi.yaml")
+    : resolve(process.cwd(), "../../lib/api-spec/openapi.yaml");
 
 router.get("/docs/spec", requireSuperAdmin(), (req: Request, res: Response) => {
   try {
