@@ -67,6 +67,8 @@ export const RefreshTokenResponse = zod.object({
  */
 export const registerBodyPasswordMin = 8;
 
+export const registerBodyKelasMax = 10;
+
 export const RegisterBody = zod.object({
   email: zod.string().email(),
   password: zod
@@ -80,6 +82,11 @@ export const RegisterBody = zod.object({
   prodi: zod.string(),
   fakultas: zod.string(),
   angkatan: zod.number().optional().describe("Tahun angkatan (mahasiswa)"),
+  kelas: zod
+    .string()
+    .max(registerBodyKelasMax)
+    .optional()
+    .describe("Kelas \/ rombel mahasiswa (contoh A, B, C) — opsional"),
 });
 
 /**

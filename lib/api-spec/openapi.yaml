@@ -1879,6 +1879,10 @@ components:
         angkatan:
           type: integer
           description: Tahun angkatan (mahasiswa)
+        kelas:
+          type: string
+          maxLength: 10
+          description: Kelas / rombel mahasiswa (contoh A, B, C) — opsional
       required: [email, password, name, role, prodi, fakultas]
 
     UserProfile:

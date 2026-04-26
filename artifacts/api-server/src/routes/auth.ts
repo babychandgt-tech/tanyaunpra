@@ -42,6 +42,7 @@ const registerSchema = z.object({
   prodi: z.string().min(1, "Prodi wajib diisi"),
   fakultas: z.string().min(1, "Fakultas wajib diisi"),
   angkatan: z.coerce.number().int().min(2000).max(2100).optional(),
+  kelas: z.string().max(10).optional(),
 }).superRefine((data, ctx) => {
   if (data.role === "mahasiswa" && !data.nim) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "NIM wajib diisi untuk mahasiswa", path: ["nim"] });
@@ -143,7 +144,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     return;
   }
 
-  const { email, password, name, role, nim, nidn, prodi, fakultas, angkatan } = parsed.data;
+  const { email, password, name, role, nim, nidn, prodi, fakultas, angkatan, kelas } = parsed.data;
 
   try {
     const [existing] = await db
@@ -172,6 +173,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           fakultas,
           angkatan: angkatan ?? new Date().getFullYear(),
           semester: 1,
+          kelas: kelas ?? null,
         } as typeof studentsTable.$inferInsert);
       } else if (role === "dosen") {
         await tx.insert(lecturersTable).values({

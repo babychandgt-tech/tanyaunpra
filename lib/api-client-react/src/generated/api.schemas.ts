@@ -69,6 +69,11 @@ export interface RegisterRequest {
   fakultas: string;
   /** Tahun angkatan (mahasiswa) */
   angkatan?: number;
+  /**
+   * Kelas / rombel mahasiswa (contoh A, B, C) — opsional
+   * @maxLength 10
+   */
+  kelas?: string;
 }
 
 export type UserProfileRole =
