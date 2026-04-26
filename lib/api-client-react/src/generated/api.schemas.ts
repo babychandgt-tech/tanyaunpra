@@ -272,6 +272,7 @@ export interface Intent {
   jawaban: string;
   kategori: string;
   keywords?: string[] | null;
+  tags?: string[] | null;
   confidence: number;
   isActive: boolean;
   createdAt: string;
@@ -300,6 +301,8 @@ export interface CreateIntentRequest {
   jawaban: string;
   kategori?: string;
   keywords?: string[];
+  /** Tag topik untuk memperkuat pencocokan intent */
+  tags?: string[];
   /**
    * @minimum 0
    * @maximum 1
@@ -321,6 +324,8 @@ export interface UpdateIntentRequest {
   jawaban?: string;
   kategori?: string;
   keywords?: string[];
+  /** Tag topik untuk memperkuat pencocokan intent */
+  tags?: string[];
   /**
    * @minimum 0
    * @maximum 1

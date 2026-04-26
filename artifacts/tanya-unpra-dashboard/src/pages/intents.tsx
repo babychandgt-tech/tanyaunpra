@@ -21,6 +21,7 @@ const intentSchema = z.object({
   pertanyaan: z.string().min(5, "Minimal 5 karakter").max(500),
   jawaban: z.string().min(10, "Minimal 10 karakter").max(2000),
   kategori: z.string().optional(),
+  tagsInput: z.string().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -65,14 +66,19 @@ export default function Intents() {
 
   const form = useForm<z.infer<typeof intentSchema>>({
     resolver: zodResolver(intentSchema),
-    defaultValues: { pertanyaan: "", jawaban: "", kategori: "", isActive: true },
+    defaultValues: { pertanyaan: "", jawaban: "", kategori: "", tagsInput: "", isActive: true },
   });
 
+  const parseTags = (input: string): string[] =>
+    input.split(",").map(t => t.trim()).filter(Boolean);
+
   const onSubmit = (values: z.infer<typeof intentSchema>) => {
+    const tags = parseTags(values.tagsInput ?? "");
+    const payload = { pertanyaan: values.pertanyaan, jawaban: values.jawaban, kategori: values.kategori, tags, isActive: values.isActive };
     if (editingId) {
-      updateIntent.mutate({ id: editingId, data: values });
+      updateIntent.mutate({ id: editingId, data: payload });
     } else {
-      createIntent.mutate({ data: values });
+      createIntent.mutate({ data: payload });
     }
   };
 
@@ -82,6 +88,7 @@ export default function Intents() {
       pertanyaan: intent.pertanyaan,
       jawaban: intent.jawaban,
       kategori: intent.kategori || "",
+      tagsInput: (intent.tags ?? []).join(", "),
       isActive: intent.isActive,
     });
   };
@@ -147,6 +154,20 @@ export default function Intents() {
                       <FormControl>
                         <Textarea placeholder="Jawaban lengkap..." className="min-h-[100px]" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tagsInput"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tags <span className="text-muted-foreground font-normal">(pisahkan dengan koma)</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Contoh: UKT, pembayaran, biaya kuliah" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">Tags memperkuat pencocokan — pertanyaan yang mengandung tag ini akan lebih mudah cocok ke intent ini.</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -242,6 +263,16 @@ export default function Intents() {
                       <TableCell>
                         <div className="font-medium line-clamp-1" title={intent.pertanyaan}>{intent.pertanyaan}</div>
                         <div className="text-xs text-muted-foreground line-clamp-1 mt-1" title={intent.jawaban}>{intent.jawaban}</div>
+                        {intent.tags && intent.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {intent.tags.slice(0, 4).map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs h-4 px-1.5 py-0">{tag}</Badge>
+                            ))}
+                            {intent.tags.length > 4 && (
+                              <Badge variant="secondary" className="text-xs h-4 px-1.5 py-0">+{intent.tags.length - 4}</Badge>
+                            )}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{intent.kategori || "Umum"}</Badge>

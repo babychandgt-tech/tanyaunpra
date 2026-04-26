@@ -363,6 +363,7 @@ export const ListIntentsResponse = zod.object({
       jawaban: zod.string(),
       kategori: zod.string(),
       keywords: zod.array(zod.string()).nullish(),
+      tags: zod.array(zod.string()).nullish(),
       confidence: zod.number(),
       isActive: zod.boolean(),
       createdAt: zod.coerce.date(),
@@ -404,6 +405,10 @@ export const CreateIntentBody = zod.object({
     .max(createIntentBodyJawabanMax),
   kategori: zod.string().default(createIntentBodyKategoriDefault),
   keywords: zod.array(zod.string()).optional(),
+  tags: zod
+    .array(zod.string())
+    .optional()
+    .describe("Tag topik untuk memperkuat pencocokan intent"),
   confidence: zod
     .number()
     .min(createIntentBodyConfidenceMin)
@@ -426,6 +431,7 @@ export const GetIntentResponse = zod.object({
     jawaban: zod.string(),
     kategori: zod.string(),
     keywords: zod.array(zod.string()).nullish(),
+    tags: zod.array(zod.string()).nullish(),
     confidence: zod.number(),
     isActive: zod.boolean(),
     createdAt: zod.coerce.date(),
@@ -462,6 +468,10 @@ export const UpdateIntentBody = zod.object({
     .optional(),
   kategori: zod.string().optional(),
   keywords: zod.array(zod.string()).optional(),
+  tags: zod
+    .array(zod.string())
+    .optional()
+    .describe("Tag topik untuk memperkuat pencocokan intent"),
   confidence: zod
     .number()
     .min(updateIntentBodyConfidenceMin)
@@ -477,6 +487,7 @@ export const UpdateIntentResponse = zod.object({
     jawaban: zod.string(),
     kategori: zod.string(),
     keywords: zod.array(zod.string()).nullish(),
+    tags: zod.array(zod.string()).nullish(),
     confidence: zod.number(),
     isActive: zod.boolean(),
     createdAt: zod.coerce.date(),

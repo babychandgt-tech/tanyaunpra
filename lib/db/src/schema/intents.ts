@@ -8,6 +8,7 @@ export const intentsTable = pgTable("intents", {
   jawaban: text("jawaban").notNull(),
   kategori: text("kategori").notNull().default("Umum"),
   keywords: text("keywords").array(),
+  tags: text("tags").array(),
   confidence: real("confidence").notNull().default(1.0),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),

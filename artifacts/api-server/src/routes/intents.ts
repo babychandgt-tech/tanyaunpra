@@ -12,6 +12,7 @@ const createIntentSchema = z.object({
   jawaban: z.string().min(10, "Jawaban minimal 10 karakter").max(2000),
   kategori: z.string().min(1).max(100).default("Umum"),
   keywords: z.array(z.string().max(50)).max(20).optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
   confidence: z.number().min(0).max(1).default(1.0),
   isActive: z.boolean().default(true),
 });
@@ -92,6 +93,7 @@ router.post("/intents", requireAuth(["admin"]), async (req: Request, res: Respon
         jawaban: parsed.data.jawaban,
         kategori: parsed.data.kategori,
         keywords: parsed.data.keywords ?? [],
+        tags: parsed.data.tags ?? [],
         confidence: parsed.data.confidence,
         isActive: parsed.data.isActive,
       })

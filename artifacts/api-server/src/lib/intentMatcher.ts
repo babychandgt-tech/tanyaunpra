@@ -2,8 +2,7 @@ import { db } from "@workspace/db";
 import { intentsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const EXACT_THRESHOLD = 0.95;
-const FUZZY_THRESHOLD = 0.55;
+const MATCH_THRESHOLD = 0.45;
 
 function normalize(text: string): string {
   return text
@@ -17,20 +16,42 @@ function tokenize(text: string): string[] {
   return normalize(text).split(" ").filter(Boolean);
 }
 
-function jaccardSimilarity(a: string[], b: string[]): number {
-  const setA = new Set(a);
-  const setB = new Set(b);
-  const intersection = new Set([...setA].filter((x) => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
-  if (union.size === 0) return 0;
-  return intersection.size / union.size;
+const STOPWORDS = new Set([
+  "apa", "itu", "ini", "yang", "dan", "di", "ke", "dari", "untuk", "dengan",
+  "adalah", "ada", "tidak", "bisa", "saya", "aku", "kamu", "kita", "nya",
+  "ya", "yah", "dong", "deh", "sih", "lah", "dong", "tuh", "gitu", "gimana",
+  "berapa", "kapan", "dimana", "siapa", "bagaimana", "kenapa", "mengapa",
+  "apakah", "tolong", "mohon", "minta", "kasih", "tau", "tahu", "info",
+  "informasi", "detail", "jelaskan", "sebutkan", "ceritakan", "tentang",
+  "mengenai", "terkait", "soal", "hal", "cara", "prosedur", "langkah",
+]);
+
+function removeStopwords(tokens: string[]): string[] {
+  return tokens.filter((t) => !STOPWORDS.has(t) && t.length > 1);
+}
+
+function containmentScore(questionTokens: string[], intentTokens: string[]): number {
+  if (intentTokens.length === 0) return 0;
+  const intentSet = new Set(intentTokens);
+  const matches = questionTokens.filter((t) => intentSet.has(t)).length;
+  return matches / intentTokens.length;
 }
 
 function keywordScore(questionTokens: string[], keywords: string[]): number {
   if (keywords.length === 0) return 0;
   const kwTokens = keywords.flatMap((k) => tokenize(k));
-  const matches = kwTokens.filter((kw) => questionTokens.includes(kw));
-  return matches.length / kwTokens.length;
+  const kwSet = new Set(kwTokens);
+  const matches = questionTokens.filter((t) => kwSet.has(t)).length;
+  return Math.min(matches / kwTokens.length, 1);
+}
+
+function tagScore(questionText: string, tags: string[]): number {
+  if (!tags || tags.length === 0) return 0;
+  const lower = questionText.toLowerCase();
+  for (const tag of tags) {
+    if (lower.includes(tag.toLowerCase())) return 1;
+  }
+  return 0;
 }
 
 export interface MatchResult {
@@ -52,14 +73,23 @@ export async function matchIntent(question: string): Promise<MatchResult> {
   }
 
   const questionTokens = tokenize(question);
+  const cleanTokens = removeStopwords(questionTokens);
+
   let bestScore = 0;
   let bestIntent: (typeof intents)[0] | null = null;
 
   for (const intent of intents) {
-    const pertanyaanTokens = tokenize(intent.pertanyaan);
-    const jaccard = jaccardSimilarity(questionTokens, pertanyaanTokens);
-    const kwScore = keywordScore(questionTokens, intent.keywords ?? []);
-    const combined = jaccard * 0.6 + kwScore * 0.4;
+    const intentTokens = tokenize(intent.pertanyaan);
+    const cleanIntentTokens = removeStopwords(intentTokens);
+
+    const containment = containmentScore(cleanTokens, cleanIntentTokens);
+    const kwScore = keywordScore(cleanTokens, intent.keywords ?? []);
+    const tScore = tagScore(question, intent.tags ?? []);
+
+    const combined =
+      containment * 0.45 +
+      kwScore * 0.35 +
+      tScore * 0.20;
 
     if (combined > bestScore) {
       bestScore = combined;
@@ -67,21 +97,11 @@ export async function matchIntent(question: string): Promise<MatchResult> {
     }
   }
 
-  if (bestScore >= EXACT_THRESHOLD && bestIntent) {
+  if (bestScore >= MATCH_THRESHOLD && bestIntent) {
     return {
       matched: true,
       answer: bestIntent.jawaban,
-      confidence: bestScore,
-      intentId: bestIntent.id,
-      source: "intent",
-    };
-  }
-
-  if (bestScore >= FUZZY_THRESHOLD && bestIntent) {
-    return {
-      matched: true,
-      answer: bestIntent.jawaban,
-      confidence: bestScore,
+      confidence: Math.min(bestScore, 1),
       intentId: bestIntent.id,
       source: "intent",
     };
