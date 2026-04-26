@@ -11,6 +11,7 @@ export const studentsTable = pgTable("students", {
   fakultas: text("fakultas").notNull(),
   semester: integer("semester").notNull().default(1),
   angkatan: integer("angkatan").notNull(),
+  kelas: text("kelas"),
   phone: text("phone"),
   address: text("address"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

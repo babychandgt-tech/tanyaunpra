@@ -2402,6 +2402,10 @@ components:
           description: Format HH:MM
         ruangan:
           type: string
+        kelas:
+          type: string
+          nullable: true
+          description: Kelas / rombel (contoh A, B, C)
         semester:
           type: string
         tahunAjaran:
@@ -2453,6 +2457,10 @@ components:
         ruangan:
           type: string
           maxLength: 50
+        kelas:
+          type: string
+          maxLength: 10
+          description: Kelas / rombel (contoh A, B, C) — opsional
         semester:
           type: string
         tahunAjaran:
@@ -2477,6 +2485,9 @@ components:
           type: string
         ruangan:
           type: string
+        kelas:
+          type: string
+          nullable: true
         semester:
           type: string
         tahunAjaran:
@@ -2605,6 +2616,10 @@ components:
           type: integer
         angkatan:
           type: integer
+        kelas:
+          type: string
+          nullable: true
+          description: Kelas / rombel mahasiswa (contoh A, B, C)
         phone:
           type: string
           nullable: true
@@ -2665,6 +2680,10 @@ components:
           type: integer
           minimum: 2000
           maximum: 2100
+        kelas:
+          type: string
+          maxLength: 10
+          description: Kelas / rombel (contoh A, B, C) — opsional
         phone:
           type: string
           maxLength: 20
@@ -2684,6 +2703,9 @@ components:
           type: integer
           minimum: 1
           maximum: 14
+        kelas:
+          type: string
+          nullable: true
         phone:
           type: string
         address:

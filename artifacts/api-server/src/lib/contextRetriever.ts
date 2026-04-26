@@ -8,10 +8,10 @@ import {
   academicCalendarTable,
   usersTable,
 } from "@workspace/db";
-import { eq, desc, and, gte, lte, or, ilike } from "drizzle-orm";
+import { eq, desc, and, gte, lte, or, ilike, SQL } from "drizzle-orm";
 
 const KEYWORDS = {
-  jadwal: ["jadwal", "kelas", "kuliah", "mengajar", "diajarkan", "ruangan", "jam kuliah", "senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "jam berapa", "hari apa"],
+  jadwal: ["jadwal", "kelas", "kuliah", "mengajar", "diajarkan", "ruangan", "jam kuliah", "senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "jam berapa", "hari apa", "jadwalku", "jadwal saya", "kuliah hari ini", "kuliah besok", "mata kuliahku"],
   pengumuman: ["pengumuman", "pemberitahuan", "info terbaru", "informasi terbaru", "kabar", "berita", "update"],
   kalender: ["kalender", "akademik", "uts", "uas", "ujian tengah", "ujian akhir", "libur", "wisuda", "krs", "registrasi", "tanggal", "jadwal ujian", "semester ini"],
   matkul: ["mata kuliah", "matkul", "sks", "kode mk", "kurikulum", "pelajaran", "subject"],
@@ -40,8 +40,22 @@ function formatDate(d: string | Date | null): string {
   return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
-async function getJadwalContext(question: string): Promise<string> {
-  const lower = question.toLowerCase();
+interface UserContext {
+  nama?: string | null;
+  nim?: string | null;
+  prodi: string;
+  semester: number;
+  kelas?: string | null;
+}
+
+async function getJadwalContext(question: string, userCtx?: UserContext): Promise<string> {
+  const conds: SQL[] = [];
+  if (userCtx) {
+    conds.push(eq(coursesTable.prodi, userCtx.prodi));
+    if (userCtx.kelas) {
+      conds.push(eq(schedulesTable.kelas, userCtx.kelas));
+    }
+  }
 
   const rows = await db
     .select({
@@ -49,6 +63,7 @@ async function getJadwalContext(question: string): Promise<string> {
       jamMulai: schedulesTable.jamMulai,
       jamSelesai: schedulesTable.jamSelesai,
       ruangan: schedulesTable.ruangan,
+      kelas: schedulesTable.kelas,
       semester: schedulesTable.semester,
       tahunAjaran: schedulesTable.tahunAjaran,
       namaMatkul: coursesTable.nama,
@@ -61,16 +76,21 @@ async function getJadwalContext(question: string): Promise<string> {
     .leftJoin(coursesTable, eq(schedulesTable.courseId, coursesTable.id))
     .leftJoin(lecturersTable, eq(schedulesTable.lecturerId, lecturersTable.id))
     .leftJoin(usersTable, eq(lecturersTable.userId, usersTable.id))
+    .where(conds.length > 0 ? and(...conds) : undefined)
     .orderBy(schedulesTable.hari, schedulesTable.jamMulai)
-    .limit(20);
+    .limit(30);
 
   if (rows.length === 0) return "";
 
+  const header = userCtx
+    ? `=== JADWAL KULIAH (${userCtx.prodi}${userCtx.kelas ? " Kelas " + userCtx.kelas : ""}, Semester ${userCtx.semester}) ===`
+    : `=== DATA JADWAL KULIAH ===`;
+
   const lines = rows.map((r) =>
-    `- ${r.hari} ${r.jamMulai}–${r.jamSelesai} | ${r.namaMatkul ?? "-"} (${r.kodeMatkul ?? "-"}, ${r.sks ?? "-"} SKS) | Ruang: ${r.ruangan} | Dosen: ${r.namaDosen ?? "TBA"} | Prodi: ${r.prodi ?? "-"} | Semester ${r.semester} TA ${r.tahunAjaran}`
+    `- ${r.hari} ${r.jamMulai}–${r.jamSelesai} | ${r.namaMatkul ?? "-"} (${r.kodeMatkul ?? "-"}, ${r.sks ?? "-"} SKS) | Ruang: ${r.ruangan}${r.kelas ? " | Kelas: " + r.kelas : ""} | Dosen: ${r.namaDosen ?? "TBA"} | Prodi: ${r.prodi ?? "-"} | Semester ${r.semester} TA ${r.tahunAjaran}`
   );
 
-  return `=== DATA JADWAL KULIAH ===\n${lines.join("\n")}`;
+  return `${header}\n${lines.join("\n")}`;
 }
 
 async function getPengumumanContext(): Promise<string> {
@@ -219,14 +239,20 @@ async function getMahasiswaContext(): Promise<string> {
   return `=== DATA MAHASISWA ===\n${lines.join("\n")}`;
 }
 
-export async function retrieveContext(question: string): Promise<string> {
+export async function retrieveContext(question: string, userCtx?: UserContext): Promise<string> {
   const topics = detectTopics(question);
 
   const sections: string[] = [];
 
+  if (userCtx) {
+    sections.push(
+      `=== PROFIL PENGGUNA ===\nNama: ${userCtx.nama ?? "Mahasiswa"} | NIM: ${userCtx.nim ?? "-"} | Prodi: ${userCtx.prodi} | Semester: ${userCtx.semester}${userCtx.kelas ? " | Kelas: " + userCtx.kelas : ""}`
+    );
+  }
+
   const fetchers: Promise<string>[] = [];
 
-  if (topics.has("jadwal")) fetchers.push(getJadwalContext(question));
+  if (topics.has("jadwal")) fetchers.push(getJadwalContext(question, userCtx));
   if (topics.has("pengumuman")) fetchers.push(getPengumumanContext());
   if (topics.has("kalender")) fetchers.push(getKalenderContext());
   if (topics.has("matkul")) fetchers.push(getMatkulContext());
@@ -240,3 +266,5 @@ export async function retrieveContext(question: string): Promise<string> {
 
   return sections.join("\n\n");
 }
+
+export type { UserContext };

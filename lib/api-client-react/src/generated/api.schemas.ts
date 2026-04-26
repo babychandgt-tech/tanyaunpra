@@ -426,6 +426,8 @@ export interface Schedule {
   /** Format HH:MM */
   jamSelesai: string;
   ruangan: string;
+  /** Kelas / rombel (contoh A, B, C) */
+  kelas?: string | null;
   semester: string;
   tahunAjaran: string;
   createdAt: string;
@@ -463,6 +465,11 @@ export interface CreateScheduleRequest {
   jamSelesai: string;
   /** @maxLength 50 */
   ruangan: string;
+  /**
+   * Kelas / rombel (contoh A, B, C) — opsional
+   * @maxLength 10
+   */
+  kelas?: string;
   semester: string;
   tahunAjaran: string;
 }
@@ -486,6 +493,7 @@ export interface UpdateScheduleRequest {
   jamMulai?: string;
   jamSelesai?: string;
   ruangan?: string;
+  kelas?: string | null;
   semester?: string;
   tahunAjaran?: string;
 }
@@ -558,6 +566,8 @@ export interface Student {
   fakultas: string;
   semester: number;
   angkatan: number;
+  /** Kelas / rombel mahasiswa (contoh A, B, C) */
+  kelas?: string | null;
   phone?: string | null;
   address?: string | null;
   createdAt: string;
@@ -601,6 +611,11 @@ export interface CreateStudentRequest {
    * @maximum 2100
    */
   angkatan: number;
+  /**
+   * Kelas / rombel (contoh A, B, C) — opsional
+   * @maxLength 10
+   */
+  kelas?: string;
   /** @maxLength 20 */
   phone?: string;
   /** @maxLength 500 */
@@ -615,6 +630,7 @@ export interface UpdateStudentRequest {
    * @maximum 14
    */
   semester?: number;
+  kelas?: string | null;
   phone?: string;
   address?: string;
 }

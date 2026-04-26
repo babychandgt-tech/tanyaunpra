@@ -19,6 +19,7 @@ const schema = z.object({
   fakultas: z.string().min(2).max(100),
   semester: z.coerce.number().min(1).max(14),
   angkatan: z.coerce.number().min(2000).max(2100),
+  kelas: z.string().max(10).optional(),
   phone: z.string().optional(),
 });
 
@@ -63,7 +64,7 @@ export default function Mahasiswa() {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { nim: "", prodi: "", fakultas: "", semester: 1, angkatan: new Date().getFullYear(), phone: "" },
+    defaultValues: { nim: "", prodi: "", fakultas: "", semester: 1, angkatan: new Date().getFullYear(), kelas: "", phone: "" },
   });
 
   const onSubmit = (values: z.infer<typeof schema>) => {
@@ -104,12 +105,15 @@ export default function Mahasiswa() {
                     <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <FormField control={form.control} name="semester" render={({ field }) => (
                     <FormItem><FormLabel>Semester</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="angkatan" render={({ field }) => (
-                    <FormItem><FormLabel>Angkatan (Tahun)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Angkatan</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="kelas" render={({ field }) => (
+                    <FormItem><FormLabel>Kelas <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="A, B, C..." {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={create.isPending || update.isPending}>Simpan</Button>
@@ -138,7 +142,7 @@ export default function Mahasiswa() {
                 <TableHead>NIM</TableHead>
                 <TableHead>Nama / Email</TableHead>
                 <TableHead>Prodi / Fakultas</TableHead>
-                <TableHead>Semester / Angkatan</TableHead>
+                <TableHead>Smt / Angkatan / Kelas</TableHead>
                 <TableHead className="w-[100px]">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -162,14 +166,14 @@ export default function Mahasiswa() {
                       <div className="text-xs text-muted-foreground">{s.fakultas}</div>
                     </TableCell>
                     <TableCell>
-                      <div>Sem: {s.semester}</div>
-                      <div className="text-xs text-muted-foreground">Thn: {s.angkatan}</div>
+                      <div>Sem: {s.semester} | Thn: {s.angkatan}</div>
+                      <div className="text-xs text-muted-foreground">Kelas: {s.kelas || <span className="italic">—</span>}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingId(s.id);
-                          form.reset({ nim: s.nim, prodi: s.prodi, fakultas: s.fakultas, semester: s.semester, angkatan: s.angkatan, phone: s.phone || '' });
+                          form.reset({ nim: s.nim, prodi: s.prodi, fakultas: s.fakultas, semester: s.semester, angkatan: s.angkatan, kelas: s.kelas || '', phone: s.phone || '' });
                         }}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Hapus?") && remove.mutate({ id: s.id })}><Trash2 className="h-4 w-4" /></Button>
                       </div>

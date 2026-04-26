@@ -712,6 +712,10 @@ export const ListSchedulesResponse = zod.object({
       jamMulai: zod.string().describe("Format HH:MM"),
       jamSelesai: zod.string().describe("Format HH:MM"),
       ruangan: zod.string(),
+      kelas: zod
+        .string()
+        .nullish()
+        .describe("Kelas \/ rombel (contoh A, B, C)"),
       semester: zod.string(),
       tahunAjaran: zod.string(),
       createdAt: zod.coerce.date(),
@@ -731,6 +735,8 @@ export const ListSchedulesResponse = zod.object({
  */
 export const createScheduleBodyRuanganMax = 50;
 
+export const createScheduleBodyKelasMax = 10;
+
 export const CreateScheduleBody = zod.object({
   courseId: zod.string().uuid(),
   lecturerId: zod.string().uuid().optional(),
@@ -738,6 +744,11 @@ export const CreateScheduleBody = zod.object({
   jamMulai: zod.string().describe("Format HH:MM (contoh 08:00)"),
   jamSelesai: zod.string().describe("Format HH:MM (contoh 10:00)"),
   ruangan: zod.string().max(createScheduleBodyRuanganMax),
+  kelas: zod
+    .string()
+    .max(createScheduleBodyKelasMax)
+    .optional()
+    .describe("Kelas \/ rombel (contoh A, B, C) — opsional"),
   semester: zod.string(),
   tahunAjaran: zod.string(),
 });
@@ -761,6 +772,7 @@ export const GetScheduleResponse = zod.object({
     jamMulai: zod.string().describe("Format HH:MM"),
     jamSelesai: zod.string().describe("Format HH:MM"),
     ruangan: zod.string(),
+    kelas: zod.string().nullish().describe("Kelas \/ rombel (contoh A, B, C)"),
     semester: zod.string(),
     tahunAjaran: zod.string(),
     createdAt: zod.coerce.date(),
@@ -784,6 +796,7 @@ export const UpdateScheduleBody = zod.object({
   jamMulai: zod.string().optional(),
   jamSelesai: zod.string().optional(),
   ruangan: zod.string().optional(),
+  kelas: zod.string().nullish(),
   semester: zod.string().optional(),
   tahunAjaran: zod.string().optional(),
 });
@@ -800,6 +813,7 @@ export const UpdateScheduleResponse = zod.object({
     jamMulai: zod.string().describe("Format HH:MM"),
     jamSelesai: zod.string().describe("Format HH:MM"),
     ruangan: zod.string(),
+    kelas: zod.string().nullish().describe("Kelas \/ rombel (contoh A, B, C)"),
     semester: zod.string(),
     tahunAjaran: zod.string(),
     createdAt: zod.coerce.date(),
@@ -992,6 +1006,10 @@ export const ListStudentsResponse = zod.object({
       fakultas: zod.string(),
       semester: zod.number(),
       angkatan: zod.number(),
+      kelas: zod
+        .string()
+        .nullish()
+        .describe("Kelas \/ rombel mahasiswa (contoh A, B, C)"),
       phone: zod.string().nullish(),
       address: zod.string().nullish(),
       createdAt: zod.coerce.date(),
@@ -1024,6 +1042,8 @@ export const createStudentBodySemesterMax = 14;
 export const createStudentBodyAngkatanMin = 2000;
 export const createStudentBodyAngkatanMax = 2100;
 
+export const createStudentBodyKelasMax = 10;
+
 export const createStudentBodyPhoneMax = 20;
 
 export const createStudentBodyAddressMax = 500;
@@ -1052,6 +1072,11 @@ export const CreateStudentBody = zod.object({
     .number()
     .min(createStudentBodyAngkatanMin)
     .max(createStudentBodyAngkatanMax),
+  kelas: zod
+    .string()
+    .max(createStudentBodyKelasMax)
+    .optional()
+    .describe("Kelas \/ rombel (contoh A, B, C) — opsional"),
   phone: zod.string().max(createStudentBodyPhoneMax).optional(),
   address: zod.string().max(createStudentBodyAddressMax).optional(),
 });
@@ -1070,6 +1095,10 @@ export const GetMyStudentProfileResponse = zod.object({
     fakultas: zod.string(),
     semester: zod.number(),
     angkatan: zod.number(),
+    kelas: zod
+      .string()
+      .nullish()
+      .describe("Kelas \/ rombel mahasiswa (contoh A, B, C)"),
     phone: zod.string().nullish(),
     address: zod.string().nullish(),
     createdAt: zod.coerce.date(),
@@ -1100,6 +1129,10 @@ export const UpdateMyStudentProfileResponse = zod.object({
     fakultas: zod.string(),
     semester: zod.number(),
     angkatan: zod.number(),
+    kelas: zod
+      .string()
+      .nullish()
+      .describe("Kelas \/ rombel mahasiswa (contoh A, B, C)"),
     phone: zod.string().nullish(),
     address: zod.string().nullish(),
     createdAt: zod.coerce.date(),
@@ -1125,6 +1158,10 @@ export const GetStudentResponse = zod.object({
     fakultas: zod.string(),
     semester: zod.number(),
     angkatan: zod.number(),
+    kelas: zod
+      .string()
+      .nullish()
+      .describe("Kelas \/ rombel mahasiswa (contoh A, B, C)"),
     phone: zod.string().nullish(),
     address: zod.string().nullish(),
     createdAt: zod.coerce.date(),
@@ -1145,6 +1182,7 @@ export const UpdateStudentBody = zod.object({
   prodi: zod.string().optional(),
   fakultas: zod.string().optional(),
   semester: zod.number().min(1).max(updateStudentBodySemesterMax).optional(),
+  kelas: zod.string().nullish(),
   phone: zod.string().optional(),
   address: zod.string().optional(),
 });
@@ -1160,6 +1198,10 @@ export const UpdateStudentResponse = zod.object({
     fakultas: zod.string(),
     semester: zod.number(),
     angkatan: zod.number(),
+    kelas: zod
+      .string()
+      .nullish()
+      .describe("Kelas \/ rombel mahasiswa (contoh A, B, C)"),
     phone: zod.string().nullish(),
     address: zod.string().nullish(),
     createdAt: zod.coerce.date(),

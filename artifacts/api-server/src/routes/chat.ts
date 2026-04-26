@@ -5,12 +5,13 @@ import {
   chatSessionsTable,
   chatMessagesTable,
   usersTable,
+  studentsTable,
 } from "@workspace/db";
 import { eq, desc, and, or, gte, lte, sql, count, SQL, ilike } from "drizzle-orm";
 import { requireAuth, requireApiKey, requireApiKeyOrAuth } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
-import { retrieveContext } from "../lib/contextRetriever";
+import { retrieveContext, type UserContext } from "../lib/contextRetriever";
 
 const router: IRouter = Router();
 
@@ -64,6 +65,25 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
       .reverse()
       .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+    let userCtx: UserContext | undefined;
+    if (req.user?.userId) {
+      const [studentRow] = await db
+        .select({
+          nim: studentsTable.nim,
+          prodi: studentsTable.prodi,
+          semester: studentsTable.semester,
+          kelas: studentsTable.kelas,
+          nama: usersTable.name,
+        })
+        .from(studentsTable)
+        .leftJoin(usersTable, eq(usersTable.id, studentsTable.userId))
+        .where(eq(studentsTable.userId, req.user.userId))
+        .limit(1);
+      if (studentRow) {
+        userCtx = { nim: studentRow.nim, nama: studentRow.nama, prodi: studentRow.prodi, semester: studentRow.semester, kelas: studentRow.kelas };
+      }
+    }
+
     const intentResult = await matchIntent(question);
 
     let answer: string;
@@ -81,7 +101,7 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
       confidence = intentResult.confidence;
     } else {
       try {
-        const dbContext = await retrieveContext(question).catch(() => "");
+        const dbContext = await retrieveContext(question, userCtx).catch(() => "");
         const qwenResult = await askQwen(question, history, dbContext || undefined);
         answer = qwenResult.answer;
         answerSource = "ai";

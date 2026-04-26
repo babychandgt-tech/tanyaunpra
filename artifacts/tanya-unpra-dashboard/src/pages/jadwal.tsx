@@ -24,6 +24,7 @@ const scheduleSchema = z.object({
   jamMulai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
   jamSelesai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
   ruangan: z.string().min(1, "Wajib diisi").max(50),
+  kelas: z.string().max(10).optional(),
   semester: z.string().min(1, "Wajib diisi"),
   tahunAjaran: z.string().min(1, "Wajib diisi"),
 });
@@ -80,7 +81,7 @@ export default function Jadwal() {
 
   const form = useForm<z.infer<typeof scheduleSchema>>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", semester: "Ganjil", tahunAjaran: "2024/2025" },
+    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", kelas: "", semester: "Ganjil", tahunAjaran: "2024/2025" },
   });
 
   const onSubmit = (values: z.infer<typeof scheduleSchema>) => {
@@ -100,6 +101,7 @@ export default function Jadwal() {
       jamMulai: schedule.jamMulai,
       jamSelesai: schedule.jamSelesai,
       ruangan: schedule.ruangan,
+      kelas: schedule.kelas || "",
       semester: schedule.semester,
       tahunAjaran: schedule.tahunAjaran,
     });
@@ -200,7 +202,14 @@ export default function Jadwal() {
                     </FormItem>
                   )} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField control={form.control} name="kelas" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kelas <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel>
+                      <FormControl><Input placeholder="A, B, C..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="semester" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Semester</FormLabel>
@@ -277,17 +286,18 @@ export default function Jadwal() {
               <TableRow>
                 <TableHead>Mata Kuliah</TableHead>
                 <TableHead>Waktu & Ruang</TableHead>
+                <TableHead>Kelas</TableHead>
                 <TableHead>Semester / TA</TableHead>
                 <TableHead className="w-[100px]">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></TableCell></TableRow>
               ) : isError ? (
-                <TableRow><TableCell colSpan={4} className="h-24 text-center text-destructive">Gagal memuat data jadwal. Coba refresh halaman.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat data jadwal. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.schedules.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Tidak ada jadwal</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Tidak ada jadwal</TableCell></TableRow>
               ) : (
                 data?.schedules.map(s => (
                   <TableRow key={s.id}>
@@ -303,6 +313,9 @@ export default function Jadwal() {
                       <div className="flex items-center gap-2 text-sm mt-1">
                         <Clock className="h-3 w-3" /> {s.jamMulai} - {s.jamSelesai} | {s.ruangan}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {s.kelas ? <Badge variant="secondary">{s.kelas}</Badge> : <span className="text-xs text-muted-foreground italic">—</span>}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">{s.semester}</div>

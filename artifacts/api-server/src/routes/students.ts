@@ -23,6 +23,7 @@ const createSchema = z.object({
   fakultas: z.string().min(2).max(100),
   semester: z.number().int().min(1).max(14).default(1),
   angkatan: z.number().int().min(2000).max(2100),
+  kelas: z.string().max(10).optional(),
   phone: z.string().max(20).optional(),
   address: z.string().max(500).optional(),
 });
@@ -31,6 +32,7 @@ const updateSchema = z.object({
   prodi: z.string().min(2).max(100).optional(),
   fakultas: z.string().min(2).max(100).optional(),
   semester: z.number().int().min(1).max(14).optional(),
+  kelas: z.string().max(10).optional().nullable(),
   phone: z.string().max(20).optional(),
   address: z.string().max(500).optional(),
 });
@@ -47,6 +49,7 @@ const studentWithUser = (where?: SQL) =>
       fakultas: studentsTable.fakultas,
       semester: studentsTable.semester,
       angkatan: studentsTable.angkatan,
+      kelas: studentsTable.kelas,
       phone: studentsTable.phone,
       address: studentsTable.address,
       createdAt: studentsTable.createdAt,

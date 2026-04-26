@@ -18,6 +18,7 @@ const listSchema = z.object({
   lecturerId: z.string().uuid().optional(),
   courseId: z.string().uuid().optional(),
   hari: z.enum(DAY_ENUM).optional(),
+  kelas: z.string().optional(),
 });
 
 const createSchema = z.object({
@@ -27,6 +28,7 @@ const createSchema = z.object({
   jamMulai: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
   jamSelesai: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
   ruangan: z.string().min(1).max(50),
+  kelas: z.string().max(10).optional(),
   semester: z.string().min(1).max(20),
   tahunAjaran: z.string().min(4).max(20),
 });
@@ -46,6 +48,7 @@ const buildScheduleQuery = (where?: SQL) =>
       jamMulai: schedulesTable.jamMulai,
       jamSelesai: schedulesTable.jamSelesai,
       ruangan: schedulesTable.ruangan,
+      kelas: schedulesTable.kelas,
       semester: schedulesTable.semester,
       tahunAjaran: schedulesTable.tahunAjaran,
       createdAt: schedulesTable.createdAt,
@@ -63,7 +66,7 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
     res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
-  const { page, limit, prodi, semester, tahunAjaran, lecturerId, courseId, hari } = parsed.data;
+  const { page, limit, prodi, semester, tahunAjaran, lecturerId, courseId, hari, kelas } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -73,6 +76,7 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
     if (lecturerId) conds.push(eq(schedulesTable.lecturerId, lecturerId));
     if (courseId) conds.push(eq(schedulesTable.courseId, courseId));
     if (hari) conds.push(eq(schedulesTable.hari, hari));
+    if (kelas) conds.push(eq(schedulesTable.kelas, kelas));
     if (prodi) conds.push(eq(coursesTable.prodi, prodi));
     const where = conds.length > 0 ? and(...conds) : undefined;
 

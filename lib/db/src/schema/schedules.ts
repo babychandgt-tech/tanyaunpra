@@ -16,6 +16,7 @@ export const schedulesTable = pgTable("schedules", {
   jamMulai: time("jam_mulai").notNull(),
   jamSelesai: time("jam_selesai").notNull(),
   ruangan: text("ruangan").notNull(),
+  kelas: text("kelas"),
   semester: text("semester").notNull(),
   tahunAjaran: text("tahun_ajaran").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
