@@ -327,6 +327,7 @@ components:
         password:
           type: string
           minLength: 6
+          description: Password (minimal 6 karakter untuk login; registrasi memerlukan minimal 8)
       required: [email, password]
 
     RefreshTokenRequest:
@@ -344,7 +345,8 @@ components:
           format: email
         password:
           type: string
-          minLength: 6
+          minLength: 8
+          description: Password minimal 8 karakter
         name:
           type: string
         role:
@@ -427,8 +429,9 @@ components:
           description: Nama deskriptif untuk API key ini
         expiresInDays:
           type: integer
-          nullable: true
-          description: Masa berlaku dalam hari. Null berarti tidak kadaluarsa.
+          minimum: 1
+          maximum: 365
+          description: Masa berlaku dalam hari (1-365). Jika tidak diisi, key tidak kadaluarsa.
       required: [name]
 
     CreateApiKeyResponse:

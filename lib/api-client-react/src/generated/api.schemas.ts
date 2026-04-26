@@ -33,7 +33,10 @@ export interface PingResponse {
 
 export interface LoginRequest {
   email: string;
-  /** @minLength 6 */
+  /**
+   * Password (minimal 6 karakter untuk login; registrasi memerlukan minimal 8)
+   * @minLength 6
+   */
   password: string;
 }
 
@@ -51,7 +54,10 @@ export const RegisterRequestRole = {
 
 export interface RegisterRequest {
   email: string;
-  /** @minLength 6 */
+  /**
+   * Password minimal 8 karakter
+   * @minLength 8
+   */
   password: string;
   name: string;
   role: RegisterRequestRole;
@@ -103,8 +109,12 @@ export interface ApiKey {
 export interface CreateApiKeyRequest {
   /** Nama deskriptif untuk API key ini */
   name: string;
-  /** Masa berlaku dalam hari. Null berarti tidak kadaluarsa. */
-  expiresInDays?: number | null;
+  /**
+   * Masa berlaku dalam hari (1-365). Jika tidak diisi, key tidak kadaluarsa.
+   * @minimum 1
+   * @maximum 365
+   */
+  expiresInDays?: number;
 }
 
 export type CreateApiKeyResponseApiKey = ApiKey & {

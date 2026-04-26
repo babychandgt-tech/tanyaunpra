@@ -21,7 +21,12 @@ export const loginBodyPasswordMin = 6;
 
 export const LoginBody = zod.object({
   email: zod.string().email(),
-  password: zod.string().min(loginBodyPasswordMin),
+  password: zod
+    .string()
+    .min(loginBodyPasswordMin)
+    .describe(
+      "Password (minimal 6 karakter untuk login; registrasi memerlukan minimal 8)",
+    ),
 });
 
 export const LoginResponse = zod.object({
@@ -58,11 +63,14 @@ export const RefreshTokenResponse = zod.object({
 /**
  * @summary Registrasi mahasiswa atau dosen baru
  */
-export const registerBodyPasswordMin = 6;
+export const registerBodyPasswordMin = 8;
 
 export const RegisterBody = zod.object({
   email: zod.string().email(),
-  password: zod.string().min(registerBodyPasswordMin),
+  password: zod
+    .string()
+    .min(registerBodyPasswordMin)
+    .describe("Password minimal 8 karakter"),
   name: zod.string(),
   role: zod.enum(["mahasiswa", "dosen"]),
   nim: zod.string().optional().describe("Wajib jika role mahasiswa"),
@@ -105,12 +113,18 @@ export const ListApiKeysResponse = zod.object({
 /**
  * @summary Generate API key baru untuk Android app (admin only)
  */
+export const createApiKeyBodyExpiresInDaysMax = 365;
+
 export const CreateApiKeyBody = zod.object({
   name: zod.string().describe("Nama deskriptif untuk API key ini"),
   expiresInDays: zod
     .number()
-    .nullish()
-    .describe("Masa berlaku dalam hari. Null berarti tidak kadaluarsa."),
+    .min(1)
+    .max(createApiKeyBodyExpiresInDaysMax)
+    .optional()
+    .describe(
+      "Masa berlaku dalam hari (1-365). Jika tidak diisi, key tidak kadaluarsa.",
+    ),
 });
 
 /**
