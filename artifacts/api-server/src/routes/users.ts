@@ -50,6 +50,7 @@ router.get("/users", requireSuperAdmin(), async (req: Request, res: Response) =>
           email: usersTable.email,
           name: usersTable.name,
           role: usersTable.role,
+          isSuperAdmin: usersTable.isSuperAdmin,
           createdAt: usersTable.createdAt,
         })
         .from(usersTable)
@@ -101,6 +102,7 @@ router.post("/users/admin", requireSuperAdmin(), async (req: Request, res: Respo
       name: usersTable.name,
       email: usersTable.email,
       role: usersTable.role,
+      isSuperAdmin: usersTable.isSuperAdmin,
       createdAt: usersTable.createdAt,
     });
 
