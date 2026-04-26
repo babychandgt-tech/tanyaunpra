@@ -150,8 +150,39 @@ Tables:
 ### Health
 - `GET /healthz` — health check
 
+## Admin Dashboard (React + Vite)
+
+Artifact: `artifacts/tanya-unpra-dashboard/` — served at `/` (port assigned dynamically)
+
+### Dashboard Pages
+- `/login` — form login email/password untuk semua role
+- `/dashboard` — stats cards, recent announcements, upcoming calendar events, chat activity
+- `/chat-logs` — tabel sesi percakapan Android dengan pagination, detail view + flag/unflag messages
+- `/intents` — CRUD knowledge base FAQ AI (admin only)
+- `/jadwal` — CRUD jadwal kuliah dengan filter prodi/semester
+- `/kalender` — CRUD kalender akademik (UTS, UAS, Libur, dll)
+- `/pengumuman` — CRUD pengumuman kampus, toggle aktif/nonaktif
+- `/mahasiswa` — tabel mahasiswa dengan search, detail view (admin & dosen)
+- `/dosen` — tabel dosen dengan detail view (admin only)
+- `/matkul` — CRUD mata kuliah dengan search (admin & dosen)
+- `/settings/api-keys` — generate & revoke API keys Android (admin only)
+- `/users` — daftar user sistem (admin only)
+
+### Frontend Stack
+- React + Vite, Tailwind CSS, shadcn/ui components
+- Wouter (routing), TanStack Query, react-hook-form + zod
+- Generated API hooks from `@workspace/api-client-react`
+- JWT stored in localStorage; `setAuthTokenGetter` injects token to all API calls
+- Role-based sidebar: admin=all pages, dosen=jadwal/mahasiswa/pengumuman, mahasiswa=dashboard only
+
+### Key Files
+- `artifacts/tanya-unpra-dashboard/src/App.tsx` — routes + auth guards
+- `artifacts/tanya-unpra-dashboard/src/hooks/use-auth.tsx` — AuthContext with JWT logic
+- `artifacts/tanya-unpra-dashboard/src/pages/` — all page components
+- `artifacts/tanya-unpra-dashboard/src/components/layout/` — MainLayout + Sidebar
+
 ## Pending Tasks
 
-- Task #4: Admin Dashboard web (React)
+None (all 4 tasks complete).
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
