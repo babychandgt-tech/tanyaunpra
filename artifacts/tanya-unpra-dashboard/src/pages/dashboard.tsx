@@ -5,14 +5,22 @@ import { format } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function Dashboard() {
-  const { data: summary, isLoading: isSummaryLoading } = useGetDashboardSummary();
+  const { data: summary, isLoading: isSummaryLoading, isError: isSummaryError } = useGetDashboardSummary();
   const { data: activity, isLoading: isActivityLoading } = useGetDashboardActivity();
-  const { data: chatStats } = useGetChatStats();
+  const { data: chatStats, isError: isChatStatsError } = useGetChatStats();
 
   if (isSummaryLoading || isActivityLoading) {
     return (
       <div className="w-full h-[60vh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isSummaryError) {
+    return (
+      <div className="rounded-md bg-destructive/10 border border-destructive/20 p-6 text-center text-destructive">
+        Gagal memuat data dashboard. Periksa koneksi server dan coba lagi.
       </div>
     );
   }

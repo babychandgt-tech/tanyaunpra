@@ -60,7 +60,7 @@ export default function Kalender() {
     to: format(monthEnd, "yyyy-MM-dd"),
   });
 
-  const { data: tableData, isLoading: isTableLoading } = useListAcademicCalendar({ page, limit: 10 });
+  const { data: tableData, isLoading: isTableLoading, isError: isTableError } = useListAcademicCalendar({ page, limit: 10 });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -288,6 +288,8 @@ export default function Kalender() {
             <TableBody>
               {isTableLoading ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin text-primary" /></TableCell></TableRow>
+              ) : isTableError ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat agenda. Coba refresh halaman.</TableCell></TableRow>
               ) : tableData?.events.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Tidak ada agenda</TableCell></TableRow>
               ) : (

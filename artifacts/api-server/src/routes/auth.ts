@@ -82,14 +82,14 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name };
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name, isSuperAdmin: user.isSuperAdmin };
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
     res.json({
       token: accessToken,
       refreshToken,
-      user: { id: user.id, email: user.email, role: user.role, name: user.name, createdAt: user.createdAt },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, isSuperAdmin: user.isSuperAdmin, createdAt: user.createdAt },
     });
   } catch (err) {
     req.log.error({ err }, "Login error");
@@ -122,14 +122,14 @@ router.post("/auth/refresh", async (req: Request, res: Response) => {
       return;
     }
 
-    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name };
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name, isSuperAdmin: user.isSuperAdmin };
     const newAccessToken = generateAccessToken(tokenPayload);
     const newRefreshToken = generateRefreshToken(tokenPayload);
 
     res.json({
       token: newAccessToken,
       refreshToken: newRefreshToken,
-      user: { id: user.id, email: user.email, role: user.role, name: user.name, createdAt: user.createdAt },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, isSuperAdmin: user.isSuperAdmin, createdAt: user.createdAt },
     });
   } catch {
     res.status(401).json({ error: "Refresh token tidak valid atau sudah kadaluarsa" });
@@ -208,6 +208,7 @@ router.get("/auth/me", requireAuth(), async (req: Request, res: Response) => {
         email: usersTable.email,
         role: usersTable.role,
         name: usersTable.name,
+        isSuperAdmin: usersTable.isSuperAdmin,
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)

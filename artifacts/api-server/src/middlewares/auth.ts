@@ -8,6 +8,7 @@ export interface JwtPayload {
   email: string;
   role: Role;
   name: string;
+  isSuperAdmin?: boolean;
   type?: "access" | "refresh";
 }
 
@@ -42,6 +43,37 @@ export function requireAuth(roles: Role[] = []) {
 
       if (roles.length > 0 && !roles.includes(payload.role)) {
         res.status(403).json({ error: "Akses ditolak. Role tidak diizinkan." });
+        return;
+      }
+
+      next();
+    } catch {
+      res.status(401).json({ error: "Token tidak valid atau sudah kadaluarsa" });
+    }
+  };
+}
+
+export function requireSuperAdmin() {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).json({ error: "Token tidak ditemukan" });
+      return;
+    }
+
+    const token = authHeader.slice(7);
+    try {
+      const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+      if (payload.type === "refresh") {
+        res.status(401).json({ error: "Gunakan access token, bukan refresh token" });
+        return;
+      }
+
+      req.user = payload;
+
+      if (payload.role !== "admin" || !payload.isSuperAdmin) {
+        res.status(403).json({ error: "Akses ditolak. Hanya superadmin yang diizinkan." });
         return;
       }
 

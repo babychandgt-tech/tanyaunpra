@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { ilike, or, eq, and, count, desc, SQL } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requireSuperAdmin } from "../middlewares/auth";
 import * as bcrypt from "bcryptjs";
 
 const router: IRouter = Router();
@@ -78,7 +78,7 @@ router.get("/users", requireAuth(["admin"]), async (req: Request, res: Response)
   }
 });
 
-router.post("/users/admin", requireAuth(["admin"]), async (req: Request, res: Response) => {
+router.post("/users/admin", requireSuperAdmin(), async (req: Request, res: Response) => {
   try {
     const body = createAdminSchema.parse(req.body);
 

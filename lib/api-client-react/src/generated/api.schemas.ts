@@ -85,6 +85,7 @@ export interface UserProfile {
   email: string;
   role: UserProfileRole;
   name: string;
+  isSuperAdmin: boolean;
   createdAt: string;
 }
 
@@ -175,6 +176,10 @@ export interface ChatSession {
   lastMessageAt: string;
   createdAt: string;
   messageCount: number;
+  /** Nama pengguna terdaftar (jika sesi terhubung ke akun) */
+  userName?: string | null;
+  /** Email pengguna terdaftar (jika sesi terhubung ke akun) */
+  userEmail?: string | null;
 }
 
 export type ChatMessageRole =
@@ -852,6 +857,7 @@ export interface UserItem {
   email: string;
   name: string;
   role: UserItemRole;
+  isSuperAdmin: boolean;
   createdAt: string;
 }
 
@@ -886,6 +892,10 @@ export type ListChatSessionsParams = {
    * Filter berdasarkan device info pengguna
    */
   search?: string;
+  /**
+   * Filter berdasarkan nama atau email pengguna terdaftar
+   */
+  userSearch?: string;
 };
 
 export type FlagChatMessageBody = {

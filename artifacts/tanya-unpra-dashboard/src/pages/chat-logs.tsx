@@ -16,10 +16,16 @@ export default function ChatLogs() {
   const [page, setPage] = useState(1);
   const [date, setDate] = useState<string>("");
   const [search, setSearch] = useState<string>("");
+  const [userSearch, setUserSearch] = useState<string>("");
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   
   const { data: stats } = useGetChatStats();
-  const { data: sessionsData, isLoading } = useListChatSessions({ page, limit: 10, date: date || undefined, search: search || undefined });
+  const { data: sessionsData, isLoading, isError } = useListChatSessions({
+    page, limit: 10,
+    date: date || undefined,
+    search: search || undefined,
+    userSearch: userSearch || undefined,
+  });
 
   return (
     <div className="space-y-6">
@@ -68,7 +74,12 @@ export default function ChatLogs() {
           <CardDescription>Recent chat sessions from users</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          {isError && (
+            <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              Gagal memuat data sesi chat. Periksa koneksi atau coba lagi.
+            </div>
+          )}
+          <div className="flex flex-col md:flex-row flex-wrap gap-3 mb-6">
             <div className="relative">
               <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -82,14 +93,24 @@ export default function ChatLogs() {
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
+                placeholder="Cari nama/email pengguna..."
+                value={userSearch}
+                onChange={(e) => { setUserSearch(e.target.value); setPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <div className="relative flex-1 md:max-w-xs">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
                 placeholder="Cari device info..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="pl-9"
               />
             </div>
-            {(date || search) && (
-              <Button variant="ghost" onClick={() => { setDate(""); setSearch(""); setPage(1); }}>
+            {(date || search || userSearch) && (
+              <Button variant="ghost" onClick={() => { setDate(""); setSearch(""); setUserSearch(""); setPage(1); }}>
                 Hapus Filter
               </Button>
             )}
@@ -126,8 +147,13 @@ export default function ChatLogs() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm">{session.userId || "Anonymous"}</span>
-                          <span className="text-xs text-muted-foreground">{session.deviceInfo || "Unknown Device"}</span>
+                          <span className="text-sm font-medium">
+                            {session.userName || (session.userId ? `ID: ${session.userId.slice(0, 8)}…` : "Anonim")}
+                          </span>
+                          {session.userEmail && (
+                            <span className="text-xs text-muted-foreground">{session.userEmail}</span>
+                          )}
+                          <span className="text-xs text-muted-foreground">{session.deviceInfo || "Perangkat tidak diketahui"}</span>
                         </div>
                       </TableCell>
                       <TableCell>{session.messageCount}</TableCell>

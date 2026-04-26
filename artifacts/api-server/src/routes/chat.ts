@@ -6,7 +6,7 @@ import {
   chatMessagesTable,
   usersTable,
 } from "@workspace/db";
-import { eq, desc, and, gte, lte, sql, count, SQL, ilike } from "drizzle-orm";
+import { eq, desc, and, or, gte, lte, sql, count, SQL, ilike } from "drizzle-orm";
 import { requireAuth, requireApiKey } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
@@ -135,6 +135,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
       .optional(),
     search: z.string().optional(),
+    userSearch: z.string().optional(),
   });
 
   const parsed = pageSchema.safeParse(req.query);
@@ -143,7 +144,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
     return;
   }
 
-  const { page, limit, date, search } = parsed.data;
+  const { page, limit, date, search, userSearch } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -171,18 +172,36 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
           lastMessageAt: chatSessionsTable.lastMessageAt,
           createdAt: chatSessionsTable.createdAt,
           messageCount: count(chatMessagesTable.id),
+          userName: usersTable.name,
+          userEmail: usersTable.email,
         })
         .from(chatSessionsTable)
         .leftJoin(chatMessagesTable, eq(chatMessagesTable.sessionId, chatSessionsTable.id))
-        .where(whereClause)
-        .groupBy(chatSessionsTable.id)
+        .leftJoin(usersTable, eq(usersTable.id, chatSessionsTable.userId))
+        .where(
+          userSearch
+            ? and(whereClause, or(
+                ilike(usersTable.name, `%${userSearch}%`),
+                ilike(usersTable.email, `%${userSearch}%`),
+              ))
+            : whereClause
+        )
+        .groupBy(chatSessionsTable.id, usersTable.name, usersTable.email)
         .orderBy(desc(chatSessionsTable.lastMessageAt))
         .limit(limit)
         .offset(offset),
       db
         .select({ total: count() })
         .from(chatSessionsTable)
-        .where(whereClause),
+        .leftJoin(usersTable, eq(usersTable.id, chatSessionsTable.userId))
+        .where(
+          userSearch
+            ? and(whereClause, or(
+                ilike(usersTable.name, `%${userSearch}%`),
+                ilike(usersTable.email, `%${userSearch}%`),
+              ))
+            : whereClause
+        ),
     ]);
 
     res.json({

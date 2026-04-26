@@ -27,6 +27,7 @@ async function seedAdmin() {
       password: passwordHash,
       name: "Super Admin UNPRA",
       role: "admin",
+      isSuperAdmin: true,
     })
     .returning({ id: usersTable.id, email: usersTable.email });
 

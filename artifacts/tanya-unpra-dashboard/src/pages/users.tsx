@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useListUsers, useDeleteUser, useCreateAdminUser, getListUsersQueryKey, UserItem, ListUsersRole } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -32,8 +33,9 @@ export default function Users() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
-  const { data, isLoading } = useListUsers({
+  const { data, isLoading, isError } = useListUsers({
     page,
     limit: 20,
     search: search || undefined,
@@ -94,6 +96,7 @@ export default function Users() {
           <p className="text-muted-foreground">Lihat dan kelola semua akun pengguna sistem.</p>
         </div>
 
+        {currentUser?.isSuperAdmin && (
         <Dialog open={isAddAdminOpen} onOpenChange={(open) => {
           if (!open) { setIsAddAdminOpen(false); adminForm.reset(); setShowPassword(false); }
           else setIsAddAdminOpen(true);
@@ -153,6 +156,7 @@ export default function Users() {
             </Form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card>
@@ -196,6 +200,12 @@ export default function Users() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-destructive">
+                    Gagal memuat data user. Coba refresh halaman.
                   </TableCell>
                 </TableRow>
               ) : data?.users.length === 0 ? (

@@ -37,6 +37,7 @@ export const LoginResponse = zod.object({
     email: zod.string(),
     role: zod.enum(["mahasiswa", "dosen", "admin"]),
     name: zod.string(),
+    isSuperAdmin: zod.boolean(),
     createdAt: zod.coerce.date(),
   }),
 });
@@ -56,6 +57,7 @@ export const RefreshTokenResponse = zod.object({
     email: zod.string(),
     role: zod.enum(["mahasiswa", "dosen", "admin"]),
     name: zod.string(),
+    isSuperAdmin: zod.boolean(),
     createdAt: zod.coerce.date(),
   }),
 });
@@ -89,6 +91,7 @@ export const GetMeResponse = zod.object({
     email: zod.string(),
     role: zod.enum(["mahasiswa", "dosen", "admin"]),
     name: zod.string(),
+    isSuperAdmin: zod.boolean(),
     createdAt: zod.coerce.date(),
   }),
 });
@@ -215,6 +218,10 @@ export const ListChatSessionsQueryParams = zod.object({
     .string()
     .optional()
     .describe("Filter berdasarkan device info pengguna"),
+  userSearch: zod.coerce
+    .string()
+    .optional()
+    .describe("Filter berdasarkan nama atau email pengguna terdaftar"),
 });
 
 export const ListChatSessionsResponse = zod.object({
@@ -226,6 +233,14 @@ export const ListChatSessionsResponse = zod.object({
       lastMessageAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
       messageCount: zod.number(),
+      userName: zod
+        .string()
+        .nullish()
+        .describe("Nama pengguna terdaftar (jika sesi terhubung ke akun)"),
+      userEmail: zod
+        .string()
+        .nullish()
+        .describe("Email pengguna terdaftar (jika sesi terhubung ke akun)"),
     }),
   ),
   pagination: zod.object({
@@ -251,6 +266,14 @@ export const GetChatSessionResponse = zod.object({
     lastMessageAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
     messageCount: zod.number(),
+    userName: zod
+      .string()
+      .nullish()
+      .describe("Nama pengguna terdaftar (jika sesi terhubung ke akun)"),
+    userEmail: zod
+      .string()
+      .nullish()
+      .describe("Email pengguna terdaftar (jika sesi terhubung ke akun)"),
   }),
   messages: zod.array(
     zod.object({
@@ -1515,6 +1538,7 @@ export const ListUsersResponse = zod.object({
       email: zod.string(),
       name: zod.string(),
       role: zod.enum(["mahasiswa", "dosen", "admin"]),
+      isSuperAdmin: zod.boolean(),
       createdAt: zod.coerce.date(),
     }),
   ),

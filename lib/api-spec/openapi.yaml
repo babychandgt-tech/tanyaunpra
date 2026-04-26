@@ -355,6 +355,11 @@ paths:
           schema:
             type: string
           description: Filter berdasarkan device info pengguna
+        - name: userSearch
+          in: query
+          schema:
+            type: string
+          description: Filter berdasarkan nama atau email pengguna terdaftar
       responses:
         "200":
           description: Daftar sesi percakapan
@@ -1836,10 +1841,12 @@ components:
           enum: [mahasiswa, dosen, admin]
         name:
           type: string
+        isSuperAdmin:
+          type: boolean
         createdAt:
           type: string
           format: date-time
-      required: [id, email, role, name, createdAt]
+      required: [id, email, role, name, isSuperAdmin, createdAt]
 
     AuthResponse:
       type: object
@@ -1964,6 +1971,14 @@ components:
           format: date-time
         messageCount:
           type: integer
+        userName:
+          type: string
+          nullable: true
+          description: Nama pengguna terdaftar (jika sesi terhubung ke akun)
+        userEmail:
+          type: string
+          nullable: true
+          description: Email pengguna terdaftar (jika sesi terhubung ke akun)
       required: [id, lastMessageAt, createdAt, messageCount]
 
     ChatMessage:
@@ -2907,10 +2922,12 @@ components:
         role:
           type: string
           enum: [mahasiswa, dosen, admin]
+        isSuperAdmin:
+          type: boolean
         createdAt:
           type: string
           format: date-time
-      required: [id, email, name, role, createdAt]
+      required: [id, email, name, role, isSuperAdmin, createdAt]
 
     UsersListResponse:
       type: object
