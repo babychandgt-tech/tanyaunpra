@@ -91,9 +91,11 @@ router.get("/students", requireAuth(["admin", "dosen"]), async (req: Request, re
         .select({ prodi: lecturersTable.prodi })
         .from(lecturersTable)
         .where(eq(lecturersTable.userId, req.user!.userId));
-      if (dosenProfile) {
-        conds.push(eq(studentsTable.prodi, dosenProfile.prodi));
+      if (!dosenProfile) {
+        res.status(403).json({ error: "Profil dosen tidak ditemukan. Hubungi admin." });
+        return;
       }
+      conds.push(eq(studentsTable.prodi, dosenProfile.prodi));
     }
 
     if (prodi) conds.push(ilike(studentsTable.prodi, `%${prodi}%`));
@@ -135,7 +137,11 @@ router.get("/students/:id", requireAuth(["admin", "dosen"]), async (req: Request
         .select({ prodi: lecturersTable.prodi })
         .from(lecturersTable)
         .where(eq(lecturersTable.userId, req.user!.userId));
-      if (dosenProfile && rows[0].prodi !== dosenProfile.prodi) {
+      if (!dosenProfile) {
+        res.status(403).json({ error: "Profil dosen tidak ditemukan. Hubungi admin." });
+        return;
+      }
+      if (rows[0].prodi !== dosenProfile.prodi) {
         res.status(403).json({ error: "Akses ditolak. Mahasiswa bukan dari prodi Anda." });
         return;
       }

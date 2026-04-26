@@ -734,7 +734,7 @@ paths:
     delete:
       operationId: deleteCourse
       tags: [courses]
-      summary: Hapus mata kuliah (admin only)
+      summary: Hapus mata kuliah (admin & dosen)
       security:
         - bearerAuth: []
       parameters:

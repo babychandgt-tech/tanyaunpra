@@ -586,7 +586,7 @@ export const UpdateCourseResponse = zod.object({
 });
 
 /**
- * @summary Hapus mata kuliah (admin only)
+ * @summary Hapus mata kuliah (admin & dosen)
  */
 export const DeleteCourseParams = zod.object({
   id: zod.coerce.string(),

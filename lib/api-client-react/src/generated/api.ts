@@ -2156,7 +2156,7 @@ export const useUpdateCourse = <
 };
 
 /**
- * @summary Hapus mata kuliah (admin only)
+ * @summary Hapus mata kuliah (admin & dosen)
  */
 export const getDeleteCourseUrl = (id: string) => {
   return `/api/courses/${id}`;
@@ -2217,7 +2217,7 @@ export type DeleteCourseMutationResult = NonNullable<
 export type DeleteCourseMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Hapus mata kuliah (admin only)
+ * @summary Hapus mata kuliah (admin & dosen)
  */
 export const useDeleteCourse = <
   TError = ErrorType<ErrorResponse>,
