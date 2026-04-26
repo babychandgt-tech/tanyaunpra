@@ -23,6 +23,7 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   roles: string[];
+  superAdminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -36,7 +37,7 @@ const navItems: NavItem[] = [
   { title: "Data Dosen", href: "/dosen", icon: Users, roles: ["admin"] },
   { title: "Mata Kuliah", href: "/matkul", icon: BookOpen, roles: ["admin", "dosen"] },
   { title: "API Keys", href: "/settings/api-keys", icon: Key, roles: ["admin"] },
-  { title: "Users", href: "/users", icon: Users, roles: ["admin"] },
+  { title: "Manajemen Admin", href: "/users", icon: Users, roles: ["admin"], superAdminOnly: true },
 ];
 
 export function Sidebar() {
@@ -45,7 +46,9 @@ export function Sidebar() {
 
   if (!user) return null;
 
-  const filteredNavItems = navItems.filter(item => item.roles.includes(user.role));
+  const filteredNavItems = navItems.filter(item =>
+    item.roles.includes(user.role) && (!item.superAdminOnly || user.isSuperAdmin)
+  );
 
   const NavLinks = () => (
     <div className="space-y-1 py-4">

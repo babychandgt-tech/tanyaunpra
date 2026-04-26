@@ -36,7 +36,7 @@ const ROLE_DEFAULT_PATH: Record<string, string> = {
   mahasiswa: "/kalender",
 };
 
-function ProtectedRoute({ component: Component, allowedRoles }: { component: ComponentType, allowedRoles?: string[] }) {
+function ProtectedRoute({ component: Component, allowedRoles, superAdminOnly }: { component: ComponentType, allowedRoles?: string[], superAdminOnly?: boolean }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -48,6 +48,11 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Com
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
+    const defaultPath = ROLE_DEFAULT_PATH[user.role] ?? "/kalender";
+    return <Redirect to={defaultPath} />;
+  }
+
+  if (superAdminOnly && !user.isSuperAdmin) {
     const defaultPath = ROLE_DEFAULT_PATH[user.role] ?? "/kalender";
     return <Redirect to={defaultPath} />;
   }
@@ -83,7 +88,7 @@ function Router() {
       <Route path="/dosen" component={() => <ProtectedRoute component={Dosen} allowedRoles={["admin"]} />} />
       <Route path="/matkul" component={() => <ProtectedRoute component={Matkul} allowedRoles={["admin", "dosen"]} />} />
       <Route path="/settings/api-keys" component={() => <ProtectedRoute component={ApiKeys} allowedRoles={["admin"]} />} />
-      <Route path="/users" component={() => <ProtectedRoute component={Users} allowedRoles={["admin"]} />} />
+      <Route path="/users" component={() => <ProtectedRoute component={Users} allowedRoles={["admin"]} superAdminOnly />} />
 
       <Route component={NotFound} />
     </Switch>

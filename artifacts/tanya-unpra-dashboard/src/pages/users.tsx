@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Search, Trash2, Loader2, ChevronLeft, ChevronRight, UserPlus, Eye, EyeOff } from "lucide-react";
@@ -27,7 +26,6 @@ const ROLE_LABELS: Record<string, string> = { admin: "Admin", dosen: "Dosen", ma
 
 export default function Users() {
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +37,7 @@ export default function Users() {
     page,
     limit: 20,
     search: search || undefined,
-    role: (roleFilter as ListUsersRole) || undefined,
+    role: "admin" as ListUsersRole,
   });
 
   const deleteUser = useDeleteUser({
@@ -161,28 +159,15 @@ export default function Users() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+          <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-9 sm:max-w-sm"
-                placeholder="Cari nama atau email..."
+                placeholder="Cari nama atau email admin..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            <Select value={roleFilter} onValueChange={(v) => { setRoleFilter(v === "all" ? "" : v); setPage(1); }}>
-              <SelectTrigger className="sm:max-w-[180px]">
-                <SelectValue placeholder="Semua Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Role</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="dosen">Dosen</SelectItem>
-                <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -235,9 +220,9 @@ export default function Users() {
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive"
-                        disabled={u.role === "admin" || deleteUser.isPending}
+                        disabled={u.id === currentUser?.id || deleteUser.isPending}
                         onClick={() => handleDelete(u)}
-                        title={u.role === "admin" ? "Tidak dapat menghapus admin" : "Hapus user"}
+                        title={u.id === currentUser?.id ? "Tidak dapat menghapus akun sendiri" : "Hapus admin"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

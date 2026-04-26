@@ -23,7 +23,7 @@ const createAdminSchema = z.object({
   password: z.string().min(8).max(100),
 });
 
-router.get("/users", requireAuth(["admin"]), async (req: Request, res: Response) => {
+router.get("/users", requireSuperAdmin(), async (req: Request, res: Response) => {
   try {
     const params = listSchema.parse(req.query);
     const offset = (params.page - 1) * params.limit;
@@ -111,7 +111,7 @@ router.post("/users/admin", requireSuperAdmin(), async (req: Request, res: Respo
   }
 });
 
-router.delete("/users/:id", requireAuth(["admin"]), async (req: Request, res: Response) => {
+router.delete("/users/:id", requireSuperAdmin(), async (req: Request, res: Response) => {
   try {
     const { id } = idSchema.parse(req.params);
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
