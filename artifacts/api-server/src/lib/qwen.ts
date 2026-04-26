@@ -30,10 +30,15 @@ export interface QwenResponse {
 
 export async function askQwen(
   question: string,
-  conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = []
+  conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [],
+  databaseContext?: string
 ): Promise<QwenResponse> {
+  const systemContent = databaseContext
+    ? `${UNPRA_SYSTEM_PROMPT}\n\nBELOW IS REAL DATA FROM THE UNPRA DATABASE — use it to answer accurately:\n\n${databaseContext}\n\nIMPORTANT: Answer based on the data above. If data is not found, say so clearly.`
+    : UNPRA_SYSTEM_PROMPT;
+
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: "system", content: UNPRA_SYSTEM_PROMPT },
+    { role: "system", content: systemContent },
     ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: question },
   ];

@@ -10,6 +10,7 @@ import { eq, desc, and, or, gte, lte, sql, count, SQL, ilike } from "drizzle-orm
 import { requireAuth, requireApiKey, requireApiKeyOrAuth } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
+import { retrieveContext } from "../lib/contextRetriever";
 
 const router: IRouter = Router();
 
@@ -75,10 +76,11 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
       confidence = intentResult.confidence;
     } else {
       try {
-        const qwenResult = await askQwen(question, history);
+        const dbContext = await retrieveContext(question).catch(() => "");
+        const qwenResult = await askQwen(question, history, dbContext || undefined);
         answer = qwenResult.answer;
         answerSource = "ai";
-        confidence = 0.75;
+        confidence = dbContext ? 0.85 : 0.75;
       } catch (err) {
         req.log.error({ err }, "Qwen API error — using fallback");
         answer = "Maaf, layanan AI saat ini tidak tersedia. Silakan coba beberapa saat lagi atau hubungi bagian akademik UNPRA secara langsung.";
