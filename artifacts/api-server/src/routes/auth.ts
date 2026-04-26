@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 import { db } from "@workspace/db";
 import {
   usersTable,
@@ -20,50 +21,75 @@ import {
 const router: IRouter = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
+const loginSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(6, "Password minimal 6 karakter"),
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token wajib diisi"),
+});
+
+const registerSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+  name: z.string().min(2, "Nama minimal 2 karakter"),
+  role: z.enum(["mahasiswa", "dosen"], {
+    invalid_type_error: "Role harus mahasiswa atau dosen",
+  }),
+  nim: z.string().optional(),
+  nidn: z.string().optional(),
+  prodi: z.string().min(1, "Prodi wajib diisi"),
+  fakultas: z.string().min(1, "Fakultas wajib diisi"),
+  angkatan: z.coerce.number().int().min(2000).max(2100).optional(),
+}).superRefine((data, ctx) => {
+  if (data.role === "mahasiswa" && !data.nim) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "NIM wajib diisi untuk mahasiswa", path: ["nim"] });
+  }
+  if (data.role === "dosen" && !data.nidn) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "NIDN wajib diisi untuk dosen", path: ["nidn"] });
+  }
+});
+
+const createApiKeySchema = z.object({
+  name: z.string().min(1, "Nama API key wajib diisi").max(100),
+  expiresInDays: z.coerce.number().int().min(1).max(365).optional(),
+});
+
 router.post("/auth/login", async (req: Request, res: Response) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) {
-    res.status(400).json({ error: "Email dan password wajib diisi" });
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
+
+  const { email, password } = parsed.data;
 
   try {
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, String(email)));
+      .where(eq(usersTable.email, email));
 
     if (!user) {
       res.status(401).json({ error: "Email atau password salah" });
       return;
     }
 
-    const valid = await bcrypt.compare(String(password), user.password);
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       res.status(401).json({ error: "Email atau password salah" });
       return;
     }
 
-    const tokenPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    };
-
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name };
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
     res.json({
       token: accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, createdAt: user.createdAt },
     });
   } catch (err) {
     req.log.error({ err }, "Login error");
@@ -72,14 +98,14 @@ router.post("/auth/login", async (req: Request, res: Response) => {
 });
 
 router.post("/auth/refresh", async (req: Request, res: Response) => {
-  const { refreshToken } = req.body as { refreshToken?: string };
-  if (!refreshToken) {
-    res.status(400).json({ error: "Refresh token wajib diisi" });
+  const parsed = refreshSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
 
   try {
-    const payload = jwt.verify(String(refreshToken), JWT_SECRET) as JwtPayload;
+    const payload = jwt.verify(parsed.data.refreshToken, JWT_SECRET) as JwtPayload;
 
     if (payload.type !== "refresh") {
       res.status(401).json({ error: "Token tidak valid untuk refresh" });
@@ -96,26 +122,14 @@ router.post("/auth/refresh", async (req: Request, res: Response) => {
       return;
     }
 
-    const tokenPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    };
-
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name };
     const newAccessToken = generateAccessToken(tokenPayload);
     const newRefreshToken = generateRefreshToken(tokenPayload);
 
     res.json({
       token: newAccessToken,
       refreshToken: newRefreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, createdAt: user.createdAt },
     });
   } catch {
     res.status(401).json({ error: "Refresh token tidak valid atau sudah kadaluarsa" });
@@ -123,92 +137,62 @@ router.post("/auth/refresh", async (req: Request, res: Response) => {
 });
 
 router.post("/auth/register", async (req: Request, res: Response) => {
-  const { email, password, name, role, nim, nidn, prodi, fakultas, angkatan } = req.body as {
-    email?: string;
-    password?: string;
-    name?: string;
-    role?: string;
-    nim?: string;
-    nidn?: string;
-    prodi?: string;
-    fakultas?: string;
-    angkatan?: number;
-  };
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
+    return;
+  }
 
-  if (!email || !password || !name || !role || !prodi || !fakultas) {
-    res.status(400).json({ error: "Email, password, name, role, prodi, dan fakultas wajib diisi" });
-    return;
-  }
-  if (!["mahasiswa", "dosen"].includes(role)) {
-    res.status(400).json({ error: "Role harus mahasiswa atau dosen" });
-    return;
-  }
-  if (role === "mahasiswa" && !nim) {
-    res.status(400).json({ error: "NIM wajib diisi untuk mahasiswa" });
-    return;
-  }
-  if (role === "dosen" && !nidn) {
-    res.status(400).json({ error: "NIDN wajib diisi untuk dosen" });
-    return;
-  }
+  const { email, password, name, role, nim, nidn, prodi, fakultas, angkatan } = parsed.data;
 
   try {
     const [existing] = await db
       .select({ id: usersTable.id })
       .from(usersTable)
-      .where(eq(usersTable.email, String(email)));
+      .where(eq(usersTable.email, email));
 
     if (existing) {
       res.status(409).json({ error: "Email sudah terdaftar" });
       return;
     }
 
-    const passwordHash = await bcrypt.hash(String(password), 12);
-    const userRole = role as "mahasiswa" | "dosen";
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    const [user] = await db
-      .insert(usersTable)
-      .values({ email: String(email), password: passwordHash, name: String(name), role: userRole })
-      .returning();
+    const [user] = await db.transaction(async (tx) => {
+      const [newUser] = await tx
+        .insert(usersTable)
+        .values({ email, password: passwordHash, name, role })
+        .returning();
 
-    if (role === "mahasiswa") {
-      await db.insert(studentsTable).values({
-        userId: user.id,
-        nim: String(nim),
-        prodi: String(prodi),
-        fakultas: String(fakultas),
-        angkatan: Number(angkatan) || new Date().getFullYear(),
-        semester: 1,
-      } as typeof studentsTable.$inferInsert);
-    } else if (role === "dosen") {
-      await db.insert(lecturersTable).values({
-        userId: user.id,
-        nidn: String(nidn),
-        prodi: String(prodi),
-        fakultas: String(fakultas),
-      } as typeof lecturersTable.$inferInsert);
-    }
+      if (role === "mahasiswa") {
+        await tx.insert(studentsTable).values({
+          userId: newUser.id,
+          nim: nim!,
+          prodi,
+          fakultas,
+          angkatan: angkatan ?? new Date().getFullYear(),
+          semester: 1,
+        } as typeof studentsTable.$inferInsert);
+      } else if (role === "dosen") {
+        await tx.insert(lecturersTable).values({
+          userId: newUser.id,
+          nidn: nidn!,
+          prodi,
+          fakultas,
+        } as typeof lecturersTable.$inferInsert);
+      }
 
-    const tokenPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    };
+      return [newUser];
+    });
 
+    const tokenPayload = { userId: user.id, email: user.email, role: user.role, name: user.name };
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
     res.status(201).json({
       token: accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
+      user: { id: user.id, email: user.email, role: user.role, name: user.name, createdAt: user.createdAt },
     });
   } catch (err) {
     req.log.error({ err }, "Register error");
@@ -242,11 +226,13 @@ router.get("/auth/me", requireAuth(), async (req: Request, res: Response) => {
 });
 
 router.post("/auth/api-keys", requireAuth(["admin"]), async (req: Request, res: Response) => {
-  const { name, expiresInDays } = req.body as { name?: string; expiresInDays?: number };
-  if (!name) {
-    res.status(400).json({ error: "Nama API key wajib diisi" });
+  const parsed = createApiKeySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
+
+  const { name, expiresInDays } = parsed.data;
 
   try {
     const rawKey = `unpra_${crypto.randomBytes(32).toString("hex")}`;
@@ -254,13 +240,13 @@ router.post("/auth/api-keys", requireAuth(["admin"]), async (req: Request, res: 
     const keyPrefix = rawKey.substring(0, 12);
 
     const expiresAt = expiresInDays
-      ? new Date(Date.now() + Number(expiresInDays) * 24 * 60 * 60 * 1000)
+      ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
       : undefined;
 
     const [apiKey] = await db
       .insert(apiKeysTable)
       .values({
-        name: String(name),
+        name,
         keyHash,
         keyPrefix,
         isActive: true,
