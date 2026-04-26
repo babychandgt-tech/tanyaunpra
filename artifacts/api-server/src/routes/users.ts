@@ -73,6 +73,9 @@ router.get("/users", requireSuperAdmin(), async (req: Request, res: Response) =>
       },
     });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: "Parameter tidak valid", details: err.errors });
+    }
     console.error("List users error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -114,9 +117,10 @@ router.post("/users/admin", requireSuperAdmin(), async (req: Request, res: Respo
 router.delete("/users/:id", requireSuperAdmin(), async (req: Request, res: Response) => {
   try {
     const { id } = idSchema.parse(req.params);
+    const requestingUserId = (req as Request & { user?: { userId: string } }).user?.userId;
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
-    if (user.role === "admin") return res.status(403).json({ error: "Tidak dapat menghapus akun admin" });
+    if (user.id === requestingUserId) return res.status(403).json({ error: "Tidak dapat menghapus akun sendiri" });
 
     await db.delete(usersTable).where(eq(usersTable.id, id));
     return res.json({ message: "User berhasil dihapus" });

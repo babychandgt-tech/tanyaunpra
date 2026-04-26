@@ -78,11 +78,7 @@ export default function Users() {
   };
 
   const handleDelete = (user: UserItem) => {
-    if (user.role === "admin") {
-      toast({ title: "Tidak dapat menghapus akun admin", variant: "destructive" });
-      return;
-    }
-    if (!confirm(`Yakin ingin menghapus user "${user.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+    if (!confirm(`Yakin ingin menghapus akun admin "${user.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
     deleteUser.mutate({ id: user.id });
   };
 
