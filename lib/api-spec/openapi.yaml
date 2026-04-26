@@ -439,7 +439,7 @@ paths:
     get:
       operationId: listIntents
       tags: [intents]
-      summary: List intent/FAQ database (admin & dosen)
+      summary: List intent/FAQ database (admin only)
       security:
         - bearerAuth: []
       parameters:
@@ -509,7 +509,7 @@ paths:
     get:
       operationId: getIntent
       tags: [intents]
-      summary: Detail intent (admin & dosen)
+      summary: Detail intent (admin only)
       security:
         - bearerAuth: []
       parameters:
@@ -893,6 +893,17 @@ components:
           type: object
           additionalProperties:
             type: integer
+        popularTopics:
+          type: array
+          description: Pertanyaan paling sering diajukan minggu ini (top 10)
+          items:
+            type: object
+            properties:
+              question:
+                type: string
+              count:
+                type: integer
+            required: [question, count]
         lowConfidenceSessions:
           type: array
           items:
@@ -903,7 +914,7 @@ components:
               avgConfidence:
                 type: number
             required: [sessionId, avgConfidence]
-      required: [today, week, needsReview, sourceBreakdown, lowConfidenceSessions]
+      required: [today, week, needsReview, sourceBreakdown, popularTopics, lowConfidenceSessions]
 
     Intent:
       type: object

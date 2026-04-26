@@ -6,7 +6,7 @@ import {
   chatMessagesTable,
   usersTable,
 } from "@workspace/db";
-import { eq, desc, and, gte, sql, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, count, SQL } from "drizzle-orm";
 import { requireAuth, requireApiKey } from "../middlewares/auth";
 import { matchIntent } from "../lib/intentMatcher";
 import { askQwen } from "../lib/qwen";
@@ -140,13 +140,14 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
   const offset = (page - 1) * limit;
 
   try {
-    const conditions = [];
+    const conditions: SQL[] = [];
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       conditions.push(gte(chatSessionsTable.createdAt, startOfDay));
+      conditions.push(lte(chatSessionsTable.createdAt, endOfDay));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -193,21 +194,32 @@ router.get("/chat/sessions/:id", requireAuth(["admin"]), async (req: Request, re
   const id = String(req.params.id);
 
   try {
-    const [session] = await db
-      .select()
-      .from(chatSessionsTable)
-      .where(eq(chatSessionsTable.id, id));
+    const [sessionRow, messages] = await Promise.all([
+      db
+        .select({
+          id: chatSessionsTable.id,
+          userId: chatSessionsTable.userId,
+          deviceInfo: chatSessionsTable.deviceInfo,
+          lastMessageAt: chatSessionsTable.lastMessageAt,
+          createdAt: chatSessionsTable.createdAt,
+          messageCount: count(chatMessagesTable.id),
+        })
+        .from(chatSessionsTable)
+        .leftJoin(chatMessagesTable, eq(chatMessagesTable.sessionId, chatSessionsTable.id))
+        .where(eq(chatSessionsTable.id, id))
+        .groupBy(chatSessionsTable.id),
+      db
+        .select()
+        .from(chatMessagesTable)
+        .where(eq(chatMessagesTable.sessionId, id))
+        .orderBy(chatMessagesTable.createdAt),
+    ]);
 
+    const session = sessionRow[0];
     if (!session) {
       res.status(404).json({ error: "Session tidak ditemukan" });
       return;
     }
-
-    const messages = await db
-      .select()
-      .from(chatMessagesTable)
-      .where(eq(chatMessagesTable.sessionId, id))
-      .orderBy(chatMessagesTable.createdAt);
 
     res.json({ session, messages });
   } catch (err) {
@@ -251,6 +263,7 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
       needsReviewCount,
       sourceBreakdown,
       lowConfidenceSessions,
+      popularTopicsWeek,
     ] = await Promise.all([
       db
         .select({ count: count() })
@@ -291,6 +304,21 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
         .groupBy(chatMessagesTable.sessionId)
         .having(sql`AVG(${chatMessagesTable.confidence}) < ${LOW_CONFIDENCE_THRESHOLD}`)
         .limit(10),
+      db
+        .select({
+          content: chatMessagesTable.content,
+          count: count(),
+        })
+        .from(chatMessagesTable)
+        .where(
+          and(
+            eq(chatMessagesTable.role, "user"),
+            gte(chatMessagesTable.createdAt, startOfWeek)
+          )
+        )
+        .groupBy(chatMessagesTable.content)
+        .orderBy(desc(count()))
+        .limit(10),
     ]);
 
     res.json({
@@ -309,6 +337,10 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
         },
         {} as Record<string, number>
       ),
+      popularTopics: popularTopicsWeek.map((row) => ({
+        question: row.content,
+        count: row.count,
+      })),
       lowConfidenceSessions: lowConfidenceSessions.map((s) => ({
         sessionId: s.sessionId,
         avgConfidence: Math.round((s.avgConfidence ?? 0) * 100) / 100,

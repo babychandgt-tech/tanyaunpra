@@ -1335,7 +1335,7 @@ export function useGetChatStats<
 }
 
 /**
- * @summary List intent/FAQ database (admin & dosen)
+ * @summary List intent/FAQ database (admin only)
  */
 export const getListIntentsUrl = (params?: ListIntentsParams) => {
   const normalizedParams = new URLSearchParams();
@@ -1402,7 +1402,7 @@ export type ListIntentsQueryResult = NonNullable<
 export type ListIntentsQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary List intent/FAQ database (admin & dosen)
+ * @summary List intent/FAQ database (admin only)
  */
 
 export function useListIntents<
@@ -1515,7 +1515,7 @@ export const useCreateIntent = <
 };
 
 /**
- * @summary Detail intent (admin & dosen)
+ * @summary Detail intent (admin only)
  */
 export const getGetIntentUrl = (id: string) => {
   return `/api/intents/${id}`;
@@ -1573,7 +1573,7 @@ export type GetIntentQueryResult = NonNullable<
 export type GetIntentQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Detail intent (admin & dosen)
+ * @summary Detail intent (admin only)
  */
 
 export function useGetIntent<

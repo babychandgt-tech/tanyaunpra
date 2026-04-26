@@ -234,6 +234,11 @@ export type ChatStatsResponseWeek = {
 
 export type ChatStatsResponseSourceBreakdown = { [key: string]: number };
 
+export type ChatStatsResponsePopularTopicsItem = {
+  question: string;
+  count: number;
+};
+
 export type ChatStatsResponseLowConfidenceSessionsItem = {
   sessionId: string;
   avgConfidence: number;
@@ -244,6 +249,8 @@ export interface ChatStatsResponse {
   week: ChatStatsResponseWeek;
   needsReview: number;
   sourceBreakdown: ChatStatsResponseSourceBreakdown;
+  /** Pertanyaan paling sering diajukan minggu ini (top 10) */
+  popularTopics: ChatStatsResponsePopularTopicsItem[];
   lowConfidenceSessions: ChatStatsResponseLowConfidenceSessionsItem[];
 }
 

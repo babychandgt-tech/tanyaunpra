@@ -26,7 +26,7 @@ const listIntentsSchema = z.object({
   isActive: z.enum(["true", "false"]).optional(),
 });
 
-router.get("/intents", requireAuth(["admin", "dosen"]), async (req: Request, res: Response) => {
+router.get("/intents", requireAuth(["admin"]), async (req: Request, res: Response) => {
   const parsed = listIntentsSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
@@ -104,7 +104,7 @@ router.post("/intents", requireAuth(["admin"]), async (req: Request, res: Respon
   }
 });
 
-router.get("/intents/:id", requireAuth(["admin", "dosen"]), async (req: Request, res: Response) => {
+router.get("/intents/:id", requireAuth(["admin"]), async (req: Request, res: Response) => {
   const id = String(req.params.id);
   try {
     const [intent] = await db

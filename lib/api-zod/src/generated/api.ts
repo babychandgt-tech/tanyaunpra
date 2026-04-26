@@ -290,6 +290,14 @@ export const GetChatStatsResponse = zod.object({
   }),
   needsReview: zod.number(),
   sourceBreakdown: zod.record(zod.string(), zod.number()),
+  popularTopics: zod
+    .array(
+      zod.object({
+        question: zod.string(),
+        count: zod.number(),
+      }),
+    )
+    .describe("Pertanyaan paling sering diajukan minggu ini (top 10)"),
   lowConfidenceSessions: zod.array(
     zod.object({
       sessionId: zod.string(),
@@ -299,7 +307,7 @@ export const GetChatStatsResponse = zod.object({
 });
 
 /**
- * @summary List intent/FAQ database (admin & dosen)
+ * @summary List intent/FAQ database (admin only)
  */
 export const listIntentsQueryPageDefault = 1;
 export const listIntentsQueryLimitDefault = 20;
@@ -370,7 +378,7 @@ export const CreateIntentBody = zod.object({
 });
 
 /**
- * @summary Detail intent (admin & dosen)
+ * @summary Detail intent (admin only)
  */
 export const GetIntentParams = zod.object({
   id: zod.coerce.string(),
