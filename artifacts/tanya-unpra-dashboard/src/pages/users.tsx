@@ -1,15 +1,26 @@
 import { useState } from "react";
-import { useListUsers, useDeleteUser, getListUsersQueryKey, UserItem, ListUsersRole } from "@workspace/api-client-react";
+import { useListUsers, useDeleteUser, useCreateAdminUser, getListUsersQueryKey, UserItem, ListUsersRole } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Search, Trash2, Loader2, ChevronLeft, ChevronRight, UserPlus, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+
+const adminSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+});
 
 const ROLE_LABELS: Record<string, string> = { admin: "Admin", dosen: "Dosen", mahasiswa: "Mahasiswa" };
 
@@ -17,6 +28,8 @@ export default function Users() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [page, setPage] = useState(1);
+  const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -40,6 +53,30 @@ export default function Users() {
     },
   });
 
+  const createAdmin = useCreateAdminUser({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+        setIsAddAdminOpen(false);
+        adminForm.reset();
+        toast({ title: "Akun admin berhasil dibuat" });
+      },
+      onError: (err) => {
+        const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Gagal membuat akun admin";
+        toast({ title: "Gagal", description: message, variant: "destructive" });
+      },
+    },
+  });
+
+  const adminForm = useForm<z.infer<typeof adminSchema>>({
+    resolver: zodResolver(adminSchema),
+    defaultValues: { name: "", email: "", password: "" },
+  });
+
+  const onAddAdmin = (values: z.infer<typeof adminSchema>) => {
+    createAdmin.mutate({ data: values });
+  };
+
   const handleDelete = (user: UserItem) => {
     if (user.role === "admin") {
       toast({ title: "Tidak dapat menghapus akun admin", variant: "destructive" });
@@ -51,9 +88,71 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manajemen User</h1>
-        <p className="text-muted-foreground">Lihat dan kelola semua akun pengguna sistem.</p>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Manajemen User</h1>
+          <p className="text-muted-foreground">Lihat dan kelola semua akun pengguna sistem.</p>
+        </div>
+
+        <Dialog open={isAddAdminOpen} onOpenChange={(open) => {
+          if (!open) { setIsAddAdminOpen(false); adminForm.reset(); setShowPassword(false); }
+          else setIsAddAdminOpen(true);
+        }}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setIsAddAdminOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" /> Tambah Admin
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle>Tambah Akun Admin</DialogTitle>
+            </DialogHeader>
+            <Form {...adminForm}>
+              <form onSubmit={adminForm.handleSubmit(onAddAdmin)} className="space-y-4 pt-2">
+                <FormField control={adminForm.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama Lengkap</FormLabel>
+                    <FormControl><Input placeholder="Nama admin..." {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={adminForm.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl><Input type="email" placeholder="admin@unpra.ac.id" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={adminForm.control} name="password" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Minimal 8 karakter"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(v => !v)}
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <Button type="submit" className="w-full" disabled={createAdmin.isPending}>
+                  {createAdmin.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Buat Akun Admin
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>

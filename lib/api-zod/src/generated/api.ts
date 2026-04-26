@@ -293,6 +293,14 @@ export const GetChatStatsResponse = zod.object({
     sessions: zod.number(),
   }),
   needsReview: zod.number(),
+  dailyTrend: zod
+    .array(
+      zod.object({
+        date: zod.coerce.date(),
+        sessions: zod.number(),
+      }),
+    )
+    .describe("Jumlah sesi per hari selama 7 hari terakhir"),
   sourceBreakdown: zod.record(zod.string(), zod.number()),
   popularTopics: zod
     .array(
@@ -1516,6 +1524,23 @@ export const ListUsersResponse = zod.object({
     total: zod.number(),
     totalPages: zod.number(),
   }),
+});
+
+/**
+ * @summary Buat akun admin baru (admin only)
+ */
+export const createAdminUserBodyNameMin = 2;
+export const createAdminUserBodyNameMax = 100;
+
+export const createAdminUserBodyPasswordMin = 8;
+
+export const CreateAdminUserBody = zod.object({
+  name: zod
+    .string()
+    .min(createAdminUserBodyNameMin)
+    .max(createAdminUserBodyNameMax),
+  email: zod.string().email(),
+  password: zod.string().min(createAdminUserBodyPasswordMin),
 });
 
 /**

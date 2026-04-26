@@ -1,14 +1,8 @@
 import { useGetDashboardSummary, useGetDashboardActivity, useGetChatStats } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, Bell, MessageSquare, GraduationCap, Activity, Loader2, TrendingUp, BrainCircuit } from "lucide-react";
+import { Users, BookOpen, MessageSquare, GraduationCap, Activity, Loader2, TrendingUp, BrainCircuit } from "lucide-react";
 import { format } from "date-fns";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-
-const SOURCE_COLORS: Record<string, string> = {
-  intent: "#2563eb",
-  qwen: "#16a34a",
-  fallback: "#dc2626",
-};
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function Dashboard() {
   const { data: summary, isLoading: isSummaryLoading } = useGetDashboardSummary();
@@ -23,9 +17,10 @@ export default function Dashboard() {
     );
   }
 
-  const sourceChartData = chatStats?.sourceBreakdown
-    ? Object.entries(chatStats.sourceBreakdown).map(([source, value]) => ({ source, value }))
-    : [];
+  const dailyTrend = (chatStats?.dailyTrend ?? []).map((d) => ({
+    date: d.date.slice(5),
+    sessions: d.sessions,
+  }));
 
   const popularTopics = chatStats?.popularTopics ?? [];
 
@@ -79,53 +74,58 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* AI Usage Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Source Breakdown Chart */}
-        <Card>
+      {/* Weekly Trend + Popular Topics */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        {/* Weekly Trend Line Chart */}
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Sumber Jawaban AI
+              Tren Chat Mingguan
             </CardTitle>
-            <CardDescription>Distribusi jawaban: intent DB vs AI generatif</CardDescription>
+            <CardDescription>Jumlah sesi percakapan per hari (7 hari terakhir)</CardDescription>
           </CardHeader>
           <CardContent>
-            {sourceChartData.length === 0 ? (
+            {dailyTrend.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Belum ada data aktivitas AI</p>
             ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={sourceChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="source" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={dailyTrend} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                   <Tooltip
-                    formatter={(v: number) => [v, "Jawaban"]}
-                    labelFormatter={(l: string) => `Source: ${l}`}
+                    formatter={(v: number) => [v, "Sesi"]}
+                    contentStyle={{ fontSize: 12 }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {sourceChartData.map((entry) => (
-                      <Cell key={entry.source} fill={SOURCE_COLORS[entry.source] ?? "#6b7280"} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                  <Line
+                    type="monotone"
+                    dataKey="sessions"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: "hsl(var(--primary))" }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             )}
             {chatStats && (
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="text-destructive font-medium">{chatStats.needsReview}</span> pesan perlu direview
+                <span className="font-medium text-foreground">{chatStats.week.sessions}</span> sesi minggu ini ·
+                <span className="text-destructive font-medium">{chatStats.needsReview}</span> perlu direview
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Popular Topics */}
-        <Card>
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BrainCircuit className="h-5 w-5" />
-              Topik Populer Minggu Ini
+              Topik Populer
             </CardTitle>
-            <CardDescription>Pertanyaan yang paling sering diajukan</CardDescription>
+            <CardDescription>Pertanyaan paling sering minggu ini</CardDescription>
           </CardHeader>
           <CardContent>
             {popularTopics.length === 0 ? (
@@ -138,7 +138,7 @@ export default function Dashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate" title={topic.question}>{topic.question}</p>
                     </div>
-                    <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full whitespace-nowrap">
                       {topic.count}×
                     </span>
                   </div>

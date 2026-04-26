@@ -232,6 +232,11 @@ export type ChatStatsResponseWeek = {
   sessions: number;
 };
 
+export type ChatStatsResponseDailyTrendItem = {
+  date: string;
+  sessions: number;
+};
+
 export type ChatStatsResponseSourceBreakdown = { [key: string]: number };
 
 export type ChatStatsResponsePopularTopicsItem = {
@@ -248,6 +253,8 @@ export interface ChatStatsResponse {
   today: ChatStatsResponseToday;
   week: ChatStatsResponseWeek;
   needsReview: number;
+  /** Jumlah sesi per hari selama 7 hari terakhir */
+  dailyTrend: ChatStatsResponseDailyTrendItem[];
   sourceBreakdown: ChatStatsResponseSourceBreakdown;
   /** Pertanyaan paling sering diajukan minggu ini (top 10) */
   popularTopics: ChatStatsResponsePopularTopicsItem[];
@@ -1018,3 +1025,19 @@ export const ListUsersRole = {
   dosen: "dosen",
   admin: "admin",
 } as const;
+
+export type CreateAdminUserBody = {
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  name: string;
+  email: string;
+  /** @minLength 8 */
+  password: string;
+};
+
+export type CreateAdminUser201 = {
+  user: UserItem;
+  message: string;
+};

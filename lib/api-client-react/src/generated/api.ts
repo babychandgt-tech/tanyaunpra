@@ -29,6 +29,8 @@ import type {
   ChatStatsResponse,
   CourseResponse,
   CoursesResponse,
+  CreateAdminUser201,
+  CreateAdminUserBody,
   CreateAnnouncementRequest,
   CreateApiKeyRequest,
   CreateApiKeyResponse,
@@ -4852,6 +4854,92 @@ export function useListUsers<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Buat akun admin baru (admin only)
+ */
+export const getCreateAdminUserUrl = () => {
+  return `/api/users/admin`;
+};
+
+export const createAdminUser = async (
+  createAdminUserBody: CreateAdminUserBody,
+  options?: RequestInit,
+): Promise<CreateAdminUser201> => {
+  return customFetch<CreateAdminUser201>(getCreateAdminUserUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createAdminUserBody),
+  });
+};
+
+export const getCreateAdminUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAdminUser>>,
+    TError,
+    { data: BodyType<CreateAdminUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createAdminUser>>,
+  TError,
+  { data: BodyType<CreateAdminUserBody> },
+  TContext
+> => {
+  const mutationKey = ["createAdminUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createAdminUser>>,
+    { data: BodyType<CreateAdminUserBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createAdminUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAdminUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createAdminUser>>
+>;
+export type CreateAdminUserMutationBody = BodyType<CreateAdminUserBody>;
+export type CreateAdminUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Buat akun admin baru (admin only)
+ */
+export const useCreateAdminUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAdminUser>>,
+    TError,
+    { data: BodyType<CreateAdminUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createAdminUser>>,
+  TError,
+  { data: BodyType<CreateAdminUserBody> },
+  TContext
+> => {
+  return useMutation(getCreateAdminUserMutationOptions(options));
+};
 
 /**
  * @summary Hapus user (admin only, tidak dapat hapus akun admin)

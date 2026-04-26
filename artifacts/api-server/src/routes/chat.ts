@@ -266,6 +266,9 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
     const startOfWeek = new Date(startOfToday);
     startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay());
 
+    const sevenDaysAgo = new Date(startOfToday);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
     const [
       todaySessions,
       weekSessions,
@@ -274,6 +277,7 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
       sourceBreakdown,
       lowConfidenceSessions,
       popularTopicsWeek,
+      dailyBreakdown,
     ] = await Promise.all([
       db
         .select({ count: count() })
@@ -329,7 +333,27 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
         .groupBy(chatMessagesTable.content)
         .orderBy(desc(count()))
         .limit(10),
+      db
+        .select({
+          day: sql<string>`DATE(${chatSessionsTable.createdAt})`,
+          count: count(),
+        })
+        .from(chatSessionsTable)
+        .where(gte(chatSessionsTable.createdAt, sevenDaysAgo))
+        .groupBy(sql`DATE(${chatSessionsTable.createdAt})`)
+        .orderBy(sql`DATE(${chatSessionsTable.createdAt})`),
     ]);
+
+    const dailyTrendMap: Record<string, number> = {};
+    for (const row of dailyBreakdown) {
+      if (row.day) dailyTrendMap[row.day] = row.count;
+    }
+    const dailyTrend = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(sevenDaysAgo);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      return { date: key, sessions: dailyTrendMap[key] ?? 0 };
+    });
 
     res.json({
       today: {
@@ -340,6 +364,7 @@ router.get("/chat/stats", requireAuth(["admin"]), async (req: Request, res: Resp
         sessions: weekSessions[0]?.count ?? 0,
       },
       needsReview: needsReviewCount[0]?.count ?? 0,
+      dailyTrend,
       sourceBreakdown: sourceBreakdown.reduce(
         (acc, row) => {
           if (row.source) acc[row.source] = row.count;
