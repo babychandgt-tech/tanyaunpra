@@ -30,6 +30,12 @@ const queryClient = new QueryClient({
   },
 });
 
+const ROLE_DEFAULT_PATH: Record<string, string> = {
+  admin: "/dashboard",
+  dosen: "/jadwal",
+  mahasiswa: "/kalender",
+};
+
 function ProtectedRoute({ component: Component, allowedRoles }: { component: ComponentType, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
 
@@ -42,7 +48,8 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Com
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Redirect to="/dashboard" />;
+    const defaultPath = ROLE_DEFAULT_PATH[user.role] ?? "/kalender";
+    return <Redirect to={defaultPath} />;
   }
 
   return (
@@ -55,16 +62,18 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Com
 function Router() {
   const { user } = useAuth();
   
+  const defaultPath = user ? (ROLE_DEFAULT_PATH[user.role] ?? "/kalender") : "/login";
+
   return (
     <Switch>
       <Route path="/">
-        {user ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
+        <Redirect to={defaultPath} />
       </Route>
       <Route path="/login">
-        {user ? <Redirect to="/dashboard" /> : <Login />}
+        {user ? <Redirect to={defaultPath} /> : <Login />}
       </Route>
       
-      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} allowedRoles={["admin"]} />} />
       <Route path="/chat-logs" component={() => <ProtectedRoute component={ChatLogs} allowedRoles={["admin"]} />} />
       <Route path="/intents" component={() => <ProtectedRoute component={Intents} allowedRoles={["admin"]} />} />
       <Route path="/jadwal" component={() => <ProtectedRoute component={Jadwal} allowedRoles={["admin", "dosen"]} />} />

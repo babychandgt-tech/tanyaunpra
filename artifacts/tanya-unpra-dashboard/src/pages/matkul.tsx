@@ -30,7 +30,7 @@ export default function Matkul() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListCourses({ page, limit: 10, search: search || undefined });
+  const { data, isLoading, isError } = useListCourses({ page, limit: 10, search: search || undefined });
   const { data: lecturers } = useListLecturers({ limit: 100 });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -160,6 +160,8 @@ export default function Matkul() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat data mata kuliah. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.courses.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
               ) : (

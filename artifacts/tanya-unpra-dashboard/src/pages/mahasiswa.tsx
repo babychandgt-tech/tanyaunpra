@@ -28,7 +28,7 @@ export default function Mahasiswa() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListStudents({ page, limit: 10, search: search || undefined });
+  const { data, isLoading, isError } = useListStudents({ page, limit: 10, search: search || undefined });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -145,6 +145,8 @@ export default function Mahasiswa() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat data mahasiswa. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.students.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
               ) : (

@@ -30,7 +30,7 @@ export default function Intents() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListIntents({ page, limit: 10, search: search || undefined });
+  const { data, isLoading, isError } = useListIntents({ page, limit: 10, search: search || undefined });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -222,6 +222,12 @@ export default function Intents() {
                   <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                    </TableCell>
+                  </TableRow>
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center text-destructive">
+                      Gagal memuat data intent. Coba refresh halaman.
                     </TableCell>
                   </TableRow>
                 ) : data?.intents.length === 0 ? (

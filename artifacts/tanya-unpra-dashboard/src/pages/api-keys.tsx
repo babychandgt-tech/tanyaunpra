@@ -25,7 +25,7 @@ export default function ApiKeys() {
   const [newKey, setNewKey] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data, isLoading } = useListApiKeys();
+  const { data, isLoading, isError } = useListApiKeys();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -143,6 +143,8 @@ export default function ApiKeys() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={7} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={7} className="h-24 text-center text-destructive">Gagal memuat API keys. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.apiKeys?.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Belum ada API key</TableCell></TableRow>
               ) : (

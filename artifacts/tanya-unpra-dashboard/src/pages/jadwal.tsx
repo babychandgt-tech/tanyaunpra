@@ -37,7 +37,7 @@ export default function Jadwal() {
   const [filterSemester, setFilterSemester] = useState("");
   const [filterHari, setFilterHari] = useState<string>("");
 
-  const { data, isLoading } = useListSchedules({
+  const { data, isLoading, isError } = useListSchedules({
     page,
     limit: 20,
     prodi: filterProdi || undefined,
@@ -284,6 +284,8 @@ export default function Jadwal() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={4} className="h-24 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={4} className="h-24 text-center text-destructive">Gagal memuat data jadwal. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.schedules.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Tidak ada jadwal</TableCell></TableRow>
               ) : (

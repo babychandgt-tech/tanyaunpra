@@ -31,7 +31,7 @@ export default function Pengumuman() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListAnnouncements({ page, limit: 10 });
+  const { data, isLoading, isError } = useListAnnouncements({ page, limit: 10 });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -147,6 +147,8 @@ export default function Pengumuman() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat pengumuman. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.announcements.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
               ) : (

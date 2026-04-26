@@ -27,7 +27,7 @@ export default function Dosen() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const { data, isLoading } = useListLecturers({ page, limit: 10, search: search || undefined });
+  const { data, isLoading, isError } = useListLecturers({ page, limit: 10, search: search || undefined });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -137,6 +137,8 @@ export default function Dosen() {
             <TableBody>
               {isLoading ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat data dosen. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.lecturers.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
               ) : (
