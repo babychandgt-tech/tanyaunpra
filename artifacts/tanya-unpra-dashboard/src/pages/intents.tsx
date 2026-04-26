@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Search, BrainCircuit } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Search, BrainCircuit, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const intentSchema = z.object({
@@ -223,7 +223,7 @@ export default function Intents() {
               type="text"
               placeholder="Cari pertanyaan..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
         </CardHeader>
@@ -299,6 +299,41 @@ export default function Intents() {
               </TableBody>
             </Table>
           </div>
+
+          {data?.pagination && (
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm text-muted-foreground">
+                {data.pagination.total === 0
+                  ? "Tidak ada intent"
+                  : `${((data.pagination.page - 1) * data.pagination.limit) + 1}–${Math.min(data.pagination.page * data.pagination.limit, data.pagination.total)} dari ${data.pagination.total} intent`}
+              </span>
+              {data.pagination.totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Prev
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {data.pagination.page} / {data.pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+                    disabled={page === data.pagination.totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
