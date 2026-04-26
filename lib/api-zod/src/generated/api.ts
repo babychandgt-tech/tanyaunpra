@@ -161,3 +161,293 @@ export const PingMahasiswaResponse = zod.object({
   message: zod.string(),
   role: zod.enum(["mahasiswa", "dosen", "admin"]),
 });
+
+/**
+ * @summary Kirim pertanyaan ke AI asisten UNPRA (Android — API key auth)
+ */
+export const chatAskBodyQuestionMax = 2000;
+
+export const chatAskBodyDeviceInfoMax = 255;
+
+export const ChatAskBody = zod.object({
+  question: zod
+    .string()
+    .min(1)
+    .max(chatAskBodyQuestionMax)
+    .describe("Pertanyaan dari pengguna"),
+  sessionId: zod
+    .string()
+    .optional()
+    .describe("ID sesi percakapan yang sudah ada (opsional)"),
+  deviceInfo: zod
+    .string()
+    .max(chatAskBodyDeviceInfoMax)
+    .optional()
+    .describe("Informasi perangkat Android (opsional)"),
+});
+
+export const ChatAskResponse = zod.object({
+  answer: zod.string().describe("Jawaban dari AI atau intent database"),
+  sessionId: zod
+    .string()
+    .describe("ID sesi percakapan (baru atau yang sudah ada)"),
+  source: zod.enum(["intent", "ai", "fallback"]).describe("Sumber jawaban"),
+  confidence: zod.number().describe("Skor kepercayaan jawaban (0.0 - 1.0)"),
+  needsReview: zod
+    .boolean()
+    .describe("Apakah jawaban memerlukan review manual"),
+});
+
+/**
+ * @summary List semua sesi percakapan (admin only)
+ */
+export const listChatSessionsQueryPageDefault = 1;
+export const listChatSessionsQueryLimitDefault = 20;
+
+export const ListChatSessionsQueryParams = zod.object({
+  page: zod.coerce.number().default(listChatSessionsQueryPageDefault),
+  limit: zod.coerce.number().default(listChatSessionsQueryLimitDefault),
+  date: zod
+    .date()
+    .optional()
+    .describe("Filter berdasarkan tanggal (YYYY-MM-DD)"),
+});
+
+export const ListChatSessionsResponse = zod.object({
+  sessions: zod.array(
+    zod.object({
+      id: zod.string(),
+      userId: zod.string().nullish(),
+      deviceInfo: zod.string().nullish(),
+      lastMessageAt: zod.coerce.date(),
+      createdAt: zod.coerce.date(),
+      messageCount: zod.number(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Detail sesi percakapan beserta semua pesan (admin only)
+ */
+export const GetChatSessionParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetChatSessionResponse = zod.object({
+  session: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    deviceInfo: zod.string().nullish(),
+    lastMessageAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+    messageCount: zod.number(),
+  }),
+  messages: zod.array(
+    zod.object({
+      id: zod.string(),
+      sessionId: zod.string(),
+      role: zod.enum(["user", "assistant"]),
+      content: zod.string(),
+      answerSource: zod.enum(["intent", "ai", "fallback"]).nullish(),
+      confidence: zod.number().nullish(),
+      needsReview: zod.boolean(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Tandai pesan untuk review manual (admin only)
+ */
+export const FlagChatMessageParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const FlagChatMessageBody = zod.object({
+  needsReview: zod.boolean(),
+});
+
+export const FlagChatMessageResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Statistik chat — total sesi, sumber jawaban, confidence rendah (admin only)
+ */
+export const GetChatStatsResponse = zod.object({
+  today: zod.object({
+    sessions: zod.number(),
+    messages: zod.number(),
+  }),
+  week: zod.object({
+    sessions: zod.number(),
+  }),
+  needsReview: zod.number(),
+  sourceBreakdown: zod.record(zod.string(), zod.number()),
+  lowConfidenceSessions: zod.array(
+    zod.object({
+      sessionId: zod.string(),
+      avgConfidence: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary List intent/FAQ database (admin & dosen)
+ */
+export const listIntentsQueryPageDefault = 1;
+export const listIntentsQueryLimitDefault = 20;
+
+export const ListIntentsQueryParams = zod.object({
+  page: zod.coerce.number().default(listIntentsQueryPageDefault),
+  limit: zod.coerce.number().default(listIntentsQueryLimitDefault),
+  kategori: zod.coerce.string().optional(),
+  search: zod.coerce.string().optional(),
+  isActive: zod.enum(["true", "false"]).optional(),
+});
+
+export const ListIntentsResponse = zod.object({
+  intents: zod.array(
+    zod.object({
+      id: zod.string(),
+      pertanyaan: zod.string(),
+      jawaban: zod.string(),
+      kategori: zod.string(),
+      keywords: zod.array(zod.string()).nullish(),
+      confidence: zod.number(),
+      isActive: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Tambah intent/FAQ baru (admin only)
+ */
+export const createIntentBodyPertanyaanMin = 5;
+export const createIntentBodyPertanyaanMax = 500;
+
+export const createIntentBodyJawabanMin = 10;
+export const createIntentBodyJawabanMax = 2000;
+
+export const createIntentBodyKategoriDefault = `Umum`;
+export const createIntentBodyConfidenceDefault = 1;
+export const createIntentBodyConfidenceMin = 0;
+export const createIntentBodyConfidenceMax = 1;
+
+export const createIntentBodyIsActiveDefault = true;
+
+export const CreateIntentBody = zod.object({
+  pertanyaan: zod
+    .string()
+    .min(createIntentBodyPertanyaanMin)
+    .max(createIntentBodyPertanyaanMax),
+  jawaban: zod
+    .string()
+    .min(createIntentBodyJawabanMin)
+    .max(createIntentBodyJawabanMax),
+  kategori: zod.string().default(createIntentBodyKategoriDefault),
+  keywords: zod.array(zod.string()).optional(),
+  confidence: zod
+    .number()
+    .min(createIntentBodyConfidenceMin)
+    .max(createIntentBodyConfidenceMax)
+    .default(createIntentBodyConfidenceDefault),
+  isActive: zod.boolean().default(createIntentBodyIsActiveDefault),
+});
+
+/**
+ * @summary Detail intent (admin & dosen)
+ */
+export const GetIntentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetIntentResponse = zod.object({
+  intent: zod.object({
+    id: zod.string(),
+    pertanyaan: zod.string(),
+    jawaban: zod.string(),
+    kategori: zod.string(),
+    keywords: zod.array(zod.string()).nullish(),
+    confidence: zod.number(),
+    isActive: zod.boolean(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update intent/FAQ (admin only)
+ */
+export const UpdateIntentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateIntentBodyPertanyaanMin = 5;
+export const updateIntentBodyPertanyaanMax = 500;
+
+export const updateIntentBodyJawabanMin = 10;
+export const updateIntentBodyJawabanMax = 2000;
+
+export const updateIntentBodyConfidenceMin = 0;
+export const updateIntentBodyConfidenceMax = 1;
+
+export const UpdateIntentBody = zod.object({
+  pertanyaan: zod
+    .string()
+    .min(updateIntentBodyPertanyaanMin)
+    .max(updateIntentBodyPertanyaanMax)
+    .optional(),
+  jawaban: zod
+    .string()
+    .min(updateIntentBodyJawabanMin)
+    .max(updateIntentBodyJawabanMax)
+    .optional(),
+  kategori: zod.string().optional(),
+  keywords: zod.array(zod.string()).optional(),
+  confidence: zod
+    .number()
+    .min(updateIntentBodyConfidenceMin)
+    .max(updateIntentBodyConfidenceMax)
+    .optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateIntentResponse = zod.object({
+  intent: zod.object({
+    id: zod.string(),
+    pertanyaan: zod.string(),
+    jawaban: zod.string(),
+    kategori: zod.string(),
+    keywords: zod.array(zod.string()).nullish(),
+    confidence: zod.number(),
+    isActive: zod.boolean(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus intent (admin only)
+ */
+export const DeleteIntentParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteIntentResponse = zod.object({
+  message: zod.string(),
+});

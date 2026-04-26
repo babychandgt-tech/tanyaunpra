@@ -127,6 +127,189 @@ export interface CreateApiKeyResponse {
   message: string;
 }
 
+export interface ChatAskRequest {
+  /**
+   * Pertanyaan dari pengguna
+   * @minLength 1
+   * @maxLength 2000
+   */
+  question: string;
+  /** ID sesi percakapan yang sudah ada (opsional) */
+  sessionId?: string;
+  /**
+   * Informasi perangkat Android (opsional)
+   * @maxLength 255
+   */
+  deviceInfo?: string;
+}
+
+/**
+ * Sumber jawaban
+ */
+export type ChatAskResponseSource =
+  (typeof ChatAskResponseSource)[keyof typeof ChatAskResponseSource];
+
+export const ChatAskResponseSource = {
+  intent: "intent",
+  ai: "ai",
+  fallback: "fallback",
+} as const;
+
+export interface ChatAskResponse {
+  /** Jawaban dari AI atau intent database */
+  answer: string;
+  /** ID sesi percakapan (baru atau yang sudah ada) */
+  sessionId: string;
+  /** Sumber jawaban */
+  source: ChatAskResponseSource;
+  /** Skor kepercayaan jawaban (0.0 - 1.0) */
+  confidence: number;
+  /** Apakah jawaban memerlukan review manual */
+  needsReview: boolean;
+}
+
+export interface ChatSession {
+  id: string;
+  userId?: string | null;
+  deviceInfo?: string | null;
+  lastMessageAt: string;
+  createdAt: string;
+  messageCount: number;
+}
+
+export type ChatMessageRole =
+  (typeof ChatMessageRole)[keyof typeof ChatMessageRole];
+
+export const ChatMessageRole = {
+  user: "user",
+  assistant: "assistant",
+} as const;
+
+export type ChatMessageAnswerSource =
+  | (typeof ChatMessageAnswerSource)[keyof typeof ChatMessageAnswerSource]
+  | null;
+
+export const ChatMessageAnswerSource = {
+  intent: "intent",
+  ai: "ai",
+  fallback: "fallback",
+} as const;
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: ChatMessageRole;
+  content: string;
+  answerSource?: ChatMessageAnswerSource;
+  confidence?: number | null;
+  needsReview: boolean;
+  createdAt: string;
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ChatSessionsResponse {
+  sessions: ChatSession[];
+  pagination: Pagination;
+}
+
+export interface ChatSessionDetailResponse {
+  session: ChatSession;
+  messages: ChatMessage[];
+}
+
+export type ChatStatsResponseToday = {
+  sessions: number;
+  messages: number;
+};
+
+export type ChatStatsResponseWeek = {
+  sessions: number;
+};
+
+export type ChatStatsResponseSourceBreakdown = { [key: string]: number };
+
+export type ChatStatsResponseLowConfidenceSessionsItem = {
+  sessionId: string;
+  avgConfidence: number;
+};
+
+export interface ChatStatsResponse {
+  today: ChatStatsResponseToday;
+  week: ChatStatsResponseWeek;
+  needsReview: number;
+  sourceBreakdown: ChatStatsResponseSourceBreakdown;
+  lowConfidenceSessions: ChatStatsResponseLowConfidenceSessionsItem[];
+}
+
+export interface Intent {
+  id: string;
+  pertanyaan: string;
+  jawaban: string;
+  kategori: string;
+  keywords?: string[] | null;
+  confidence: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IntentResponse {
+  intent: Intent;
+}
+
+export interface IntentsResponse {
+  intents: Intent[];
+  pagination: Pagination;
+}
+
+export interface CreateIntentRequest {
+  /**
+   * @minLength 5
+   * @maxLength 500
+   */
+  pertanyaan: string;
+  /**
+   * @minLength 10
+   * @maxLength 2000
+   */
+  jawaban: string;
+  kategori?: string;
+  keywords?: string[];
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  confidence?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateIntentRequest {
+  /**
+   * @minLength 5
+   * @maxLength 500
+   */
+  pertanyaan?: string;
+  /**
+   * @minLength 10
+   * @maxLength 2000
+   */
+  jawaban?: string;
+  kategori?: string;
+  keywords?: string[];
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  confidence?: number;
+  isActive?: boolean;
+}
+
 export type GetMe200 = {
   user: UserProfile;
 };
@@ -134,3 +317,32 @@ export type GetMe200 = {
 export type ListApiKeys200 = {
   apiKeys: ApiKey[];
 };
+
+export type ListChatSessionsParams = {
+  page?: number;
+  limit?: number;
+  /**
+   * Filter berdasarkan tanggal (YYYY-MM-DD)
+   */
+  date?: string;
+};
+
+export type FlagChatMessageBody = {
+  needsReview: boolean;
+};
+
+export type ListIntentsParams = {
+  page?: number;
+  limit?: number;
+  kategori?: string;
+  search?: string;
+  isActive?: ListIntentsIsActive;
+};
+
+export type ListIntentsIsActive =
+  (typeof ListIntentsIsActive)[keyof typeof ListIntentsIsActive];
+
+export const ListIntentsIsActive = {
+  true: "true",
+  false: "false",
+} as const;

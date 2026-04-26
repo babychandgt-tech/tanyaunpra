@@ -18,17 +18,29 @@ import type {
 
 import type {
   AuthResponse,
+  ChatAskRequest,
+  ChatAskResponse,
+  ChatSessionDetailResponse,
+  ChatSessionsResponse,
+  ChatStatsResponse,
   CreateApiKeyRequest,
   CreateApiKeyResponse,
+  CreateIntentRequest,
   ErrorResponse,
+  FlagChatMessageBody,
   GetMe200,
   HealthStatus,
+  IntentResponse,
+  IntentsResponse,
   ListApiKeys200,
+  ListChatSessionsParams,
+  ListIntentsParams,
   LoginRequest,
   MessageResponse,
   PingResponse,
   RefreshTokenRequest,
   RegisterRequest,
+  UpdateIntentRequest,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -889,3 +901,871 @@ export function usePingMahasiswa<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Kirim pertanyaan ke AI asisten UNPRA (Android — API key auth)
+ */
+export const getChatAskUrl = () => {
+  return `/api/chat/ask`;
+};
+
+export const chatAsk = async (
+  chatAskRequest: ChatAskRequest,
+  options?: RequestInit,
+): Promise<ChatAskResponse> => {
+  return customFetch<ChatAskResponse>(getChatAskUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(chatAskRequest),
+  });
+};
+
+export const getChatAskMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof chatAsk>>,
+    TError,
+    { data: BodyType<ChatAskRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof chatAsk>>,
+  TError,
+  { data: BodyType<ChatAskRequest> },
+  TContext
+> => {
+  const mutationKey = ["chatAsk"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof chatAsk>>,
+    { data: BodyType<ChatAskRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return chatAsk(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ChatAskMutationResult = NonNullable<
+  Awaited<ReturnType<typeof chatAsk>>
+>;
+export type ChatAskMutationBody = BodyType<ChatAskRequest>;
+export type ChatAskMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Kirim pertanyaan ke AI asisten UNPRA (Android — API key auth)
+ */
+export const useChatAsk = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof chatAsk>>,
+    TError,
+    { data: BodyType<ChatAskRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof chatAsk>>,
+  TError,
+  { data: BodyType<ChatAskRequest> },
+  TContext
+> => {
+  return useMutation(getChatAskMutationOptions(options));
+};
+
+/**
+ * @summary List semua sesi percakapan (admin only)
+ */
+export const getListChatSessionsUrl = (params?: ListChatSessionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/chat/sessions?${stringifiedParams}`
+    : `/api/chat/sessions`;
+};
+
+export const listChatSessions = async (
+  params?: ListChatSessionsParams,
+  options?: RequestInit,
+): Promise<ChatSessionsResponse> => {
+  return customFetch<ChatSessionsResponse>(getListChatSessionsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListChatSessionsQueryKey = (
+  params?: ListChatSessionsParams,
+) => {
+  return [`/api/chat/sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListChatSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listChatSessions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListChatSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listChatSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListChatSessionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listChatSessions>>
+  > = ({ signal }) => listChatSessions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listChatSessions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListChatSessionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listChatSessions>>
+>;
+export type ListChatSessionsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List semua sesi percakapan (admin only)
+ */
+
+export function useListChatSessions<
+  TData = Awaited<ReturnType<typeof listChatSessions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListChatSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listChatSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListChatSessionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Detail sesi percakapan beserta semua pesan (admin only)
+ */
+export const getGetChatSessionUrl = (id: string) => {
+  return `/api/chat/sessions/${id}`;
+};
+
+export const getChatSession = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ChatSessionDetailResponse> => {
+  return customFetch<ChatSessionDetailResponse>(getGetChatSessionUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetChatSessionQueryKey = (id: string) => {
+  return [`/api/chat/sessions/${id}`] as const;
+};
+
+export const getGetChatSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getChatSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getChatSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetChatSessionQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatSession>>> = ({
+    signal,
+  }) => getChatSession(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getChatSession>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetChatSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getChatSession>>
+>;
+export type GetChatSessionQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Detail sesi percakapan beserta semua pesan (admin only)
+ */
+
+export function useGetChatSession<
+  TData = Awaited<ReturnType<typeof getChatSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getChatSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetChatSessionQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Tandai pesan untuk review manual (admin only)
+ */
+export const getFlagChatMessageUrl = (id: string) => {
+  return `/api/chat/messages/${id}/flag`;
+};
+
+export const flagChatMessage = async (
+  id: string,
+  flagChatMessageBody: FlagChatMessageBody,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getFlagChatMessageUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(flagChatMessageBody),
+  });
+};
+
+export const getFlagChatMessageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof flagChatMessage>>,
+    TError,
+    { id: string; data: BodyType<FlagChatMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof flagChatMessage>>,
+  TError,
+  { id: string; data: BodyType<FlagChatMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["flagChatMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof flagChatMessage>>,
+    { id: string; data: BodyType<FlagChatMessageBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return flagChatMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FlagChatMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof flagChatMessage>>
+>;
+export type FlagChatMessageMutationBody = BodyType<FlagChatMessageBody>;
+export type FlagChatMessageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tandai pesan untuk review manual (admin only)
+ */
+export const useFlagChatMessage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof flagChatMessage>>,
+    TError,
+    { id: string; data: BodyType<FlagChatMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof flagChatMessage>>,
+  TError,
+  { id: string; data: BodyType<FlagChatMessageBody> },
+  TContext
+> => {
+  return useMutation(getFlagChatMessageMutationOptions(options));
+};
+
+/**
+ * @summary Statistik chat — total sesi, sumber jawaban, confidence rendah (admin only)
+ */
+export const getGetChatStatsUrl = () => {
+  return `/api/chat/stats`;
+};
+
+export const getChatStats = async (
+  options?: RequestInit,
+): Promise<ChatStatsResponse> => {
+  return customFetch<ChatStatsResponse>(getGetChatStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetChatStatsQueryKey = () => {
+  return [`/api/chat/stats`] as const;
+};
+
+export const getGetChatStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getChatStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getChatStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetChatStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getChatStats>>> = ({
+    signal,
+  }) => getChatStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getChatStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetChatStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getChatStats>>
+>;
+export type GetChatStatsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Statistik chat — total sesi, sumber jawaban, confidence rendah (admin only)
+ */
+
+export function useGetChatStats<
+  TData = Awaited<ReturnType<typeof getChatStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getChatStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetChatStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List intent/FAQ database (admin & dosen)
+ */
+export const getListIntentsUrl = (params?: ListIntentsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/intents?${stringifiedParams}`
+    : `/api/intents`;
+};
+
+export const listIntents = async (
+  params?: ListIntentsParams,
+  options?: RequestInit,
+): Promise<IntentsResponse> => {
+  return customFetch<IntentsResponse>(getListIntentsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListIntentsQueryKey = (params?: ListIntentsParams) => {
+  return [`/api/intents`, ...(params ? [params] : [])] as const;
+};
+
+export const getListIntentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listIntents>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListIntentsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listIntents>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListIntentsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listIntents>>> = ({
+    signal,
+  }) => listIntents(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listIntents>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListIntentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listIntents>>
+>;
+export type ListIntentsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List intent/FAQ database (admin & dosen)
+ */
+
+export function useListIntents<
+  TData = Awaited<ReturnType<typeof listIntents>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListIntentsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listIntents>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListIntentsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Tambah intent/FAQ baru (admin only)
+ */
+export const getCreateIntentUrl = () => {
+  return `/api/intents`;
+};
+
+export const createIntent = async (
+  createIntentRequest: CreateIntentRequest,
+  options?: RequestInit,
+): Promise<IntentResponse> => {
+  return customFetch<IntentResponse>(getCreateIntentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createIntentRequest),
+  });
+};
+
+export const getCreateIntentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createIntent>>,
+    TError,
+    { data: BodyType<CreateIntentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createIntent>>,
+  TError,
+  { data: BodyType<CreateIntentRequest> },
+  TContext
+> => {
+  const mutationKey = ["createIntent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createIntent>>,
+    { data: BodyType<CreateIntentRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createIntent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateIntentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createIntent>>
+>;
+export type CreateIntentMutationBody = BodyType<CreateIntentRequest>;
+export type CreateIntentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tambah intent/FAQ baru (admin only)
+ */
+export const useCreateIntent = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createIntent>>,
+    TError,
+    { data: BodyType<CreateIntentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createIntent>>,
+  TError,
+  { data: BodyType<CreateIntentRequest> },
+  TContext
+> => {
+  return useMutation(getCreateIntentMutationOptions(options));
+};
+
+/**
+ * @summary Detail intent (admin & dosen)
+ */
+export const getGetIntentUrl = (id: string) => {
+  return `/api/intents/${id}`;
+};
+
+export const getIntent = async (
+  id: string,
+  options?: RequestInit,
+): Promise<IntentResponse> => {
+  return customFetch<IntentResponse>(getGetIntentUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetIntentQueryKey = (id: string) => {
+  return [`/api/intents/${id}`] as const;
+};
+
+export const getGetIntentQueryOptions = <
+  TData = Awaited<ReturnType<typeof getIntent>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIntent>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetIntentQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getIntent>>> = ({
+    signal,
+  }) => getIntent(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getIntent>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetIntentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getIntent>>
+>;
+export type GetIntentQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Detail intent (admin & dosen)
+ */
+
+export function useGetIntent<
+  TData = Awaited<ReturnType<typeof getIntent>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIntent>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIntentQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update intent/FAQ (admin only)
+ */
+export const getUpdateIntentUrl = (id: string) => {
+  return `/api/intents/${id}`;
+};
+
+export const updateIntent = async (
+  id: string,
+  updateIntentRequest: UpdateIntentRequest,
+  options?: RequestInit,
+): Promise<IntentResponse> => {
+  return customFetch<IntentResponse>(getUpdateIntentUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateIntentRequest),
+  });
+};
+
+export const getUpdateIntentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateIntent>>,
+    TError,
+    { id: string; data: BodyType<UpdateIntentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateIntent>>,
+  TError,
+  { id: string; data: BodyType<UpdateIntentRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateIntent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateIntent>>,
+    { id: string; data: BodyType<UpdateIntentRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateIntent(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateIntentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateIntent>>
+>;
+export type UpdateIntentMutationBody = BodyType<UpdateIntentRequest>;
+export type UpdateIntentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update intent/FAQ (admin only)
+ */
+export const useUpdateIntent = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateIntent>>,
+    TError,
+    { id: string; data: BodyType<UpdateIntentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateIntent>>,
+  TError,
+  { id: string; data: BodyType<UpdateIntentRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateIntentMutationOptions(options));
+};
+
+/**
+ * @summary Hapus intent (admin only)
+ */
+export const getDeleteIntentUrl = (id: string) => {
+  return `/api/intents/${id}`;
+};
+
+export const deleteIntent = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getDeleteIntentUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteIntentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteIntent>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteIntent>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteIntent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteIntent>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteIntent(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteIntentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteIntent>>
+>;
+
+export type DeleteIntentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus intent (admin only)
+ */
+export const useDeleteIntent = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteIntent>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteIntent>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteIntentMutationOptions(options));
+};

@@ -67,15 +67,39 @@ Tables:
 - `JWT_SECRET` — secret key untuk JWT signing
 - `DASHSCOPE_API_KEY` — Alibaba Dashscope API key untuk Qwen AI (task #2)
 
+## AI Chat Engine
+
+- **Qwen AI via Dashscope** (OpenAI-compatible endpoint): `qwen-turbo` model
+- **Hybrid matching**: intent DB lookup dulu (Jaccard + keyword, threshold 0.55), fallback ke Qwen
+- **System prompt**: dikonfigurasi sebagai "Tanya UNPRA" asisten akademik
+- **Low confidence threshold**: < 0.4 → `needsReview: true`
+- Qwen service: `artifacts/api-server/src/lib/qwen.ts`
+- Intent matcher: `artifacts/api-server/src/lib/intentMatcher.ts`
+
 ## API Routes (implemented)
 
 ### Auth (`/api/auth/`)
 - `POST /auth/login` — login semua role
 - `POST /auth/register` — registrasi mahasiswa/dosen
+- `POST /auth/refresh` — refresh access token
 - `GET /auth/me` — profil user (requires JWT)
 - `POST /auth/api-keys` — generate API key (admin only)
 - `GET /auth/api-keys` — list API keys (admin only)
 - `DELETE /auth/api-keys/:id` — revoke API key (admin only)
+
+### Chat (`/api/chat/`) — Android: API key auth; Admin: JWT auth
+- `POST /chat/ask` — kirim pertanyaan (X-API-Key)
+- `GET /chat/sessions` — list sesi percakapan (admin only)
+- `GET /chat/sessions/:id` — detail sesi + semua pesan (admin only)
+- `PATCH /chat/messages/:id/flag` — tandai untuk review (admin only)
+- `GET /chat/stats` — statistik hari ini/minggu (admin only)
+
+### Intents (`/api/intents/`) — JWT auth
+- `GET /intents` — list dengan filter (admin & dosen)
+- `POST /intents` — tambah intent baru (admin only)
+- `GET /intents/:id` — detail intent (admin & dosen)
+- `PUT /intents/:id` — update intent (admin only)
+- `DELETE /intents/:id` — hapus intent (admin only)
 
 ### Health
 - `GET /healthz` — health check
