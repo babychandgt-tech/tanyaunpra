@@ -41,10 +41,13 @@ router.post("/chat/ask", requireApiKey(), async (req: Request, res: Response) =>
       if (!existing) currentSessionId = undefined;
     }
 
+    const resolvedDeviceInfo =
+      deviceInfo ?? (req.headers["user-agent"] as string | undefined) ?? null;
+
     if (!currentSessionId) {
       const [newSession] = await db
         .insert(chatSessionsTable)
-        .values({ deviceInfo: deviceInfo ?? null })
+        .values({ deviceInfo: resolvedDeviceInfo })
         .returning({ id: chatSessionsTable.id });
       currentSessionId = newSession.id;
     }
@@ -75,7 +78,7 @@ router.post("/chat/ask", requireApiKey(), async (req: Request, res: Response) =>
         const qwenResult = await askQwen(question, history);
         answer = qwenResult.answer;
         answerSource = "ai";
-        confidence = 0.85;
+        confidence = 0.75;
       } catch (err) {
         req.log.error({ err }, "Qwen API error — using fallback");
         answer = "Maaf, layanan AI saat ini tidak tersedia. Silakan coba beberapa saat lagi atau hubungi bagian akademik UNPRA secara langsung.";
@@ -127,7 +130,10 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
   const pageSchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    date: z.string().optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD")
+      .optional(),
   });
 
   const parsed = pageSchema.safeParse(req.query);
