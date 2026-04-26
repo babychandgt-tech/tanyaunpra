@@ -13,7 +13,8 @@ import {
   BookOpen, 
   Key, 
   LogOut,
-  Menu
+  Menu,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { title: "Mata Kuliah", href: "/matkul", icon: BookOpen, roles: ["admin", "dosen"] },
   { title: "API Keys", href: "/settings/api-keys", icon: Key, roles: ["admin"] },
   { title: "Manajemen Admin", href: "/users", icon: Users, roles: ["admin"], superAdminOnly: true },
+  { title: "Dokumentasi API", href: "/api-docs", icon: FileText, roles: ["admin"], superAdminOnly: true },
 ];
 
 export function Sidebar() {

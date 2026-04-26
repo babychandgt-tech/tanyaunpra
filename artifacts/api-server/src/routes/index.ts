@@ -12,6 +12,7 @@ import announcementsRouter from "./announcements";
 import academicCalendarRouter from "./academic-calendar";
 import dashboardRouter from "./dashboard";
 import usersRouter from "./users";
+import apiDocsRouter from "./api-docs";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(announcementsRouter);
 router.use(academicCalendarRouter);
 router.use(dashboardRouter);
 router.use(usersRouter);
+router.use(apiDocsRouter);
 
 export default router;

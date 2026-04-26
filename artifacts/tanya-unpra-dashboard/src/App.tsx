@@ -20,6 +20,7 @@ import Dosen from "@/pages/dosen";
 import Matkul from "@/pages/matkul";
 import ApiKeys from "@/pages/api-keys";
 import Users from "@/pages/users";
+import ApiDocs from "@/pages/api-docs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +90,7 @@ function Router() {
       <Route path="/matkul" component={() => <ProtectedRoute component={Matkul} allowedRoles={["admin", "dosen"]} />} />
       <Route path="/settings/api-keys" component={() => <ProtectedRoute component={ApiKeys} allowedRoles={["admin"]} />} />
       <Route path="/users" component={() => <ProtectedRoute component={Users} allowedRoles={["admin"]} superAdminOnly />} />
+      <Route path="/api-docs" component={() => <ProtectedRoute component={ApiDocs} allowedRoles={["admin"]} superAdminOnly />} />
 
       <Route component={NotFound} />
     </Switch>
