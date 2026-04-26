@@ -9,28 +9,36 @@ export interface HealthStatus {
   status: string;
 }
 
-export type ErrorResponseDetailsItem = { [key: string]: unknown };
-
 export interface ErrorResponse {
   error: string;
-  details?: ErrorResponseDetailsItem[];
 }
 
 export interface MessageResponse {
   message: string;
 }
 
-export interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export type PingResponseRole =
+  (typeof PingResponseRole)[keyof typeof PingResponseRole];
+
+export const PingResponseRole = {
+  mahasiswa: "mahasiswa",
+  dosen: "dosen",
+  admin: "admin",
+} as const;
+
+export interface PingResponse {
+  message: string;
+  role: PingResponseRole;
 }
 
 export interface LoginRequest {
   email: string;
   /** @minLength 6 */
   password: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
 }
 
 export type RegisterRequestRole =
@@ -47,10 +55,13 @@ export interface RegisterRequest {
   password: string;
   name: string;
   role: RegisterRequestRole;
+  /** Wajib jika role mahasiswa */
   nim?: string;
+  /** Wajib jika role dosen */
   nidn?: string;
   prodi: string;
   fakultas: string;
+  /** Tahun angkatan (mahasiswa) */
   angkatan?: number;
 }
 
@@ -72,7 +83,10 @@ export interface UserProfile {
 }
 
 export interface AuthResponse {
+  /** Access token (berlaku 1 hari) */
   token: string;
+  /** Refresh token (berlaku 30 hari) */
+  refreshToken: string;
   user: UserProfile;
 }
 
@@ -87,11 +101,14 @@ export interface ApiKey {
 }
 
 export interface CreateApiKeyRequest {
+  /** Nama deskriptif untuk API key ini */
   name: string;
+  /** Masa berlaku dalam hari. Null berarti tidak kadaluarsa. */
   expiresInDays?: number | null;
 }
 
 export type CreateApiKeyResponseApiKey = ApiKey & {
+  /** Full API key — hanya ditampilkan sekali saat dibuat */
   key: string;
 };
 
@@ -100,516 +117,10 @@ export interface CreateApiKeyResponse {
   message: string;
 }
 
-export interface Student {
-  id: string;
-  userId?: string | null;
-  nim: string;
-  prodi: string;
-  fakultas: string;
-  semester: number;
-  angkatan: number;
-  phone?: string | null;
-  address?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type StudentWithUser = Student & {
-  user?: UserProfile;
-};
-
-export interface StudentListResponse {
-  students: StudentWithUser[];
-  pagination: Pagination;
-}
-
-export interface CreateStudentRequest {
-  email: string;
-  password: string;
-  name: string;
-  nim: string;
-  prodi: string;
-  fakultas: string;
-  semester?: number;
-  angkatan: number;
-  phone?: string;
-  address?: string;
-}
-
-export interface UpdateStudentRequest {
-  name?: string;
-  prodi?: string;
-  fakultas?: string;
-  semester?: number;
-  phone?: string;
-  address?: string;
-}
-
-export interface Lecturer {
-  id: string;
-  userId?: string | null;
-  nidn: string;
-  prodi: string;
-  fakultas: string;
-  jabatan?: string | null;
-  phone?: string | null;
-  expertise?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type LecturerWithUser = Lecturer & {
-  user?: UserProfile;
-};
-
-export interface LecturerListResponse {
-  lecturers: LecturerWithUser[];
-  pagination: Pagination;
-}
-
-export interface CreateLecturerRequest {
-  email: string;
-  password: string;
-  name: string;
-  nidn: string;
-  prodi: string;
-  fakultas: string;
-  jabatan?: string;
-  phone?: string;
-  expertise?: string;
-}
-
-export interface UpdateLecturerRequest {
-  name?: string;
-  prodi?: string;
-  fakultas?: string;
-  jabatan?: string;
-  phone?: string;
-  expertise?: string;
-}
-
-export interface Course {
-  id: string;
-  kode: string;
-  nama: string;
-  sks: number;
-  semester: number;
-  prodi: string;
-  deskripsi?: string | null;
-  lecturerId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CourseListResponse {
-  courses: Course[];
-  pagination: Pagination;
-}
-
-export interface CreateCourseRequest {
-  kode: string;
-  nama: string;
-  sks: number;
-  semester: number;
-  prodi: string;
-  deskripsi?: string;
-  lecturerId?: string;
-}
-
-export interface UpdateCourseRequest {
-  nama?: string;
-  sks?: number;
-  semester?: number;
-  deskripsi?: string;
-  lecturerId?: string;
-}
-
-export type ScheduleHari = (typeof ScheduleHari)[keyof typeof ScheduleHari];
-
-export const ScheduleHari = {
-  Senin: "Senin",
-  Selasa: "Selasa",
-  Rabu: "Rabu",
-  Kamis: "Kamis",
-  Jumat: "Jumat",
-  Sabtu: "Sabtu",
-} as const;
-
-export interface Schedule {
-  id: string;
-  courseId: string;
-  lecturerId?: string | null;
-  hari: ScheduleHari;
-  jamMulai: string;
-  jamSelesai: string;
-  ruangan: string;
-  semester: string;
-  tahunAjaran: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ScheduleListResponse {
-  schedules: Schedule[];
-  pagination: Pagination;
-}
-
-export type CreateScheduleRequestHari =
-  (typeof CreateScheduleRequestHari)[keyof typeof CreateScheduleRequestHari];
-
-export const CreateScheduleRequestHari = {
-  Senin: "Senin",
-  Selasa: "Selasa",
-  Rabu: "Rabu",
-  Kamis: "Kamis",
-  Jumat: "Jumat",
-  Sabtu: "Sabtu",
-} as const;
-
-export interface CreateScheduleRequest {
-  courseId: string;
-  lecturerId?: string;
-  hari: CreateScheduleRequestHari;
-  jamMulai: string;
-  jamSelesai: string;
-  ruangan: string;
-  semester: string;
-  tahunAjaran: string;
-}
-
-export interface UpdateScheduleRequest {
-  lecturerId?: string;
-  hari?: string;
-  jamMulai?: string;
-  jamSelesai?: string;
-  ruangan?: string;
-  semester?: string;
-  tahunAjaran?: string;
-}
-
-export type AcademicCalendarTipe =
-  (typeof AcademicCalendarTipe)[keyof typeof AcademicCalendarTipe];
-
-export const AcademicCalendarTipe = {
-  UTS: "UTS",
-  UAS: "UAS",
-  Libur: "Libur",
-  Registrasi: "Registrasi",
-  KRS: "KRS",
-  Wisuda: "Wisuda",
-  Lainnya: "Lainnya",
-} as const;
-
-export interface AcademicCalendar {
-  id: string;
-  namaEvent: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
-  tipe: AcademicCalendarTipe;
-  deskripsi?: string | null;
-  tahunAjaran: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AcademicCalendarListResponse {
-  events: AcademicCalendar[];
-}
-
-export type CreateAcademicCalendarRequestTipe =
-  (typeof CreateAcademicCalendarRequestTipe)[keyof typeof CreateAcademicCalendarRequestTipe];
-
-export const CreateAcademicCalendarRequestTipe = {
-  UTS: "UTS",
-  UAS: "UAS",
-  Libur: "Libur",
-  Registrasi: "Registrasi",
-  KRS: "KRS",
-  Wisuda: "Wisuda",
-  Lainnya: "Lainnya",
-} as const;
-
-export interface CreateAcademicCalendarRequest {
-  namaEvent: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
-  tipe: CreateAcademicCalendarRequestTipe;
-  deskripsi?: string;
-  tahunAjaran: string;
-}
-
-export interface UpdateAcademicCalendarRequest {
-  namaEvent?: string;
-  tanggalMulai?: string;
-  tanggalSelesai?: string;
-  tipe?: string;
-  deskripsi?: string;
-  tahunAjaran?: string;
-}
-
-export type AnnouncementKategori =
-  (typeof AnnouncementKategori)[keyof typeof AnnouncementKategori];
-
-export const AnnouncementKategori = {
-  Akademik: "Akademik",
-  Kemahasiswaan: "Kemahasiswaan",
-  Keuangan: "Keuangan",
-  Umum: "Umum",
-  Beasiswa: "Beasiswa",
-} as const;
-
-export interface Announcement {
-  id: string;
-  judul: string;
-  konten: string;
-  kategori: AnnouncementKategori;
-  authorId?: string | null;
-  isActive: boolean;
-  publishedAt: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AnnouncementListResponse {
-  announcements: Announcement[];
-  pagination: Pagination;
-}
-
-export type CreateAnnouncementRequestKategori =
-  (typeof CreateAnnouncementRequestKategori)[keyof typeof CreateAnnouncementRequestKategori];
-
-export const CreateAnnouncementRequestKategori = {
-  Akademik: "Akademik",
-  Kemahasiswaan: "Kemahasiswaan",
-  Keuangan: "Keuangan",
-  Umum: "Umum",
-  Beasiswa: "Beasiswa",
-} as const;
-
-export interface CreateAnnouncementRequest {
-  judul: string;
-  konten: string;
-  kategori?: CreateAnnouncementRequestKategori;
-  isActive?: boolean;
-}
-
-export interface UpdateAnnouncementRequest {
-  judul?: string;
-  konten?: string;
-  kategori?: string;
-  isActive?: boolean;
-}
-
-export interface AskChatRequest {
-  question: string;
-  sessionId?: string | null;
-  deviceInfo?: string | null;
-}
-
-export type AskChatResponseSource =
-  (typeof AskChatResponseSource)[keyof typeof AskChatResponseSource];
-
-export const AskChatResponseSource = {
-  intent: "intent",
-  ai: "ai",
-  fallback: "fallback",
-} as const;
-
-export interface AskChatResponse {
-  answer: string;
-  sessionId: string;
-  source: AskChatResponseSource;
-  confidence?: number | null;
-}
-
-export interface ChatSession {
-  id: string;
-  userId?: string | null;
-  deviceInfo?: string | null;
-  lastMessageAt: string;
-  messageCount: number;
-  hasReviewFlag: boolean;
-  createdAt: string;
-}
-
-export interface ChatSessionListResponse {
-  sessions: ChatSession[];
-  pagination: Pagination;
-}
-
-export type ChatMessageRole =
-  (typeof ChatMessageRole)[keyof typeof ChatMessageRole];
-
-export const ChatMessageRole = {
-  user: "user",
-  assistant: "assistant",
-} as const;
-
-export type ChatMessageAnswerSource =
-  | (typeof ChatMessageAnswerSource)[keyof typeof ChatMessageAnswerSource]
-  | null;
-
-export const ChatMessageAnswerSource = {
-  intent: "intent",
-  ai: "ai",
-  fallback: "fallback",
-} as const;
-
-export interface ChatMessage {
-  id: string;
-  sessionId: string;
-  role: ChatMessageRole;
-  content: string;
-  answerSource?: ChatMessageAnswerSource;
-  confidence?: number | null;
-  needsReview: boolean;
-  createdAt: string;
-}
-
-export interface ChatSessionDetail {
-  session: ChatSession;
-  messages: ChatMessage[];
-}
-
-export type ChatStatsTopTopicsItem = {
-  kategori: string;
-  count: number;
-};
-
-export interface ChatStats {
-  totalMessagesToday: number;
-  totalSessionsToday: number;
-  totalMessagesWeek: number;
-  totalSessionsAllTime: number;
-  needsReviewCount: number;
-  topTopics: ChatStatsTopTopicsItem[];
-}
-
-export interface Intent {
-  id: string;
-  pertanyaan: string;
-  jawaban: string;
-  kategori: string;
-  keywords?: string[] | null;
-  confidence: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface IntentListResponse {
-  intents: Intent[];
-  pagination: Pagination;
-}
-
-export interface CreateIntentRequest {
-  pertanyaan: string;
-  jawaban: string;
-  kategori?: string;
-  keywords?: string[];
-  isActive?: boolean;
-}
-
-export interface UpdateIntentRequest {
-  pertanyaan?: string;
-  jawaban?: string;
-  kategori?: string;
-  keywords?: string[];
-  isActive?: boolean;
-}
-
-export type DashboardSummaryChatStats = {
-  today: number;
-  thisWeek: number;
-};
-
-export interface DashboardSummary {
-  totalStudents: number;
-  totalLecturers: number;
-  totalCourses: number;
-  totalAnnouncements: number;
-  totalIntents: number;
-  chatStats: DashboardSummaryChatStats;
-  upcomingEvents: AcademicCalendar[];
-  recentAnnouncements: Announcement[];
-}
-
-export type DashboardActivityActivitiesItem = {
-  type: string;
-  description: string;
-  createdAt: string;
-};
-
-export interface DashboardActivity {
-  activities: DashboardActivityActivitiesItem[];
-}
-
-export type PageParamParameter = number;
-
-export type LimitParamParameter = number;
-
 export type GetMe200 = {
   user: UserProfile;
 };
 
 export type ListApiKeys200 = {
   apiKeys: ApiKey[];
-};
-
-export type ListStudentsParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  search?: string;
-  prodi?: string;
-};
-
-export type ListLecturersParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  search?: string;
-  prodi?: string;
-};
-
-export type ListCoursesParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  prodi?: string;
-  semester?: number;
-};
-
-export type ListSchedulesParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  prodi?: string;
-  semester?: string;
-  tahunAjaran?: string;
-  lecturerId?: string;
-};
-
-export type ListAcademicCalendarParams = {
-  tahunAjaran?: string;
-  tipe?: string;
-};
-
-export type ListAnnouncementsParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  kategori?: string;
-  isActive?: boolean;
-};
-
-export type ListChatSessionsParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  needsReview?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
-};
-
-export type ListIntentsParams = {
-  page?: PageParamParameter;
-  limit?: LimitParamParameter;
-  kategori?: string;
-  search?: string;
-  isActive?: boolean;
 };

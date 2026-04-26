@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import { db } from "@workspace/db";
 import {
   usersTable,
@@ -9,9 +10,15 @@ import {
   apiKeysTable,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { generateToken, requireAuth } from "../middlewares/auth";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  requireAuth,
+  type JwtPayload,
+} from "../middlewares/auth";
 
 const router: IRouter = Router();
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 router.post("/auth/login", async (req: Request, res: Response) => {
   const { email, password } = req.body as { email?: string; password?: string };
@@ -37,20 +44,81 @@ router.post("/auth/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const token = generateToken({
+    const tokenPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
       name: user.name,
-    });
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     res.json({
-      token,
-      user: { id: user.id, email: user.email, role: user.role, name: user.name },
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        createdAt: user.createdAt,
+      },
     });
   } catch (err) {
     req.log.error({ err }, "Login error");
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/auth/refresh", async (req: Request, res: Response) => {
+  const { refreshToken } = req.body as { refreshToken?: string };
+  if (!refreshToken) {
+    res.status(400).json({ error: "Refresh token wajib diisi" });
+    return;
+  }
+
+  try {
+    const payload = jwt.verify(String(refreshToken), JWT_SECRET) as JwtPayload;
+
+    if (payload.type !== "refresh") {
+      res.status(401).json({ error: "Token tidak valid untuk refresh" });
+      return;
+    }
+
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, payload.userId));
+
+    if (!user) {
+      res.status(401).json({ error: "User tidak ditemukan" });
+      return;
+    }
+
+    const tokenPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    };
+
+    const newAccessToken = generateAccessToken(tokenPayload);
+    const newRefreshToken = generateRefreshToken(tokenPayload);
+
+    res.json({
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch {
+    res.status(401).json({ error: "Refresh token tidak valid atau sudah kadaluarsa" });
   }
 });
 
@@ -111,26 +179,36 @@ router.post("/auth/register", async (req: Request, res: Response) => {
         fakultas: String(fakultas),
         angkatan: Number(angkatan) || new Date().getFullYear(),
         semester: 1,
-      });
+      } as typeof studentsTable.$inferInsert);
     } else if (role === "dosen") {
       await db.insert(lecturersTable).values({
         userId: user.id,
         nidn: String(nidn),
         prodi: String(prodi),
         fakultas: String(fakultas),
-      });
+      } as typeof lecturersTable.$inferInsert);
     }
 
-    const token = generateToken({
+    const tokenPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
       name: user.name,
-    });
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     res.status(201).json({
-      token,
-      user: { id: user.id, email: user.email, role: user.role, name: user.name },
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        createdAt: user.createdAt,
+      },
     });
   } catch (err) {
     req.log.error({ err }, "Register error");

@@ -56,9 +56,10 @@ Tables:
 
 ## Auth
 
-- JWT Bearer token untuk web/admin dashboard
+- JWT Bearer token (access token 1 hari, refresh token 30 hari) untuk web/admin dashboard
 - API Key (`X-API-Key` header) untuk Android app
-- Admin default: `admin@unpra.ac.id` / `Admin@Unpra2024`
+- Akun admin awal dibuat via `pnpm --filter @workspace/scripts run seed-admin`
+  (kredensial di-generate oleh script dan ditampilkan di console satu kali)
 
 ## Environment Variables / Secrets Required
 

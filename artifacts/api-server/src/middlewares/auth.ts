@@ -8,6 +8,7 @@ export interface JwtPayload {
   email: string;
   role: Role;
   name: string;
+  type?: "access" | "refresh";
 }
 
 declare global {
@@ -31,6 +32,12 @@ export function requireAuth(roles: Role[] = []) {
     const token = authHeader.slice(7);
     try {
       const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+      if (payload.type === "refresh") {
+        res.status(401).json({ error: "Gunakan access token, bukan refresh token" });
+        return;
+      }
+
       req.user = payload;
 
       if (roles.length > 0 && !roles.includes(payload.role)) {
@@ -87,6 +94,14 @@ export function requireApiKey() {
   };
 }
 
-export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+export function generateAccessToken(payload: Omit<JwtPayload, "type">): string {
+  return jwt.sign({ ...payload, type: "access" }, JWT_SECRET, { expiresIn: "1d" });
+}
+
+export function generateRefreshToken(payload: Omit<JwtPayload, "type">): string {
+  return jwt.sign({ ...payload, type: "refresh" }, JWT_SECRET, { expiresIn: "30d" });
+}
+
+export function generateToken(payload: Omit<JwtPayload, "type">): string {
+  return generateAccessToken(payload);
 }

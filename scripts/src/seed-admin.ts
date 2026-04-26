@@ -2,10 +2,10 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 async function seedAdmin() {
-  const adminEmail = "admin@unpra.ac.id";
-  const adminPassword = "Admin@Unpra2024";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@unpra.ac.id";
 
   const [existing] = await db
     .select({ id: usersTable.id })
@@ -17,7 +17,9 @@ async function seedAdmin() {
     process.exit(0);
   }
 
+  const adminPassword = crypto.randomBytes(16).toString("hex");
   const passwordHash = await bcrypt.hash(adminPassword, 12);
+
   const [admin] = await db
     .insert(usersTable)
     .values({
@@ -28,10 +30,14 @@ async function seedAdmin() {
     })
     .returning({ id: usersTable.id, email: usersTable.email });
 
-  console.log("Admin berhasil dibuat:");
-  console.log("  Email:", admin.email);
+  console.log("========================================");
+  console.log("Admin berhasil dibuat (simpan dengan aman):");
+  console.log("  Email   :", admin.email);
   console.log("  Password:", adminPassword);
-  console.log("  ID:", admin.id);
+  console.log("  ID      :", admin.id);
+  console.log("========================================");
+  console.log("PERINGATAN: Password ini tidak akan ditampilkan lagi.");
+  console.log("Segera ganti password setelah login pertama.");
   process.exit(0);
 }
 
