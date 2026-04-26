@@ -774,6 +774,47 @@ export const ListLecturersResponse = zod.object({
 });
 
 /**
+ * @summary Tambah data dosen baru (admin only)
+ */
+export const createLecturerBodyNidnMin = 2;
+export const createLecturerBodyNidnMax = 20;
+
+export const createLecturerBodyProdiMin = 2;
+export const createLecturerBodyProdiMax = 100;
+
+export const createLecturerBodyFakultasMin = 2;
+export const createLecturerBodyFakultasMax = 100;
+
+export const createLecturerBodyJabatanMax = 100;
+
+export const createLecturerBodyPhoneMax = 20;
+
+export const createLecturerBodyExpertiseMax = 500;
+
+export const CreateLecturerBody = zod.object({
+  userId: zod
+    .string()
+    .uuid()
+    .optional()
+    .describe("Opsional — link ke user yang sudah ada"),
+  nidn: zod
+    .string()
+    .min(createLecturerBodyNidnMin)
+    .max(createLecturerBodyNidnMax),
+  prodi: zod
+    .string()
+    .min(createLecturerBodyProdiMin)
+    .max(createLecturerBodyProdiMax),
+  fakultas: zod
+    .string()
+    .min(createLecturerBodyFakultasMin)
+    .max(createLecturerBodyFakultasMax),
+  jabatan: zod.string().max(createLecturerBodyJabatanMax).optional(),
+  phone: zod.string().max(createLecturerBodyPhoneMax).optional(),
+  expertise: zod.string().max(createLecturerBodyExpertiseMax).optional(),
+});
+
+/**
  * @summary Detail data dosen (semua role)
  */
 export const GetLecturerParams = zod.object({
@@ -841,7 +882,7 @@ export const DeleteLecturerResponse = zod.object({
 });
 
 /**
- * @summary List mahasiswa (admin & dosen)
+ * @summary List mahasiswa (admin & dosen — dosen hanya melihat mahasiswa di prodinya)
  */
 export const listStudentsQueryPageDefault = 1;
 export const listStudentsQueryLimitDefault = 20;
@@ -879,6 +920,56 @@ export const ListStudentsResponse = zod.object({
     total: zod.number(),
     totalPages: zod.number(),
   }),
+});
+
+/**
+ * @summary Tambah data mahasiswa baru (admin only)
+ */
+export const createStudentBodyNimMin = 2;
+export const createStudentBodyNimMax = 20;
+
+export const createStudentBodyProdiMin = 2;
+export const createStudentBodyProdiMax = 100;
+
+export const createStudentBodyFakultasMin = 2;
+export const createStudentBodyFakultasMax = 100;
+
+export const createStudentBodySemesterDefault = 1;
+export const createStudentBodySemesterMax = 14;
+
+export const createStudentBodyAngkatanMin = 2000;
+export const createStudentBodyAngkatanMax = 2100;
+
+export const createStudentBodyPhoneMax = 20;
+
+export const createStudentBodyAddressMax = 500;
+
+export const CreateStudentBody = zod.object({
+  userId: zod
+    .string()
+    .uuid()
+    .optional()
+    .describe("Opsional — link ke user yang sudah ada"),
+  nim: zod.string().min(createStudentBodyNimMin).max(createStudentBodyNimMax),
+  prodi: zod
+    .string()
+    .min(createStudentBodyProdiMin)
+    .max(createStudentBodyProdiMax),
+  fakultas: zod
+    .string()
+    .min(createStudentBodyFakultasMin)
+    .max(createStudentBodyFakultasMax),
+  semester: zod
+    .number()
+    .min(1)
+    .max(createStudentBodySemesterMax)
+    .default(createStudentBodySemesterDefault),
+  angkatan: zod
+    .number()
+    .min(createStudentBodyAngkatanMin)
+    .max(createStudentBodyAngkatanMax),
+  phone: zod.string().max(createStudentBodyPhoneMax).optional(),
+  address: zod.string().max(createStudentBodyAddressMax).optional(),
 });
 
 /**

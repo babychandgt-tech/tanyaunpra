@@ -78,7 +78,11 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
 
     const [schedules, totalResult] = await Promise.all([
       buildScheduleQuery(where).limit(limit).offset(offset),
-      db.select({ total: count() }).from(schedulesTable).where(where),
+      db
+        .select({ total: count() })
+        .from(schedulesTable)
+        .leftJoin(coursesTable, eq(coursesTable.id, schedulesTable.courseId))
+        .where(where),
     ]);
 
     res.json({ schedules, pagination: { page, limit, total: totalResult[0]?.total ?? 0, totalPages: Math.ceil((totalResult[0]?.total ?? 0) / limit) } });

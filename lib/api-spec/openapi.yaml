@@ -933,6 +933,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LecturersResponse"
+    post:
+      operationId: createLecturer
+      tags: [lecturers]
+      summary: Tambah data dosen baru (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLecturerRequest"
+      responses:
+        "201":
+          description: Data dosen berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturerResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: NIDN sudah terdaftar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /lecturers/{id}:
     get:
@@ -1024,7 +1061,7 @@ paths:
     get:
       operationId: listStudents
       tags: [students]
-      summary: List mahasiswa (admin & dosen)
+      summary: List mahasiswa (admin & dosen — dosen hanya melihat mahasiswa di prodinya)
       security:
         - bearerAuth: []
       parameters:
@@ -1055,6 +1092,43 @@ paths:
                 $ref: "#/components/schemas/StudentsResponse"
         "403":
           description: Akses ditolak (mahasiswa tidak bisa list semua)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createStudent
+      tags: [students]
+      summary: Tambah data mahasiswa baru (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStudentRequest"
+      responses:
+        "201":
+          description: Data mahasiswa berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Akses ditolak
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: NIM sudah terdaftar
           content:
             application/json:
               schema:
@@ -2231,6 +2305,36 @@ components:
           $ref: "#/components/schemas/Pagination"
       required: [lecturers, pagination]
 
+    CreateLecturerRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Opsional — link ke user yang sudah ada
+        nidn:
+          type: string
+          minLength: 2
+          maxLength: 20
+        prodi:
+          type: string
+          minLength: 2
+          maxLength: 100
+        fakultas:
+          type: string
+          minLength: 2
+          maxLength: 100
+        jabatan:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+        expertise:
+          type: string
+          maxLength: 500
+      required: [nidn, prodi, fakultas]
+
     UpdateLecturerRequest:
       type: object
       properties:
@@ -2300,6 +2404,42 @@ components:
         pagination:
           $ref: "#/components/schemas/Pagination"
       required: [students, pagination]
+
+    CreateStudentRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Opsional — link ke user yang sudah ada
+        nim:
+          type: string
+          minLength: 2
+          maxLength: 20
+        prodi:
+          type: string
+          minLength: 2
+          maxLength: 100
+        fakultas:
+          type: string
+          minLength: 2
+          maxLength: 100
+        semester:
+          type: integer
+          minimum: 1
+          maximum: 14
+          default: 1
+        angkatan:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 500
+      required: [nim, prodi, fakultas, angkatan]
 
     UpdateStudentRequest:
       type: object

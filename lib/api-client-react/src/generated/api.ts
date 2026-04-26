@@ -35,7 +35,9 @@ import type {
   CreateCalendarEventRequest,
   CreateCourseRequest,
   CreateIntentRequest,
+  CreateLecturerRequest,
   CreateScheduleRequest,
+  CreateStudentRequest,
   DashboardActivityResponse,
   DashboardSummaryResponse,
   ErrorResponse,
@@ -2770,6 +2772,92 @@ export function useListLecturers<
 }
 
 /**
+ * @summary Tambah data dosen baru (admin only)
+ */
+export const getCreateLecturerUrl = () => {
+  return `/api/lecturers`;
+};
+
+export const createLecturer = async (
+  createLecturerRequest: CreateLecturerRequest,
+  options?: RequestInit,
+): Promise<LecturerResponse> => {
+  return customFetch<LecturerResponse>(getCreateLecturerUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createLecturerRequest),
+  });
+};
+
+export const getCreateLecturerMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLecturer>>,
+    TError,
+    { data: BodyType<CreateLecturerRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLecturer>>,
+  TError,
+  { data: BodyType<CreateLecturerRequest> },
+  TContext
+> => {
+  const mutationKey = ["createLecturer"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLecturer>>,
+    { data: BodyType<CreateLecturerRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLecturer(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLecturerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLecturer>>
+>;
+export type CreateLecturerMutationBody = BodyType<CreateLecturerRequest>;
+export type CreateLecturerMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tambah data dosen baru (admin only)
+ */
+export const useCreateLecturer = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLecturer>>,
+    TError,
+    { data: BodyType<CreateLecturerRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLecturer>>,
+  TError,
+  { data: BodyType<CreateLecturerRequest> },
+  TContext
+> => {
+  return useMutation(getCreateLecturerMutationOptions(options));
+};
+
+/**
  * @summary Detail data dosen (semua role)
  */
 export const getGetLecturerUrl = (id: string) => {
@@ -3028,7 +3116,7 @@ export const useDeleteLecturer = <
 };
 
 /**
- * @summary List mahasiswa (admin & dosen)
+ * @summary List mahasiswa (admin & dosen — dosen hanya melihat mahasiswa di prodinya)
  */
 export const getListStudentsUrl = (params?: ListStudentsParams) => {
   const normalizedParams = new URLSearchParams();
@@ -3095,7 +3183,7 @@ export type ListStudentsQueryResult = NonNullable<
 export type ListStudentsQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary List mahasiswa (admin & dosen)
+ * @summary List mahasiswa (admin & dosen — dosen hanya melihat mahasiswa di prodinya)
  */
 
 export function useListStudents<
@@ -3120,6 +3208,92 @@ export function useListStudents<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Tambah data mahasiswa baru (admin only)
+ */
+export const getCreateStudentUrl = () => {
+  return `/api/students`;
+};
+
+export const createStudent = async (
+  createStudentRequest: CreateStudentRequest,
+  options?: RequestInit,
+): Promise<StudentResponse> => {
+  return customFetch<StudentResponse>(getCreateStudentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createStudentRequest),
+  });
+};
+
+export const getCreateStudentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStudent>>,
+    TError,
+    { data: BodyType<CreateStudentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStudent>>,
+  TError,
+  { data: BodyType<CreateStudentRequest> },
+  TContext
+> => {
+  const mutationKey = ["createStudent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStudent>>,
+    { data: BodyType<CreateStudentRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createStudent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStudentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStudent>>
+>;
+export type CreateStudentMutationBody = BodyType<CreateStudentRequest>;
+export type CreateStudentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tambah data mahasiswa baru (admin only)
+ */
+export const useCreateStudent = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStudent>>,
+    TError,
+    { data: BodyType<CreateStudentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStudent>>,
+  TError,
+  { data: BodyType<CreateStudentRequest> },
+  TContext
+> => {
+  return useMutation(getCreateStudentMutationOptions(options));
+};
 
 /**
  * @summary Profil mahasiswa yang sedang login (mahasiswa only)

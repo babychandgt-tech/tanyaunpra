@@ -43,6 +43,33 @@ const lecturerWithUser = (where?: SQL) =>
     .leftJoin(usersTable, eq(usersTable.id, lecturersTable.userId))
     .where(where);
 
+router.post("/lecturers", requireAuth(["admin"]), async (req: Request, res: Response) => {
+  const createSchema = z.object({
+    userId: z.string().uuid().optional(),
+    nidn: z.string().min(2).max(20),
+    prodi: z.string().min(2).max(100),
+    fakultas: z.string().min(2).max(100),
+    jabatan: z.string().max(100).optional(),
+    phone: z.string().max(20).optional(),
+    expertise: z.string().max(500).optional(),
+  });
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
+    return;
+  }
+  try {
+    const [existing] = await db.select({ id: lecturersTable.id }).from(lecturersTable).where(eq(lecturersTable.nidn, parsed.data.nidn));
+    if (existing) { res.status(409).json({ error: "NIDN sudah terdaftar" }); return; }
+
+    const [lecturer] = await db.insert(lecturersTable).values(parsed.data as typeof lecturersTable.$inferInsert).returning();
+    res.status(201).json({ lecturer });
+  } catch (err) {
+    req.log.error({ err }, "Create lecturer error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/lecturers", requireAuth(), async (req: Request, res: Response) => {
   const parsed = listSchema.safeParse(req.query);
   if (!parsed.success) {

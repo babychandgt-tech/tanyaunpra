@@ -142,7 +142,7 @@ router.put("/courses/:id", requireAuth(["admin", "dosen"]), async (req: Request,
   }
 });
 
-router.delete("/courses/:id", requireAuth(["admin"]), async (req: Request, res: Response) => {
+router.delete("/courses/:id", requireAuth(["admin", "dosen"]), async (req: Request, res: Response) => {
   try {
     const [deleted] = await db.delete(coursesTable).where(eq(coursesTable.id, String(req.params.id))).returning({ id: coursesTable.id });
     if (!deleted) { res.status(404).json({ error: "Mata kuliah tidak ditemukan" }); return; }

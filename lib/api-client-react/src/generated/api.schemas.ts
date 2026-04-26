@@ -493,6 +493,32 @@ export interface LecturersResponse {
   pagination: Pagination;
 }
 
+export interface CreateLecturerRequest {
+  /** Opsional — link ke user yang sudah ada */
+  userId?: string;
+  /**
+   * @minLength 2
+   * @maxLength 20
+   */
+  nidn: string;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  prodi: string;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  fakultas: string;
+  /** @maxLength 100 */
+  jabatan?: string;
+  /** @maxLength 20 */
+  phone?: string;
+  /** @maxLength 500 */
+  expertise?: string;
+}
+
 export interface UpdateLecturerRequest {
   prodi?: string;
   fakultas?: string;
@@ -524,6 +550,40 @@ export interface StudentResponse {
 export interface StudentsResponse {
   students: Student[];
   pagination: Pagination;
+}
+
+export interface CreateStudentRequest {
+  /** Opsional — link ke user yang sudah ada */
+  userId?: string;
+  /**
+   * @minLength 2
+   * @maxLength 20
+   */
+  nim: string;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  prodi: string;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  fakultas: string;
+  /**
+   * @minimum 1
+   * @maximum 14
+   */
+  semester?: number;
+  /**
+   * @minimum 2000
+   * @maximum 2100
+   */
+  angkatan: number;
+  /** @maxLength 20 */
+  phone?: string;
+  /** @maxLength 500 */
+  address?: string;
 }
 
 export interface UpdateStudentRequest {

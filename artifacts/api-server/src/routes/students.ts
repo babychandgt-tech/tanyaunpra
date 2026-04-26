@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
-import { studentsTable, usersTable } from "@workspace/db";
+import { studentsTable, usersTable, lecturersTable } from "@workspace/db";
 import { eq, ilike, and, SQL, count } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
@@ -14,6 +14,17 @@ const listSchema = z.object({
   fakultas: z.string().optional(),
   angkatan: z.coerce.number().int().optional(),
   search: z.string().optional(),
+});
+
+const createSchema = z.object({
+  userId: z.string().uuid().optional(),
+  nim: z.string().min(2).max(20),
+  prodi: z.string().min(2).max(100),
+  fakultas: z.string().min(2).max(100),
+  semester: z.number().int().min(1).max(14).default(1),
+  angkatan: z.number().int().min(2000).max(2100),
+  phone: z.string().max(20).optional(),
+  address: z.string().max(500).optional(),
 });
 
 const updateSchema = z.object({
@@ -45,6 +56,24 @@ const studentWithUser = (where?: SQL) =>
     .leftJoin(usersTable, eq(usersTable.id, studentsTable.userId))
     .where(where);
 
+router.post("/students", requireAuth(["admin"]), async (req: Request, res: Response) => {
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
+    return;
+  }
+  try {
+    const [existing] = await db.select({ id: studentsTable.id }).from(studentsTable).where(eq(studentsTable.nim, parsed.data.nim));
+    if (existing) { res.status(409).json({ error: "NIM sudah terdaftar" }); return; }
+
+    const [student] = await db.insert(studentsTable).values(parsed.data as typeof studentsTable.$inferInsert).returning();
+    res.status(201).json({ student });
+  } catch (err) {
+    req.log.error({ err }, "Create student error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/students", requireAuth(["admin", "dosen"]), async (req: Request, res: Response) => {
   const parsed = listSchema.safeParse(req.query);
   if (!parsed.success) {
@@ -56,6 +85,17 @@ router.get("/students", requireAuth(["admin", "dosen"]), async (req: Request, re
 
   try {
     const conds: SQL[] = [];
+
+    if (req.user!.role === "dosen") {
+      const [dosenProfile] = await db
+        .select({ prodi: lecturersTable.prodi })
+        .from(lecturersTable)
+        .where(eq(lecturersTable.userId, req.user!.userId));
+      if (dosenProfile) {
+        conds.push(eq(studentsTable.prodi, dosenProfile.prodi));
+      }
+    }
+
     if (prodi) conds.push(ilike(studentsTable.prodi, `%${prodi}%`));
     if (fakultas) conds.push(ilike(studentsTable.fakultas, `%${fakultas}%`));
     if (angkatan) conds.push(eq(studentsTable.angkatan, angkatan));
@@ -89,6 +129,18 @@ router.get("/students/:id", requireAuth(["admin", "dosen"]), async (req: Request
   try {
     const rows = await studentWithUser(eq(studentsTable.id, String(req.params.id)));
     if (!rows[0]) { res.status(404).json({ error: "Mahasiswa tidak ditemukan" }); return; }
+
+    if (req.user!.role === "dosen") {
+      const [dosenProfile] = await db
+        .select({ prodi: lecturersTable.prodi })
+        .from(lecturersTable)
+        .where(eq(lecturersTable.userId, req.user!.userId));
+      if (dosenProfile && rows[0].prodi !== dosenProfile.prodi) {
+        res.status(403).json({ error: "Akses ditolak. Mahasiswa bukan dari prodi Anda." });
+        return;
+      }
+    }
+
     res.json({ student: rows[0] });
   } catch (err) {
     req.log.error({ err }, "Get student error");
@@ -97,7 +149,10 @@ router.get("/students/:id", requireAuth(["admin", "dosen"]), async (req: Request
 });
 
 router.put("/students/me", requireAuth(["mahasiswa"]), async (req: Request, res: Response) => {
-  const parsed = updateSchema.safeParse(req.body);
+  const parsed = z.object({
+    phone: z.string().max(20).optional(),
+    address: z.string().max(500).optional(),
+  }).safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
@@ -106,8 +161,7 @@ router.put("/students/me", requireAuth(["mahasiswa"]), async (req: Request, res:
     const [target] = await db.select({ id: studentsTable.id }).from(studentsTable).where(eq(studentsTable.userId, req.user!.userId));
     if (!target) { res.status(404).json({ error: "Data mahasiswa tidak ditemukan" }); return; }
 
-    const { phone, address } = parsed.data;
-    const [updated] = await db.update(studentsTable).set({ phone, address, updatedAt: new Date() }).where(eq(studentsTable.id, target.id)).returning();
+    const [updated] = await db.update(studentsTable).set({ ...parsed.data, updatedAt: new Date() }).where(eq(studentsTable.id, target.id)).returning();
     res.json({ student: updated });
   } catch (err) {
     req.log.error({ err }, "Update my student error");
