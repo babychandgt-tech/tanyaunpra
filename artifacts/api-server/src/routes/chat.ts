@@ -71,7 +71,12 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
     let confidence: number;
 
     if (intentResult.matched && intentResult.answer) {
-      answer = intentResult.answer;
+      try {
+        const qwenResult = await askQwen(question, history, undefined, intentResult.answer);
+        answer = qwenResult.answer;
+      } catch {
+        answer = intentResult.answer;
+      }
       answerSource = "intent";
       confidence = intentResult.confidence;
     } else {
