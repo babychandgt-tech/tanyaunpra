@@ -143,6 +143,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
       .optional(),
     search: z.string().optional(),
     userSearch: z.string().optional(),
+    needsReview: z.coerce.boolean().optional(),
   });
 
   const parsed = pageSchema.safeParse(req.query);
@@ -151,7 +152,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
     return;
   }
 
-  const { page, limit, date, search, userSearch } = parsed.data;
+  const { page, limit, date, search, userSearch, needsReview } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -167,6 +168,11 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
     if (search) {
       conditions.push(ilike(chatSessionsTable.deviceInfo, `%${search}%`));
     }
+    if (needsReview) {
+      conditions.push(
+        sql`EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.session_id = ${chatSessionsTable.id} AND cm.needs_review = true)`
+      );
+    }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -179,6 +185,7 @@ router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: R
           lastMessageAt: chatSessionsTable.lastMessageAt,
           createdAt: chatSessionsTable.createdAt,
           messageCount: count(chatMessagesTable.id),
+          reviewCount: sql<number>`cast(count(case when ${chatMessagesTable.needsReview} = true then 1 end) as integer)`,
           userName: usersTable.name,
           userEmail: usersTable.email,
         })

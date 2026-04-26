@@ -360,6 +360,11 @@ paths:
           schema:
             type: string
           description: Filter berdasarkan nama atau email pengguna terdaftar
+        - name: needsReview
+          in: query
+          schema:
+            type: boolean
+          description: Jika true, hanya tampilkan sesi yang memiliki pesan butuh review
       responses:
         "200":
           description: Daftar sesi percakapan
@@ -2018,6 +2023,9 @@ components:
           format: date-time
         messageCount:
           type: integer
+        reviewCount:
+          type: integer
+          description: Jumlah pesan dalam sesi ini yang perlu di-review
         userName:
           type: string
           nullable: true
@@ -2026,7 +2034,7 @@ components:
           type: string
           nullable: true
           description: Email pengguna terdaftar (jika sesi terhubung ke akun)
-      required: [id, lastMessageAt, createdAt, messageCount]
+      required: [id, lastMessageAt, createdAt, messageCount, reviewCount]
 
     ChatMessage:
       type: object

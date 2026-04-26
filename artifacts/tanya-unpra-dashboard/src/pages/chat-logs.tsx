@@ -17,6 +17,7 @@ export default function ChatLogs() {
   const [date, setDate] = useState<string>("");
   const [search, setSearch] = useState<string>("");
   const [userSearch, setUserSearch] = useState<string>("");
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   
   const { data: stats } = useGetChatStats();
@@ -25,6 +26,7 @@ export default function ChatLogs() {
     date: date || undefined,
     search: search || undefined,
     userSearch: userSearch || undefined,
+    needsReview: flaggedOnly || undefined,
   });
 
   return (
@@ -47,14 +49,20 @@ export default function ChatLogs() {
             <p className="text-xs text-muted-foreground">{stats?.today.messages || 0} messages today</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-colors ${flaggedOnly ? "border-destructive bg-destructive/5" : "hover:border-destructive/50"}`}
+          onClick={() => { setFlaggedOnly(f => !f); setPage(1); }}
+          title="Klik untuk filter sesi yang perlu review"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Needs Review</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertTriangle className={`h-4 w-4 ${flaggedOnly ? "text-destructive" : "text-destructive"}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">{stats?.needsReview || 0}</div>
-            <p className="text-xs text-muted-foreground">Messages flagged for review</p>
+            <p className="text-xs text-muted-foreground">
+              {flaggedOnly ? "Menampilkan sesi bermasalah ✓" : "Klik untuk filter sesi bermasalah"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -123,25 +131,26 @@ export default function ChatLogs() {
                   <TableHead>Time</TableHead>
                   <TableHead>Device / User</TableHead>
                   <TableHead>Messages</TableHead>
+                  <TableHead>Review</TableHead>
                   <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
                 ) : sessionsData?.sessions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                      No chat sessions found.
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      {flaggedOnly ? "Tidak ada sesi dengan pesan yang perlu review." : "No chat sessions found."}
                     </TableCell>
                   </TableRow>
                 ) : (
                   sessionsData?.sessions.map((session) => (
-                    <TableRow key={session.id}>
+                    <TableRow key={session.id} className={session.reviewCount > 0 ? "bg-destructive/5" : ""}>
                       <TableCell className="font-medium whitespace-nowrap">
                         {format(new Date(session.lastMessageAt), "dd MMM yyyy, HH:mm")}
                       </TableCell>
@@ -157,6 +166,16 @@ export default function ChatLogs() {
                         </div>
                       </TableCell>
                       <TableCell>{session.messageCount}</TableCell>
+                      <TableCell>
+                        {session.reviewCount > 0 ? (
+                          <Badge variant="destructive" className="gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {session.reviewCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" onClick={() => setSelectedSessionId(session.id)}>
                           View Details

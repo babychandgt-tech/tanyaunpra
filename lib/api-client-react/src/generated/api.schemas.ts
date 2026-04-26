@@ -176,6 +176,8 @@ export interface ChatSession {
   lastMessageAt: string;
   createdAt: string;
   messageCount: number;
+  /** Jumlah pesan dalam sesi ini yang perlu di-review */
+  reviewCount: number;
   /** Nama pengguna terdaftar (jika sesi terhubung ke akun) */
   userName?: string | null;
   /** Email pengguna terdaftar (jika sesi terhubung ke akun) */
@@ -904,6 +906,10 @@ export type ListChatSessionsParams = {
    * Filter berdasarkan nama atau email pengguna terdaftar
    */
   userSearch?: string;
+  /**
+   * Jika true, hanya tampilkan sesi yang memiliki pesan butuh review
+   */
+  needsReview?: boolean;
 };
 
 export type FlagChatMessageBody = {

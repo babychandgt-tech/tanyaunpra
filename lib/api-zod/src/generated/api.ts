@@ -222,6 +222,12 @@ export const ListChatSessionsQueryParams = zod.object({
     .string()
     .optional()
     .describe("Filter berdasarkan nama atau email pengguna terdaftar"),
+  needsReview: zod.coerce
+    .boolean()
+    .optional()
+    .describe(
+      "Jika true, hanya tampilkan sesi yang memiliki pesan butuh review",
+    ),
 });
 
 export const ListChatSessionsResponse = zod.object({
@@ -233,6 +239,9 @@ export const ListChatSessionsResponse = zod.object({
       lastMessageAt: zod.coerce.date(),
       createdAt: zod.coerce.date(),
       messageCount: zod.number(),
+      reviewCount: zod
+        .number()
+        .describe("Jumlah pesan dalam sesi ini yang perlu di-review"),
       userName: zod
         .string()
         .nullish()
@@ -266,6 +275,9 @@ export const GetChatSessionResponse = zod.object({
     lastMessageAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
     messageCount: zod.number(),
+    reviewCount: zod
+      .number()
+      .describe("Jumlah pesan dalam sesi ini yang perlu di-review"),
     userName: zod
       .string()
       .nullish()
