@@ -28,20 +28,50 @@ interface NavItem {
   superAdminOnly?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin"] },
-  { title: "Chat Logs", href: "/chat-logs", icon: MessageSquare, roles: ["admin"] },
-  { title: "AI Intents", href: "/intents", icon: BrainCircuit, roles: ["admin"] },
-  { title: "Jadwal Kuliah", href: "/jadwal", icon: Calendar, roles: ["admin", "dosen"] },
-  { title: "Kalender Akademik", href: "/kalender", icon: CalendarDays, roles: ["admin", "dosen", "mahasiswa"] },
-  { title: "Test Chatbot", href: "/chat-test", icon: Bot, roles: ["admin", "dosen", "mahasiswa"] },
-  { title: "Pengumuman", href: "/pengumuman", icon: Bell, roles: ["admin", "dosen"] },
-  { title: "Data Mahasiswa", href: "/mahasiswa", icon: GraduationCap, roles: ["admin", "dosen"] },
-  { title: "Data Dosen", href: "/dosen", icon: Users, roles: ["admin"] },
-  { title: "Mata Kuliah", href: "/matkul", icon: BookOpen, roles: ["admin", "dosen"] },
-  { title: "API Keys", href: "/settings/api-keys", icon: Key, roles: ["admin"] },
-  { title: "Manajemen Admin", href: "/users", icon: Users, roles: ["admin"], superAdminOnly: true },
-  { title: "Dokumentasi API", href: "/api-docs", icon: FileText, roles: ["admin"], superAdminOnly: true },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Utama",
+    items: [
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin"] },
+      { title: "Test Chatbot", href: "/chat-test", icon: Bot, roles: ["admin", "dosen", "mahasiswa"] },
+    ],
+  },
+  {
+    label: "AI & Chatbot",
+    items: [
+      { title: "Chat Logs", href: "/chat-logs", icon: MessageSquare, roles: ["admin"] },
+      { title: "AI Intents", href: "/intents", icon: BrainCircuit, roles: ["admin"] },
+    ],
+  },
+  {
+    label: "Akademik",
+    items: [
+      { title: "Jadwal Kuliah", href: "/jadwal", icon: Calendar, roles: ["admin", "dosen"] },
+      { title: "Kalender Akademik", href: "/kalender", icon: CalendarDays, roles: ["admin", "dosen", "mahasiswa"] },
+      { title: "Pengumuman", href: "/pengumuman", icon: Bell, roles: ["admin", "dosen"] },
+      { title: "Mata Kuliah", href: "/matkul", icon: BookOpen, roles: ["admin", "dosen"] },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { title: "Data Mahasiswa", href: "/mahasiswa", icon: GraduationCap, roles: ["admin", "dosen"] },
+      { title: "Data Dosen", href: "/dosen", icon: Users, roles: ["admin"] },
+    ],
+  },
+  {
+    label: "Pengaturan",
+    items: [
+      { title: "API Keys", href: "/settings/api-keys", icon: Key, roles: ["admin"] },
+      { title: "Manajemen Admin", href: "/users", icon: Users, roles: ["admin"], superAdminOnly: true },
+      { title: "Dokumentasi API", href: "/api-docs", icon: FileText, roles: ["admin"], superAdminOnly: true },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -50,32 +80,49 @@ export function Sidebar() {
 
   if (!user) return null;
 
-  const filteredNavItems = navItems.filter(item =>
-    item.roles.includes(user.role) && (!item.superAdminOnly || user.isSuperAdmin)
-  );
+  const filteredGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          item.roles.includes(user.role) &&
+          (!item.superAdminOnly || user.isSuperAdmin)
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const NavLinks = () => (
-    <div className="space-y-1 py-4">
-      {filteredNavItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = location === item.href || location.startsWith(`${item.href}/`);
-        
-        return (
-          <Link key={item.href} href={item.href}>
-            <span
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.title}
-            </span>
-          </Link>
-        );
-      })}
+    <div className="py-2 space-y-4">
+      {filteredGroups.map((group) => (
+        <div key={group.label}>
+          <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            {group.label}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                location === item.href ||
+                location.startsWith(`${item.href}/`);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <span
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                    data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.title}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 
