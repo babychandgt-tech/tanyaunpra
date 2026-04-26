@@ -264,6 +264,43 @@ router.get("/chat/sessions/:id", requireAuth(["admin"]), async (req: Request, re
   }
 });
 
+router.post("/chat/messages/:id/report", requireApiKeyOrAuth, async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const schema = z.object({ reason: z.string().max(500).optional() });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Data tidak valid", details: parsed.error.flatten().fieldErrors });
+    return;
+  }
+
+  try {
+    const [msg] = await db
+      .select({ id: chatMessagesTable.id, role: chatMessagesTable.role })
+      .from(chatMessagesTable)
+      .where(eq(chatMessagesTable.id, id))
+      .limit(1);
+
+    if (!msg) {
+      res.status(404).json({ error: "Pesan tidak ditemukan" });
+      return;
+    }
+    if (msg.role !== "assistant") {
+      res.status(400).json({ error: "Hanya pesan dari AI yang bisa dilaporkan" });
+      return;
+    }
+
+    await db
+      .update(chatMessagesTable)
+      .set({ needsReview: true, reportReason: parsed.data.reason ?? null })
+      .where(eq(chatMessagesTable.id, id));
+
+    res.json({ message: "Laporan berhasil dikirim. Terima kasih atas masukanmu!" });
+  } catch (err) {
+    req.log.error({ err }, "Report message error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.patch("/chat/messages/:id/flag", requireAuth(["admin"]), async (req: Request, res: Response) => {
   const id = String(req.params.id);
   const schema = z.object({ needsReview: z.boolean() });

@@ -284,6 +284,10 @@ export const GetChatSessionResponse = zod.object({
       answerSource: zod.enum(["intent", "ai", "fallback"]).nullish(),
       confidence: zod.number().nullish(),
       needsReview: zod.boolean(),
+      reportReason: zod
+        .string()
+        .nullish()
+        .describe("Alasan pelaporan dari mahasiswa (jika ada)"),
       createdAt: zod.coerce.date(),
     }),
   ),
@@ -301,6 +305,28 @@ export const FlagChatMessageBody = zod.object({
 });
 
 export const FlagChatMessageResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * Digunakan oleh aplikasi Android untuk melaporkan jawaban AI yang dianggap tidak akurat atau menyesatkan. Pesan yang dilaporkan otomatis masuk antrian review admin.
+ * @summary Laporkan jawaban AI (mahasiswa / API key)
+ */
+export const ReportChatMessageParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const reportChatMessageBodyReasonMax = 500;
+
+export const ReportChatMessageBody = zod.object({
+  reason: zod
+    .string()
+    .max(reportChatMessageBodyReasonMax)
+    .optional()
+    .describe("Alasan pelaporan (opsional)"),
+});
+
+export const ReportChatMessageResponse = zod.object({
   message: zod.string(),
 });
 
@@ -1506,6 +1532,7 @@ export const GetDashboardActivityResponse = zod.object({
       answerSource: zod.string().nullish(),
       confidence: zod.number().nullish(),
       needsReview: zod.boolean(),
+      reportReason: zod.string().nullish(),
       createdAt: zod.coerce.date(),
     }),
   ),

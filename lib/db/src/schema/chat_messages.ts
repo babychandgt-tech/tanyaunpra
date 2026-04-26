@@ -14,6 +14,7 @@ export const chatMessagesTable = pgTable("chat_messages", {
   answerSource: answerSourceEnum("answer_source"),
   confidence: real("confidence"),
   needsReview: boolean("needs_review").notNull().default(false),
+  reportReason: text("report_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

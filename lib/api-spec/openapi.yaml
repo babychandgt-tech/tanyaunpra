@@ -438,6 +438,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /chat/messages/{id}/report:
+    post:
+      operationId: reportChatMessage
+      tags: [chat]
+      summary: Laporkan jawaban AI (mahasiswa / API key)
+      description: Digunakan oleh aplikasi Android untuk melaporkan jawaban AI yang dianggap tidak akurat atau menyesatkan. Pesan yang dilaporkan otomatis masuk antrian review admin.
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Alasan pelaporan (opsional)
+                  example: "Jawaban tidak akurat, jadwal yang disebutkan sudah berubah"
+      responses:
+        "200":
+          description: Laporan berhasil dikirim
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Hanya pesan AI yang bisa dilaporkan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Pesan tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /chat/stats:
     get:
       operationId: getChatStats
@@ -2002,6 +2049,10 @@ components:
           nullable: true
         needsReview:
           type: boolean
+        reportReason:
+          type: string
+          nullable: true
+          description: Alasan pelaporan dari mahasiswa (jika ada)
         createdAt:
           type: string
           format: date-time
@@ -2882,6 +2933,9 @@ components:
                 nullable: true
               needsReview:
                 type: boolean
+              reportReason:
+                type: string
+                nullable: true
               createdAt:
                 type: string
                 format: date-time

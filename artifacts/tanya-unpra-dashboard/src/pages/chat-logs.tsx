@@ -284,6 +284,11 @@ function ChatSessionDetailModal({ sessionId, onClose }: { sessionId: string, onC
                       >
                         <AlertTriangle className="h-3 w-3" />
                       </Button>
+                      {msg.needsReview && msg.reportReason && (
+                        <span className="text-[10px] text-destructive italic max-w-[160px] truncate" title={msg.reportReason}>
+                          "{msg.reportReason}"
+                        </span>
+                      )}
                     </>
                   )}
                 </div>

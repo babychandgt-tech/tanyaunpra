@@ -208,6 +208,8 @@ export interface ChatMessage {
   answerSource?: ChatMessageAnswerSource;
   confidence?: number | null;
   needsReview: boolean;
+  /** Alasan pelaporan dari mahasiswa (jika ada) */
+  reportReason?: string | null;
   createdAt: string;
 }
 
@@ -815,6 +817,7 @@ export type DashboardActivityResponseRecentChatMessagesItem = {
   answerSource?: string | null;
   confidence?: number | null;
   needsReview: boolean;
+  reportReason?: string | null;
   createdAt: string;
 };
 
@@ -905,6 +908,14 @@ export type ListChatSessionsParams = {
 
 export type FlagChatMessageBody = {
   needsReview: boolean;
+};
+
+export type ReportChatMessageBody = {
+  /**
+   * Alasan pelaporan (opsional)
+   * @maxLength 500
+   */
+  reason?: string;
 };
 
 export type ListIntentsParams = {

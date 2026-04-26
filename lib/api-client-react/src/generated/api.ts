@@ -65,6 +65,7 @@ import type {
   PingResponse,
   RefreshTokenRequest,
   RegisterRequest,
+  ReportChatMessageBody,
   ScheduleResponse,
   SchedulesResponse,
   StudentResponse,
@@ -1294,6 +1295,94 @@ export const useFlagChatMessage = <
   TContext
 > => {
   return useMutation(getFlagChatMessageMutationOptions(options));
+};
+
+/**
+ * Digunakan oleh aplikasi Android untuk melaporkan jawaban AI yang dianggap tidak akurat atau menyesatkan. Pesan yang dilaporkan otomatis masuk antrian review admin.
+ * @summary Laporkan jawaban AI (mahasiswa / API key)
+ */
+export const getReportChatMessageUrl = (id: string) => {
+  return `/api/chat/messages/${id}/report`;
+};
+
+export const reportChatMessage = async (
+  id: string,
+  reportChatMessageBody?: ReportChatMessageBody,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getReportChatMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reportChatMessageBody),
+  });
+};
+
+export const getReportChatMessageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reportChatMessage>>,
+    TError,
+    { id: string; data: BodyType<ReportChatMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reportChatMessage>>,
+  TError,
+  { id: string; data: BodyType<ReportChatMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["reportChatMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reportChatMessage>>,
+    { id: string; data: BodyType<ReportChatMessageBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return reportChatMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReportChatMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reportChatMessage>>
+>;
+export type ReportChatMessageMutationBody = BodyType<ReportChatMessageBody>;
+export type ReportChatMessageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Laporkan jawaban AI (mahasiswa / API key)
+ */
+export const useReportChatMessage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reportChatMessage>>,
+    TError,
+    { id: string; data: BodyType<ReportChatMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof reportChatMessage>>,
+  TError,
+  { id: string; data: BodyType<ReportChatMessageBody> },
+  TContext
+> => {
+  return useMutation(getReportChatMessageMutationOptions(options));
 };
 
 /**
