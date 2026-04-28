@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
+import fs from "fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -32,15 +33,19 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-if (process.env.NODE_ENV === "production") {
-  const staticPath = path.resolve(
-    process.cwd(),
-    "artifacts/tanya-unpra-dashboard/dist/public"
-  );
+const staticPath = path.resolve(
+  process.cwd(),
+  "artifacts/tanya-unpra-dashboard/dist/public"
+);
+
+if (fs.existsSync(path.join(staticPath, "index.html"))) {
+  logger.info({ staticPath }, "Serving dashboard static files");
   app.use(express.static(staticPath));
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
+} else {
+  logger.info({ staticPath }, "Dashboard static files not found — skipping static serve");
 }
 
 export default app;
