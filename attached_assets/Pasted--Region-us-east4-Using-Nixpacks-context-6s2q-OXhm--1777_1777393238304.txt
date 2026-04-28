@@ -1,0 +1,68 @@
+ 
+[Region: us-east4]
+==============
+Using Nixpacks
+==============
+
+context: 6s2q-OXhm
+╔══════════════════════════════ Nixpacks v1.38.0 ══════════════════════════════╗
+║ setup      │ nodejs_20, pnpm-9_x                                             ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ install    │ pnpm i --frozen-lockfile                                        ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ build      │ pnpm --filter @workspace/tanya-unpra-dashboard run build &&     ║
+║            │ pnpm --filter @workspace/api-server run build                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ start      │ node artifacts/api-server/dist/index.mjs                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+120ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+417ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+35s
+61 store paths deleted, 560.94 MiB freed
+
+stage-0
+COPY . /app/.
+76ms
+
+stage-0
+RUN pnpm i --frozen-lockfile
+686ms
+Scope: all 9 workspace projects
+ ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile
+Update your lockfile using "pnpm install --no-frozen-lockfile"
+
+Dockerfile:20
+-------------------
+18 |     ENV NIXPACKS_PATH=/app/node_modules/.bin:$NIXPACKS_PATH
+19 |     COPY . /app/.
+20 | >>> RUN --mount=type=cache,id=s/3a60a59b-6ae7-4488-b9de-7913a8029717-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 pnpm i --frozen-lockfile
+21 |
+22 |     # build phase
+-------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c pnpm i --frozen-lockfile" did not complete successfully: exit code: 1
+Error: Docker build failed
