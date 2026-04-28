@@ -1798,8 +1798,7 @@ paths:
       operationId: listFakultas
       tags: [fakultas]
       summary: Daftar semua fakultas (semua role)
-      security:
-        - bearerAuth: []
+      security: []
       responses:
         "200":
           description: Daftar fakultas
@@ -1900,8 +1899,7 @@ paths:
       operationId: listProdi
       tags: [prodi]
       summary: Daftar semua program studi (semua role)
-      security:
-        - bearerAuth: []
+      security: []
       parameters:
         - name: fakultasId
           in: query
