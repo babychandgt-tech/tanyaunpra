@@ -41,7 +41,7 @@ const staticPath = path.resolve(
 if (fs.existsSync(path.join(staticPath, "index.html"))) {
   logger.info({ staticPath }, "Serving dashboard static files");
   app.use(express.static(staticPath));
-  app.get("*", (_req, res) => {
+  app.get("/{*splat}", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 } else {

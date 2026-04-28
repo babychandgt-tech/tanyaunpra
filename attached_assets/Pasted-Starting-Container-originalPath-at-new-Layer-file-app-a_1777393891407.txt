@@ -1,0 +1,73 @@
+Starting Container
+  originalPath: '*'
+}
+    at new Layer (file:///app/artifacts/api-server/dist/index.mjs:20268:68)
+file:///app/artifacts/api-server/dist/index.mjs:19933
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:20693:21)
+          throw new PathError(`Missing parameter name at index ${index}`, str3);
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:21002:26)
+Serving dashboard static files
+                ^
+    at app2.<computed> [as get] (file:///app/artifacts/api-server/dist/index.mjs:21065:26)
+    at file:///app/artifacts/api-server/dist/index.mjs:77595:7 {
+PathError [TypeError]: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+    at name2 (file:///app/artifacts/api-server/dist/index.mjs:19933:17)
+    at parse3 (file:///app/artifacts/api-server/dist/index.mjs:19947:66)
+    at pathToRegexp (file:///app/artifacts/api-server/dist/index.mjs:20089:58)
+    at Object.match (file:///app/artifacts/api-server/dist/index.mjs:20059:32)
+    at matcher (file:///app/artifacts/api-server/dist/index.mjs:20261:27)
+Node.js v20.18.1
+Serving dashboard static files
+file:///app/artifacts/api-server/dist/index.mjs:19933
+          throw new PathError(`Missing parameter name at index ${index}`, str3);
+                ^
+PathError [TypeError]: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+    at name2 (file:///app/artifacts/api-server/dist/index.mjs:19933:17)
+    at parse3 (file:///app/artifacts/api-server/dist/index.mjs:19947:66)
+    at pathToRegexp (file:///app/artifacts/api-server/dist/index.mjs:20089:58)
+    at Object.match (file:///app/artifacts/api-server/dist/index.mjs:20059:32)
+    at matcher (file:///app/artifacts/api-server/dist/index.mjs:20261:27)
+    at new Layer (file:///app/artifacts/api-server/dist/index.mjs:20268:68)
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:20693:21)
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:21002:26)
+    at app2.<computed> [as get] (file:///app/artifacts/api-server/dist/index.mjs:21065:26)
+    at file:///app/artifacts/api-server/dist/index.mjs:77595:7 {
+  originalPath: '*'
+}
+Node.js v20.18.1
+}
+Serving dashboard static files
+Node.js v20.18.1
+file:///app/artifacts/api-server/dist/index.mjs:19933
+          throw new PathError(`Missing parameter name at index ${index}`, str3);
+                ^
+PathError [TypeError]: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+    at name2 (file:///app/artifacts/api-server/dist/index.mjs:19933:17)
+    at parse3 (file:///app/artifacts/api-server/dist/index.mjs:19947:66)
+    at pathToRegexp (file:///app/artifacts/api-server/dist/index.mjs:20089:58)
+    at Object.match (file:///app/artifacts/api-server/dist/index.mjs:20059:32)
+    at matcher (file:///app/artifacts/api-server/dist/index.mjs:20261:27)
+    at new Layer (file:///app/artifacts/api-server/dist/index.mjs:20268:68)
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:20693:21)
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:21002:26)
+    at app2.<computed> [as get] (file:///app/artifacts/api-server/dist/index.mjs:21065:26)
+    at file:///app/artifacts/api-server/dist/index.mjs:77595:7 {
+  originalPath: '*'
+Node.js v20.18.1
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:21002:26)
+    at app2.<computed> [as get] (file:///app/artifacts/api-server/dist/index.mjs:21065:26)
+Serving dashboard static files
+    at file:///app/artifacts/api-server/dist/index.mjs:77595:7 {
+file:///app/artifacts/api-server/dist/index.mjs:19933
+  originalPath: '*'
+          throw new PathError(`Missing parameter name at index ${index}`, str3);
+}
+                ^
+PathError [TypeError]: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+    at name2 (file:///app/artifacts/api-server/dist/index.mjs:19933:17)
+    at parse3 (file:///app/artifacts/api-server/dist/index.mjs:19947:66)
+    at pathToRegexp (file:///app/artifacts/api-server/dist/index.mjs:20089:58)
+    at Object.match (file:///app/artifacts/api-server/dist/index.mjs:20059:32)
+    at matcher (file:///app/artifacts/api-server/dist/index.mjs:20261:27)
+    at new Layer (file:///app/artifacts/api-server/dist/index.mjs:20268:68)
+    at Function.route (file:///app/artifacts/api-server/dist/index.mjs:20693:21)
