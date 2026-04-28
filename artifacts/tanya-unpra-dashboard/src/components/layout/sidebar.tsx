@@ -69,7 +69,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "API Keys", href: "/settings/api-keys", icon: Key, roles: ["admin"] },
       { title: "Manajemen Admin", href: "/users", icon: Users, roles: ["admin"], superAdminOnly: true },
-      { title: "Dokumentasi API", href: "/api-docs", icon: FileText, roles: ["admin"], superAdminOnly: true },
+      { title: "Dokumentasi API", href: "/docs", icon: FileText, roles: ["admin"], superAdminOnly: true },
     ],
   },
 ];

@@ -29,7 +29,7 @@ export default function ApiDocs() {
       });
   }, []);
 
-  const baseUrl = (spec?.servers as { url: string }[] | undefined)?.[0]?.url ?? "";
+  const baseUrl = `${window.location.origin}/api`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(baseUrl).then(() => {

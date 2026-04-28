@@ -91,7 +91,7 @@ function Router() {
       <Route path="/matkul" component={() => <ProtectedRoute component={Matkul} allowedRoles={["admin", "dosen"]} />} />
       <Route path="/settings/api-keys" component={() => <ProtectedRoute component={ApiKeys} allowedRoles={["admin"]} />} />
       <Route path="/users" component={() => <ProtectedRoute component={Users} allowedRoles={["admin"]} superAdminOnly />} />
-      <Route path="/api-docs" component={() => <ProtectedRoute component={ApiDocs} allowedRoles={["admin"]} superAdminOnly />} />
+      <Route path="/docs" component={() => <ProtectedRoute component={ApiDocs} allowedRoles={["admin"]} superAdminOnly />} />
       <Route path="/chat-test" component={() => <ProtectedRoute component={ChatTest} allowedRoles={["admin", "dosen", "mahasiswa"]} />} />
 
       <Route component={NotFound} />
