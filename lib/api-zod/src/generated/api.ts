@@ -1712,3 +1712,162 @@ export const DeleteUserParams = zod.object({
 export const DeleteUserResponse = zod.object({
   message: zod.string(),
 });
+
+/**
+ * @summary Daftar semua fakultas (semua role)
+ */
+export const ListFakultasResponse = zod.object({
+  fakultas: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      name: zod.string(),
+      singkatan: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Tambah fakultas baru (admin only)
+ */
+export const createFakultasBodyNameMin = 2;
+export const createFakultasBodyNameMax = 200;
+
+export const createFakultasBodySingkatanMax = 20;
+
+export const CreateFakultasBody = zod.object({
+  name: zod
+    .string()
+    .min(createFakultasBodyNameMin)
+    .max(createFakultasBodyNameMax),
+  singkatan: zod.string().min(1).max(createFakultasBodySingkatanMax),
+});
+
+/**
+ * @summary Update fakultas (admin only)
+ */
+export const UpdateFakultasParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const updateFakultasBodyNameMin = 2;
+export const updateFakultasBodyNameMax = 200;
+
+export const updateFakultasBodySingkatanMax = 20;
+
+export const UpdateFakultasBody = zod.object({
+  name: zod
+    .string()
+    .min(updateFakultasBodyNameMin)
+    .max(updateFakultasBodyNameMax)
+    .optional(),
+  singkatan: zod.string().min(1).max(updateFakultasBodySingkatanMax).optional(),
+});
+
+export const UpdateFakultasResponse = zod.object({
+  fakultas: zod.object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    singkatan: zod.string(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus fakultas (admin only)
+ */
+export const DeleteFakultasParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteFakultasResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Daftar semua program studi (semua role)
+ */
+export const ListProdiQueryParams = zod.object({
+  fakultasId: zod.coerce
+    .string()
+    .uuid()
+    .optional()
+    .describe("Filter by fakultas ID"),
+});
+
+export const ListProdiResponse = zod.object({
+  prodi: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      name: zod.string(),
+      singkatan: zod.string(),
+      fakultasId: zod.string().uuid(),
+      fakultasName: zod.string().nullish(),
+      fakultasSingkatan: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Tambah program studi baru (admin only)
+ */
+export const createProdiBodyNameMin = 2;
+export const createProdiBodyNameMax = 200;
+
+export const createProdiBodySingkatanMax = 20;
+
+export const CreateProdiBody = zod.object({
+  name: zod.string().min(createProdiBodyNameMin).max(createProdiBodyNameMax),
+  singkatan: zod.string().min(1).max(createProdiBodySingkatanMax),
+  fakultasId: zod.string().uuid(),
+});
+
+/**
+ * @summary Update program studi (admin only)
+ */
+export const UpdateProdiParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const updateProdiBodyNameMin = 2;
+export const updateProdiBodyNameMax = 200;
+
+export const updateProdiBodySingkatanMax = 20;
+
+export const UpdateProdiBody = zod.object({
+  name: zod
+    .string()
+    .min(updateProdiBodyNameMin)
+    .max(updateProdiBodyNameMax)
+    .optional(),
+  singkatan: zod.string().min(1).max(updateProdiBodySingkatanMax).optional(),
+  fakultasId: zod.string().uuid().optional(),
+});
+
+export const UpdateProdiResponse = zod.object({
+  prodi: zod.object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    singkatan: zod.string(),
+    fakultasId: zod.string().uuid(),
+    fakultasName: zod.string().nullish(),
+    fakultasSingkatan: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus program studi (admin only)
+ */
+export const DeleteProdiParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteProdiResponse = zod.object({
+  message: zod.string(),
+});

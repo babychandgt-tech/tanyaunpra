@@ -934,6 +934,95 @@ export interface UsersListResponse {
   pagination: UsersListResponsePagination;
 }
 
+export interface Fakultas {
+  id: string;
+  name: string;
+  singkatan: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FakultasListResponse {
+  fakultas: Fakultas[];
+}
+
+export interface FakultasResponse {
+  fakultas: Fakultas;
+}
+
+export interface CreateFakultasRequest {
+  /**
+   * @minLength 2
+   * @maxLength 200
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 20
+   */
+  singkatan: string;
+}
+
+export interface UpdateFakultasRequest {
+  /**
+   * @minLength 2
+   * @maxLength 200
+   */
+  name?: string;
+  /**
+   * @minLength 1
+   * @maxLength 20
+   */
+  singkatan?: string;
+}
+
+export interface ProdiItem {
+  id: string;
+  name: string;
+  singkatan: string;
+  fakultasId: string;
+  fakultasName?: string | null;
+  fakultasSingkatan?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProdiListResponse {
+  prodi: ProdiItem[];
+}
+
+export interface ProdiResponse {
+  prodi: ProdiItem;
+}
+
+export interface CreateProdiRequest {
+  /**
+   * @minLength 2
+   * @maxLength 200
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 20
+   */
+  singkatan: string;
+  fakultasId: string;
+}
+
+export interface UpdateProdiRequest {
+  /**
+   * @minLength 2
+   * @maxLength 200
+   */
+  name?: string;
+  /**
+   * @minLength 1
+   * @maxLength 20
+   */
+  singkatan?: string;
+  fakultasId?: string;
+}
+
 export type GetMe200 = {
   user: UserProfile;
 };
@@ -1123,4 +1212,11 @@ export type CreateAdminUserBody = {
 export type CreateAdminUser201 = {
   user: UserItem;
   message: string;
+};
+
+export type ListProdiParams = {
+  /**
+   * Filter by fakultas ID
+   */
+  fakultasId?: string;
 };

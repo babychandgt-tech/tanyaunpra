@@ -30,6 +30,10 @@ tags:
     description: Kalender akademik
   - name: dashboard
     description: Statistik & aktivitas dashboard admin
+  - name: fakultas
+    description: Manajemen data fakultas
+  - name: prodi
+    description: Manajemen data program studi
 
 paths:
   /healthz:
@@ -1789,6 +1793,215 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /fakultas:
+    get:
+      operationId: listFakultas
+      tags: [fakultas]
+      summary: Daftar semua fakultas (semua role)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Daftar fakultas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakultasListResponse"
+    post:
+      operationId: createFakultas
+      tags: [fakultas]
+      summary: Tambah fakultas baru (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFakultasRequest"
+      responses:
+        "201":
+          description: Fakultas berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakultasResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Fakultas sudah terdaftar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /fakultas/{id}:
+    put:
+      operationId: updateFakultas
+      tags: [fakultas]
+      summary: Update fakultas (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFakultasRequest"
+      responses:
+        "200":
+          description: Fakultas berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakultasResponse"
+        "404":
+          description: Fakultas tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFakultas
+      tags: [fakultas]
+      summary: Hapus fakultas (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Fakultas berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Fakultas tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /prodi:
+    get:
+      operationId: listProdi
+      tags: [prodi]
+      summary: Daftar semua program studi (semua role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: fakultasId
+          in: query
+          schema: { type: string, format: uuid }
+          description: Filter by fakultas ID
+      responses:
+        "200":
+          description: Daftar prodi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProdiListResponse"
+    post:
+      operationId: createProdi
+      tags: [prodi]
+      summary: Tambah program studi baru (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProdiRequest"
+      responses:
+        "201":
+          description: Prodi berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProdiResponse"
+        "400":
+          description: Data tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Fakultas tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /prodi/{id}:
+    put:
+      operationId: updateProdi
+      tags: [prodi]
+      summary: Update program studi (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProdiRequest"
+      responses:
+        "200":
+          description: Prodi berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProdiResponse"
+        "404":
+          description: Prodi tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProdi
+      tags: [prodi]
+      summary: Hapus program studi (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Prodi berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Prodi tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3074,3 +3287,136 @@ components:
               type: integer
           required: [page, limit, total, totalPages]
       required: [users, pagination]
+
+    Fakultas:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        singkatan:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, singkatan, createdAt, updatedAt]
+
+    FakultasListResponse:
+      type: object
+      properties:
+        fakultas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Fakultas"
+      required: [fakultas]
+
+    FakultasResponse:
+      type: object
+      properties:
+        fakultas:
+          $ref: "#/components/schemas/Fakultas"
+      required: [fakultas]
+
+    CreateFakultasRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        singkatan:
+          type: string
+          minLength: 1
+          maxLength: 20
+      required: [name, singkatan]
+
+    UpdateFakultasRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        singkatan:
+          type: string
+          minLength: 1
+          maxLength: 20
+
+    ProdiItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        singkatan:
+          type: string
+        fakultasId:
+          type: string
+          format: uuid
+        fakultasName:
+          type: string
+          nullable: true
+        fakultasSingkatan:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, singkatan, fakultasId, createdAt, updatedAt]
+
+    ProdiListResponse:
+      type: object
+      properties:
+        prodi:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProdiItem"
+      required: [prodi]
+
+    ProdiResponse:
+      type: object
+      properties:
+        prodi:
+          $ref: "#/components/schemas/ProdiItem"
+      required: [prodi]
+
+    CreateProdiRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        singkatan:
+          type: string
+          minLength: 1
+          maxLength: 20
+        fakultasId:
+          type: string
+          format: uuid
+      required: [name, singkatan, fakultasId]
+
+    UpdateProdiRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        singkatan:
+          type: string
+          minLength: 1
+          maxLength: 20
+        fakultasId:
+          type: string
+          format: uuid

@@ -15,7 +15,8 @@ import {
   LogOut,
   Menu,
   FileText,
-  Bot
+  Bot,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -62,6 +63,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Data Mahasiswa", href: "/mahasiswa", icon: GraduationCap, roles: ["admin", "dosen"] },
       { title: "Data Dosen", href: "/dosen", icon: Users, roles: ["admin"] },
+      { title: "Fakultas & Prodi", href: "/fakultas-prodi", icon: Building2, roles: ["admin"] },
     ],
   },
   {

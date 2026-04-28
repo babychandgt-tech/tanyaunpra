@@ -13,6 +13,7 @@ import academicCalendarRouter from "./academic-calendar";
 import dashboardRouter from "./dashboard";
 import usersRouter from "./users";
 import apiDocsRouter from "./api-docs";
+import fakultasProdiRouter from "./fakultas-prodi";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(academicCalendarRouter);
 router.use(dashboardRouter);
 router.use(usersRouter);
 router.use(apiDocsRouter);
+router.use(fakultasProdiRouter);
 
 export default router;

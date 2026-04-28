@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useListStudents, useCreateStudent, useUpdateStudent, useDeleteStudent, getListStudentsQueryKey } from "@workspace/api-client-react";
+import {
+  useListStudents, useCreateStudent, useUpdateStudent, useDeleteStudent,
+  getListStudentsQueryKey, useListFakultas, useListProdi,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
@@ -19,8 +23,8 @@ const createSchema = z.object({
   email: z.string().email("Email tidak valid").max(200),
   password: z.string().min(6, "Password minimal 6 karakter").max(100),
   nim: z.string().min(2).max(20),
-  prodi: z.string().min(2).max(100),
-  fakultas: z.string().min(2).max(100),
+  prodi: z.string().min(2, "Pilih program studi").max(100),
+  fakultas: z.string().min(2, "Pilih fakultas").max(100),
   semester: z.coerce.number().min(1).max(14),
   angkatan: z.coerce.number().min(2000).max(2100),
   kelas: z.string().max(10).optional(),
@@ -46,9 +50,19 @@ export default function Mahasiswa() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
+  const [editSelectedFakultasId, setEditSelectedFakultasId] = useState<string>("");
+
   const { data, isLoading, isError } = useListStudents({ page, limit: 10, search: search || undefined });
+  const { data: fData } = useListFakultas();
+  const { data: pData } = useListProdi(selectedFakultasId ? { fakultasId: selectedFakultasId } : {});
+  const { data: pDataEdit } = useListProdi(editSelectedFakultasId ? { fakultasId: editSelectedFakultasId } : {});
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const fakultasList = fData?.fakultas ?? [];
+  const prodiList = pData?.prodi ?? [];
+  const prodiListEdit = pDataEdit?.prodi ?? [];
 
   const create = useCreateStudent({
     mutation: {
@@ -56,6 +70,7 @@ export default function Mahasiswa() {
         queryClient.invalidateQueries({ queryKey: getListStudentsQueryKey() });
         setIsCreateOpen(false);
         createForm.reset();
+        setSelectedFakultasId("");
         toast({ title: "Mahasiswa berhasil ditambahkan" });
       },
       onError: (err: unknown) => {
@@ -118,7 +133,7 @@ export default function Mahasiswa() {
         {/* Dialog Tambah Mahasiswa */}
         <Dialog open={isCreateOpen} onOpenChange={(open) => {
           setIsCreateOpen(open);
-          if (!open) { createForm.reset(); setShowPassword(false); }
+          if (!open) { createForm.reset(); setShowPassword(false); setSelectedFakultasId(""); }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Tambah Mahasiswa</Button>
@@ -156,14 +171,50 @@ export default function Mahasiswa() {
                 <FormField control={createForm.control} name="nim" render={({ field }) => (
                   <FormItem><FormLabel>NIM</FormLabel><FormControl><Input placeholder="22010001" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={createForm.control} name="prodi" render={({ field }) => (
-                    <FormItem><FormLabel>Program Studi</FormLabel><FormControl><Input placeholder="Teknik Informatika" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={createForm.control} name="fakultas" render={({ field }) => (
-                    <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input placeholder="Teknik" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                </div>
+
+                <FormField control={createForm.control} name="fakultas" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fakultas</FormLabel>
+                    <Select onValueChange={(val) => {
+                      const f = fakultasList.find(f => f.name === val);
+                      field.onChange(val);
+                      setSelectedFakultasId(f?.id ?? "");
+                      createForm.setValue("prodi", "");
+                    }} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={fakultasList.length === 0 ? "Belum ada fakultas — tambah di menu Fakultas & Prodi" : "Pilih fakultas..."} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {fakultasList.map((f) => (
+                          <SelectItem key={f.id} value={f.name}>{f.name} ({f.singkatan})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={createForm.control} name="prodi" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Program Studi</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedFakultasId}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={!selectedFakultasId ? "Pilih fakultas dulu" : prodiList.length === 0 ? "Belum ada prodi untuk fakultas ini" : "Pilih prodi..."} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {prodiList.map((p) => (
+                          <SelectItem key={p.id} value={p.name}>{p.name} ({p.singkatan})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
                 <div className="grid grid-cols-3 gap-4">
                   <FormField control={createForm.control} name="semester" render={({ field }) => (
                     <FormItem><FormLabel>Semester</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
@@ -188,7 +239,7 @@ export default function Mahasiswa() {
         </Dialog>
 
         {/* Dialog Edit Mahasiswa */}
-        <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+        <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) { setEditingId(null); setEditSelectedFakultasId(""); } }}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Edit Data Mahasiswa</DialogTitle>
@@ -198,14 +249,43 @@ export default function Mahasiswa() {
                 <FormField control={editForm.control} name="nim" render={({ field }) => (
                   <FormItem><FormLabel>NIM</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={editForm.control} name="prodi" render={({ field }) => (
-                    <FormItem><FormLabel>Program Studi</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={editForm.control} name="fakultas" render={({ field }) => (
-                    <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                </div>
+                <FormField control={editForm.control} name="fakultas" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fakultas</FormLabel>
+                    <Select onValueChange={(val) => {
+                      const f = fakultasList.find(f => f.name === val);
+                      field.onChange(val);
+                      setEditSelectedFakultasId(f?.id ?? "");
+                      editForm.setValue("prodi", "");
+                    }} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Pilih fakultas..." /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {fakultasList.map((f) => (
+                          <SelectItem key={f.id} value={f.name}>{f.name} ({f.singkatan})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={editForm.control} name="prodi" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Program Studi</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Pilih prodi..." /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(editSelectedFakultasId ? prodiListEdit : prodiList).map((p) => (
+                          <SelectItem key={p.id} value={p.name}>{p.name} ({p.singkatan})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={editForm.control} name="semester" render={({ field }) => (
                     <FormItem><FormLabel>Semester</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
@@ -276,7 +356,9 @@ export default function Mahasiswa() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="icon" onClick={() => {
+                          const matchFakultas = fakultasList.find(f => f.name === s.fakultas);
                           setEditingId(s.id);
+                          setEditSelectedFakultasId(matchFakultas?.id ?? "");
                           editForm.reset({ nim: s.nim, prodi: s.prodi, fakultas: s.fakultas, semester: s.semester, kelas: s.kelas || '', phone: s.phone || '' });
                         }}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Hapus mahasiswa ini?") && remove.mutate({ id: s.id })}><Trash2 className="h-4 w-4" /></Button>

@@ -36,13 +36,17 @@ import type {
   CreateApiKeyResponse,
   CreateCalendarEventRequest,
   CreateCourseRequest,
+  CreateFakultasRequest,
   CreateIntentRequest,
   CreateLecturerRequest,
+  CreateProdiRequest,
   CreateScheduleRequest,
   CreateStudentRequest,
   DashboardActivityResponse,
   DashboardSummaryResponse,
   ErrorResponse,
+  FakultasListResponse,
+  FakultasResponse,
   FlagChatMessageBody,
   GetMe200,
   HealthStatus,
@@ -57,12 +61,15 @@ import type {
   ListCoursesParams,
   ListIntentsParams,
   ListLecturersParams,
+  ListProdiParams,
   ListSchedulesParams,
   ListStudentsParams,
   ListUsersParams,
   LoginRequest,
   MessageResponse,
   PingResponse,
+  ProdiListResponse,
+  ProdiResponse,
   RefreshTokenRequest,
   RegisterRequest,
   ReportChatMessageBody,
@@ -73,9 +80,11 @@ import type {
   UpdateAnnouncementRequest,
   UpdateCalendarEventRequest,
   UpdateCourseRequest,
+  UpdateFakultasRequest,
   UpdateIntentRequest,
   UpdateLecturerRequest,
   UpdateMyStudentRequest,
+  UpdateProdiRequest,
   UpdateScheduleRequest,
   UpdateStudentRequest,
   UsersListResponse,
@@ -5112,4 +5121,687 @@ export const useDeleteUser = <
   TContext
 > => {
   return useMutation(getDeleteUserMutationOptions(options));
+};
+
+/**
+ * @summary Daftar semua fakultas (semua role)
+ */
+export const getListFakultasUrl = () => {
+  return `/api/fakultas`;
+};
+
+export const listFakultas = async (
+  options?: RequestInit,
+): Promise<FakultasListResponse> => {
+  return customFetch<FakultasListResponse>(getListFakultasUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListFakultasQueryKey = () => {
+  return [`/api/fakultas`] as const;
+};
+
+export const getListFakultasQueryOptions = <
+  TData = Awaited<ReturnType<typeof listFakultas>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listFakultas>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListFakultasQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listFakultas>>> = ({
+    signal,
+  }) => listFakultas({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listFakultas>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListFakultasQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listFakultas>>
+>;
+export type ListFakultasQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Daftar semua fakultas (semua role)
+ */
+
+export function useListFakultas<
+  TData = Awaited<ReturnType<typeof listFakultas>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listFakultas>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListFakultasQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Tambah fakultas baru (admin only)
+ */
+export const getCreateFakultasUrl = () => {
+  return `/api/fakultas`;
+};
+
+export const createFakultas = async (
+  createFakultasRequest: CreateFakultasRequest,
+  options?: RequestInit,
+): Promise<FakultasResponse> => {
+  return customFetch<FakultasResponse>(getCreateFakultasUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createFakultasRequest),
+  });
+};
+
+export const getCreateFakultasMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createFakultas>>,
+    TError,
+    { data: BodyType<CreateFakultasRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createFakultas>>,
+  TError,
+  { data: BodyType<CreateFakultasRequest> },
+  TContext
+> => {
+  const mutationKey = ["createFakultas"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createFakultas>>,
+    { data: BodyType<CreateFakultasRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createFakultas(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateFakultasMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createFakultas>>
+>;
+export type CreateFakultasMutationBody = BodyType<CreateFakultasRequest>;
+export type CreateFakultasMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tambah fakultas baru (admin only)
+ */
+export const useCreateFakultas = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createFakultas>>,
+    TError,
+    { data: BodyType<CreateFakultasRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createFakultas>>,
+  TError,
+  { data: BodyType<CreateFakultasRequest> },
+  TContext
+> => {
+  return useMutation(getCreateFakultasMutationOptions(options));
+};
+
+/**
+ * @summary Update fakultas (admin only)
+ */
+export const getUpdateFakultasUrl = (id: string) => {
+  return `/api/fakultas/${id}`;
+};
+
+export const updateFakultas = async (
+  id: string,
+  updateFakultasRequest: UpdateFakultasRequest,
+  options?: RequestInit,
+): Promise<FakultasResponse> => {
+  return customFetch<FakultasResponse>(getUpdateFakultasUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateFakultasRequest),
+  });
+};
+
+export const getUpdateFakultasMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateFakultas>>,
+    TError,
+    { id: string; data: BodyType<UpdateFakultasRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateFakultas>>,
+  TError,
+  { id: string; data: BodyType<UpdateFakultasRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateFakultas"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateFakultas>>,
+    { id: string; data: BodyType<UpdateFakultasRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateFakultas(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateFakultasMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateFakultas>>
+>;
+export type UpdateFakultasMutationBody = BodyType<UpdateFakultasRequest>;
+export type UpdateFakultasMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update fakultas (admin only)
+ */
+export const useUpdateFakultas = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateFakultas>>,
+    TError,
+    { id: string; data: BodyType<UpdateFakultasRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateFakultas>>,
+  TError,
+  { id: string; data: BodyType<UpdateFakultasRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateFakultasMutationOptions(options));
+};
+
+/**
+ * @summary Hapus fakultas (admin only)
+ */
+export const getDeleteFakultasUrl = (id: string) => {
+  return `/api/fakultas/${id}`;
+};
+
+export const deleteFakultas = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getDeleteFakultasUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteFakultasMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteFakultas>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteFakultas>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteFakultas"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteFakultas>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteFakultas(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteFakultasMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteFakultas>>
+>;
+
+export type DeleteFakultasMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus fakultas (admin only)
+ */
+export const useDeleteFakultas = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteFakultas>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteFakultas>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteFakultasMutationOptions(options));
+};
+
+/**
+ * @summary Daftar semua program studi (semua role)
+ */
+export const getListProdiUrl = (params?: ListProdiParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/prodi?${stringifiedParams}`
+    : `/api/prodi`;
+};
+
+export const listProdi = async (
+  params?: ListProdiParams,
+  options?: RequestInit,
+): Promise<ProdiListResponse> => {
+  return customFetch<ProdiListResponse>(getListProdiUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListProdiQueryKey = (params?: ListProdiParams) => {
+  return [`/api/prodi`, ...(params ? [params] : [])] as const;
+};
+
+export const getListProdiQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProdi>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListProdiParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProdi>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProdiQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listProdi>>> = ({
+    signal,
+  }) => listProdi(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProdi>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListProdiQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listProdi>>
+>;
+export type ListProdiQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Daftar semua program studi (semua role)
+ */
+
+export function useListProdi<
+  TData = Awaited<ReturnType<typeof listProdi>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListProdiParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listProdi>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListProdiQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Tambah program studi baru (admin only)
+ */
+export const getCreateProdiUrl = () => {
+  return `/api/prodi`;
+};
+
+export const createProdi = async (
+  createProdiRequest: CreateProdiRequest,
+  options?: RequestInit,
+): Promise<ProdiResponse> => {
+  return customFetch<ProdiResponse>(getCreateProdiUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createProdiRequest),
+  });
+};
+
+export const getCreateProdiMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createProdi>>,
+    TError,
+    { data: BodyType<CreateProdiRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createProdi>>,
+  TError,
+  { data: BodyType<CreateProdiRequest> },
+  TContext
+> => {
+  const mutationKey = ["createProdi"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createProdi>>,
+    { data: BodyType<CreateProdiRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createProdi(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateProdiMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createProdi>>
+>;
+export type CreateProdiMutationBody = BodyType<CreateProdiRequest>;
+export type CreateProdiMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Tambah program studi baru (admin only)
+ */
+export const useCreateProdi = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createProdi>>,
+    TError,
+    { data: BodyType<CreateProdiRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createProdi>>,
+  TError,
+  { data: BodyType<CreateProdiRequest> },
+  TContext
+> => {
+  return useMutation(getCreateProdiMutationOptions(options));
+};
+
+/**
+ * @summary Update program studi (admin only)
+ */
+export const getUpdateProdiUrl = (id: string) => {
+  return `/api/prodi/${id}`;
+};
+
+export const updateProdi = async (
+  id: string,
+  updateProdiRequest: UpdateProdiRequest,
+  options?: RequestInit,
+): Promise<ProdiResponse> => {
+  return customFetch<ProdiResponse>(getUpdateProdiUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateProdiRequest),
+  });
+};
+
+export const getUpdateProdiMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProdi>>,
+    TError,
+    { id: string; data: BodyType<UpdateProdiRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateProdi>>,
+  TError,
+  { id: string; data: BodyType<UpdateProdiRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateProdi"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateProdi>>,
+    { id: string; data: BodyType<UpdateProdiRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateProdi(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateProdiMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateProdi>>
+>;
+export type UpdateProdiMutationBody = BodyType<UpdateProdiRequest>;
+export type UpdateProdiMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update program studi (admin only)
+ */
+export const useUpdateProdi = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateProdi>>,
+    TError,
+    { id: string; data: BodyType<UpdateProdiRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateProdi>>,
+  TError,
+  { id: string; data: BodyType<UpdateProdiRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateProdiMutationOptions(options));
+};
+
+/**
+ * @summary Hapus program studi (admin only)
+ */
+export const getDeleteProdiUrl = (id: string) => {
+  return `/api/prodi/${id}`;
+};
+
+export const deleteProdi = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getDeleteProdiUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteProdiMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProdi>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteProdi>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteProdi"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteProdi>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteProdi(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteProdiMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteProdi>>
+>;
+
+export type DeleteProdiMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus program studi (admin only)
+ */
+export const useDeleteProdi = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProdi>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteProdi>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteProdiMutationOptions(options));
 };
