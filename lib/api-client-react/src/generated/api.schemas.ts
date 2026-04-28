@@ -528,8 +528,23 @@ export interface LecturersResponse {
 }
 
 export interface CreateLecturerRequest {
-  /** Opsional — link ke user yang sudah ada */
-  userId?: string;
+  /**
+   * Nama lengkap dosen
+   * @minLength 2
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * Email untuk login
+   * @maxLength 200
+   */
+  email: string;
+  /**
+   * Password untuk login
+   * @minLength 6
+   * @maxLength 100
+   */
+  password: string;
   /**
    * @minLength 2
    * @maxLength 20
@@ -589,8 +604,23 @@ export interface StudentsResponse {
 }
 
 export interface CreateStudentRequest {
-  /** Opsional — link ke user yang sudah ada */
-  userId?: string;
+  /**
+   * Nama lengkap mahasiswa
+   * @minLength 2
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * Email untuk login
+   * @maxLength 200
+   */
+  email: string;
+  /**
+   * Password untuk login
+   * @minLength 6
+   * @maxLength 100
+   */
+  password: string;
   /**
    * @minLength 2
    * @maxLength 20

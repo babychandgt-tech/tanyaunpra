@@ -881,6 +881,14 @@ export const ListLecturersResponse = zod.object({
 /**
  * @summary Tambah data dosen baru (admin only)
  */
+export const createLecturerBodyNameMin = 2;
+export const createLecturerBodyNameMax = 100;
+
+export const createLecturerBodyEmailMax = 200;
+
+export const createLecturerBodyPasswordMin = 6;
+export const createLecturerBodyPasswordMax = 100;
+
 export const createLecturerBodyNidnMin = 2;
 export const createLecturerBodyNidnMax = 20;
 
@@ -897,11 +905,21 @@ export const createLecturerBodyPhoneMax = 20;
 export const createLecturerBodyExpertiseMax = 500;
 
 export const CreateLecturerBody = zod.object({
-  userId: zod
+  name: zod
     .string()
-    .uuid()
-    .optional()
-    .describe("Opsional — link ke user yang sudah ada"),
+    .min(createLecturerBodyNameMin)
+    .max(createLecturerBodyNameMax)
+    .describe("Nama lengkap dosen"),
+  email: zod
+    .string()
+    .email()
+    .max(createLecturerBodyEmailMax)
+    .describe("Email untuk login"),
+  password: zod
+    .string()
+    .min(createLecturerBodyPasswordMin)
+    .max(createLecturerBodyPasswordMax)
+    .describe("Password untuk login"),
   nidn: zod
     .string()
     .min(createLecturerBodyNidnMin)
@@ -1034,6 +1052,14 @@ export const ListStudentsResponse = zod.object({
 /**
  * @summary Tambah data mahasiswa baru (admin only)
  */
+export const createStudentBodyNameMin = 2;
+export const createStudentBodyNameMax = 100;
+
+export const createStudentBodyEmailMax = 200;
+
+export const createStudentBodyPasswordMin = 6;
+export const createStudentBodyPasswordMax = 100;
+
 export const createStudentBodyNimMin = 2;
 export const createStudentBodyNimMax = 20;
 
@@ -1056,11 +1082,21 @@ export const createStudentBodyPhoneMax = 20;
 export const createStudentBodyAddressMax = 500;
 
 export const CreateStudentBody = zod.object({
-  userId: zod
+  name: zod
     .string()
-    .uuid()
-    .optional()
-    .describe("Opsional — link ke user yang sudah ada"),
+    .min(createStudentBodyNameMin)
+    .max(createStudentBodyNameMax)
+    .describe("Nama lengkap mahasiswa"),
+  email: zod
+    .string()
+    .email()
+    .max(createStudentBodyEmailMax)
+    .describe("Email untuk login"),
+  password: zod
+    .string()
+    .min(createStudentBodyPasswordMin)
+    .max(createStudentBodyPasswordMax)
+    .describe("Password untuk login"),
   nim: zod.string().min(createStudentBodyNimMin).max(createStudentBodyNimMax),
   prodi: zod
     .string()

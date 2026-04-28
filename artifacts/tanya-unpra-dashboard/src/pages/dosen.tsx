@@ -10,10 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Search } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
 
-const schema = z.object({
+const createSchema = z.object({
+  name: z.string().min(2, "Nama minimal 2 karakter").max(100),
+  email: z.string().email("Email tidak valid").max(200),
+  password: z.string().min(6, "Password minimal 6 karakter").max(100),
   nidn: z.string().min(2).max(20),
   prodi: z.string().min(2).max(100),
   fakultas: z.string().min(2).max(100),
@@ -21,11 +25,23 @@ const schema = z.object({
   expertise: z.string().optional(),
 });
 
+const updateSchema = z.object({
+  nidn: z.string().min(2).max(20),
+  prodi: z.string().min(2).max(100),
+  fakultas: z.string().min(2).max(100),
+  jabatan: z.string().optional(),
+  expertise: z.string().optional(),
+});
+
+type CreateValues = z.infer<typeof createSchema>;
+type UpdateValues = z.infer<typeof updateSchema>;
+
 export default function Dosen() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data, isLoading, isError } = useListLecturers({ page, limit: 10, search: search || undefined });
   const queryClient = useQueryClient();
@@ -36,8 +52,13 @@ export default function Dosen() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListLecturersQueryKey() });
         setIsCreateOpen(false);
-        toast({ title: "Berhasil ditambahkan" });
-      }
+        createForm.reset();
+        toast({ title: "Dosen berhasil ditambahkan" });
+      },
+      onError: (err: unknown) => {
+        const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Gagal menambahkan dosen";
+        toast({ title: msg, variant: "destructive" });
+      },
     }
   });
 
@@ -60,17 +81,22 @@ export default function Dosen() {
     }
   });
 
-  const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+  const createForm = useForm<CreateValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { name: "", email: "", password: "", nidn: "", prodi: "", fakultas: "", jabatan: "", expertise: "" },
+  });
+
+  const editForm = useForm<UpdateValues>({
+    resolver: zodResolver(updateSchema),
     defaultValues: { nidn: "", prodi: "", fakultas: "", jabatan: "", expertise: "" },
   });
 
-  const onSubmit = (values: z.infer<typeof schema>) => {
-    if (editingId) {
-      update.mutate({ id: editingId, data: values });
-    } else {
-      create.mutate({ data: values });
-    }
+  const onCreateSubmit = (values: CreateValues) => {
+    create.mutate({ data: values });
+  };
+
+  const onUpdateSubmit = (values: UpdateValues) => {
+    if (editingId) update.mutate({ id: editingId, data: values });
   };
 
   return (
@@ -80,36 +106,100 @@ export default function Dosen() {
           <h1 className="text-3xl font-bold tracking-tight">Data Dosen</h1>
           <p className="text-muted-foreground">Kelola direktori data dosen.</p>
         </div>
-        <Dialog open={isCreateOpen || !!editingId} onOpenChange={(open) => {
-          if (!open) { setIsCreateOpen(false); setEditingId(null); form.reset(); }
+
+        {/* Dialog Tambah Dosen */}
+        <Dialog open={isCreateOpen} onOpenChange={(open) => {
+          setIsCreateOpen(open);
+          if (!open) { createForm.reset(); setShowPassword(false); }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Tambah Dosen</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Edit" : "Tambah"} Dosen</DialogTitle>
+              <DialogTitle>Tambah Dosen</DialogTitle>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="nidn" render={({ field }) => (
-                  <FormItem><FormLabel>NIDN</FormLabel><FormControl><Input {...field} disabled={!!editingId} /></FormControl><FormMessage /></FormItem>
+            <Form {...createForm}>
+              <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Akun Login</div>
+                <FormField control={createForm.control} name="name" render={({ field }) => (
+                  <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input placeholder="Dr. Budi Santoso" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={createForm.control} name="email" render={({ field }) => (
+                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="budi@unpra.ac.id" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={createForm.control} name="password" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input type={showPassword ? "text" : "password"} placeholder="Min. 6 karakter" {...field} />
+                        <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowPassword(v => !v)}>
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <Separator />
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data Akademik</div>
+                <FormField control={createForm.control} name="nidn" render={({ field }) => (
+                  <FormItem><FormLabel>NIDN</FormLabel><FormControl><Input placeholder="0123456789" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="prodi" render={({ field }) => (
+                  <FormField control={createForm.control} name="prodi" render={({ field }) => (
+                    <FormItem><FormLabel>Program Studi</FormLabel><FormControl><Input placeholder="Teknik Informatika" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={createForm.control} name="fakultas" render={({ field }) => (
+                    <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input placeholder="Teknik" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                </div>
+                <FormField control={createForm.control} name="jabatan" render={({ field }) => (
+                  <FormItem><FormLabel>Jabatan <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="Dosen Tetap" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={createForm.control} name="expertise" render={({ field }) => (
+                  <FormItem><FormLabel>Keahlian <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="Pemrograman Web, Basis Data" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <Button type="submit" className="w-full" disabled={create.isPending}>
+                  {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Simpan Dosen
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog Edit Dosen */}
+        <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Edit Data Dosen</DialogTitle>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onUpdateSubmit)} className="space-y-4">
+                <FormField control={editForm.control} name="nidn" render={({ field }) => (
+                  <FormItem><FormLabel>NIDN</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem>
+                )} />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={editForm.control} name="prodi" render={({ field }) => (
                     <FormItem><FormLabel>Program Studi</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <FormField control={form.control} name="fakultas" render={({ field }) => (
+                  <FormField control={editForm.control} name="fakultas" render={({ field }) => (
                     <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <FormField control={form.control} name="jabatan" render={({ field }) => (
+                <FormField control={editForm.control} name="jabatan" render={({ field }) => (
                   <FormItem><FormLabel>Jabatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <FormField control={form.control} name="expertise" render={({ field }) => (
+                <FormField control={editForm.control} name="expertise" render={({ field }) => (
                   <FormItem><FormLabel>Keahlian</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <Button type="submit" className="w-full" disabled={create.isPending || update.isPending}>Simpan</Button>
+                <Button type="submit" className="w-full" disabled={update.isPending}>
+                  {update.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Simpan Perubahan
+                </Button>
               </form>
             </Form>
           </DialogContent>
@@ -146,7 +236,7 @@ export default function Dosen() {
                   <TableRow key={l.id}>
                     <TableCell className="font-medium">{l.nidn}</TableCell>
                     <TableCell>
-                      <div>{l.name || '-'}</div>
+                      <div className="font-medium">{l.name || '-'}</div>
                       <div className="text-xs text-muted-foreground">{l.email || '-'}</div>
                     </TableCell>
                     <TableCell>
@@ -161,9 +251,9 @@ export default function Dosen() {
                       <div className="flex gap-2">
                         <Button variant="ghost" size="icon" onClick={() => {
                           setEditingId(l.id);
-                          form.reset({ nidn: l.nidn, prodi: l.prodi, fakultas: l.fakultas, jabatan: l.jabatan || '', expertise: l.expertise || '' });
+                          editForm.reset({ nidn: l.nidn, prodi: l.prodi, fakultas: l.fakultas, jabatan: l.jabatan || '', expertise: l.expertise || '' });
                         }}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Hapus?") && remove.mutate({ id: l.id })}><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Hapus dosen ini?") && remove.mutate({ id: l.id })}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -171,6 +261,13 @@ export default function Dosen() {
               )}
             </TableBody>
           </Table>
+          {data && data.pagination.totalPages > 1 && (
+            <div className="flex justify-end gap-2 p-4">
+              <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Sebelumnya</Button>
+              <span className="flex items-center text-sm text-muted-foreground">Hal {page} / {data.pagination.totalPages}</span>
+              <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= data.pagination.totalPages}>Berikutnya</Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

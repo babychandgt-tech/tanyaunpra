@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { lecturersTable, usersTable } from "@workspace/db";
 import { eq, ilike, and, SQL, count } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import bcrypt from "bcryptjs";
 
 const router: IRouter = Router();
 
@@ -45,7 +46,9 @@ const lecturerWithUser = (where?: SQL) =>
 
 router.post("/lecturers", requireAuth(["admin"]), async (req: Request, res: Response) => {
   const createSchema = z.object({
-    userId: z.string().uuid().optional(),
+    name: z.string().min(2).max(100),
+    email: z.string().email().max(200),
+    password: z.string().min(6).max(100),
     nidn: z.string().min(2).max(20),
     prodi: z.string().min(2).max(100),
     fakultas: z.string().min(2).max(100),
@@ -59,11 +62,34 @@ router.post("/lecturers", requireAuth(["admin"]), async (req: Request, res: Resp
     return;
   }
   try {
-    const [existing] = await db.select({ id: lecturersTable.id }).from(lecturersTable).where(eq(lecturersTable.nidn, parsed.data.nidn));
-    if (existing) { res.status(409).json({ error: "NIDN sudah terdaftar" }); return; }
+    const [existingNidn] = await db.select({ id: lecturersTable.id }).from(lecturersTable).where(eq(lecturersTable.nidn, parsed.data.nidn));
+    if (existingNidn) { res.status(409).json({ error: "NIDN sudah terdaftar" }); return; }
 
-    const [lecturer] = await db.insert(lecturersTable).values(parsed.data as typeof lecturersTable.$inferInsert).returning();
-    res.status(201).json({ lecturer });
+    const [existingEmail] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, parsed.data.email));
+    if (existingEmail) { res.status(409).json({ error: "Email sudah digunakan" }); return; }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
+    const [user] = await db.insert(usersTable).values({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      password: passwordHash,
+      role: "dosen",
+      isSuperAdmin: false,
+    }).returning({ id: usersTable.id });
+
+    const [lecturer] = await db.insert(lecturersTable).values({
+      userId: user.id,
+      nidn: parsed.data.nidn,
+      prodi: parsed.data.prodi,
+      fakultas: parsed.data.fakultas,
+      jabatan: parsed.data.jabatan,
+      phone: parsed.data.phone,
+      expertise: parsed.data.expertise,
+    }).returning();
+
+    const rows = await lecturerWithUser(eq(lecturersTable.id, lecturer.id));
+    res.status(201).json({ lecturer: rows[0] });
   } catch (err) {
     req.log.error({ err }, "Create lecturer error");
     res.status(500).json({ error: "Internal server error" });

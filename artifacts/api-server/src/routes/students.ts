@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { studentsTable, usersTable, lecturersTable } from "@workspace/db";
 import { eq, ilike, and, SQL, count } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import bcrypt from "bcryptjs";
 
 const router: IRouter = Router();
 
@@ -17,7 +18,9 @@ const listSchema = z.object({
 });
 
 const createSchema = z.object({
-  userId: z.string().uuid().optional(),
+  name: z.string().min(2).max(100),
+  email: z.string().email().max(200),
+  password: z.string().min(6).max(100),
   nim: z.string().min(2).max(20),
   prodi: z.string().min(2).max(100),
   fakultas: z.string().min(2).max(100),
@@ -66,11 +69,30 @@ router.post("/students", requireAuth(["admin"]), async (req: Request, res: Respo
     return;
   }
   try {
-    const [existing] = await db.select({ id: studentsTable.id }).from(studentsTable).where(eq(studentsTable.nim, parsed.data.nim));
-    if (existing) { res.status(409).json({ error: "NIM sudah terdaftar" }); return; }
+    const [existingNim] = await db.select({ id: studentsTable.id }).from(studentsTable).where(eq(studentsTable.nim, parsed.data.nim));
+    if (existingNim) { res.status(409).json({ error: "NIM sudah terdaftar" }); return; }
 
-    const [student] = await db.insert(studentsTable).values(parsed.data as typeof studentsTable.$inferInsert).returning();
-    res.status(201).json({ student });
+    const [existingEmail] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, parsed.data.email));
+    if (existingEmail) { res.status(409).json({ error: "Email sudah digunakan" }); return; }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
+    const [user] = await db.insert(usersTable).values({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      password: passwordHash,
+      role: "mahasiswa",
+      isSuperAdmin: false,
+    }).returning({ id: usersTable.id });
+
+    const { name: _name, email: _email, password: _password, ...studentData } = parsed.data;
+    const [student] = await db.insert(studentsTable).values({
+      ...studentData,
+      userId: user.id,
+    }).returning();
+
+    const rows = await studentWithUser(eq(studentsTable.id, student.id));
+    res.status(201).json({ student: rows[0] });
   } catch (err) {
     req.log.error({ err }, "Create student error");
     res.status(500).json({ error: "Internal server error" });

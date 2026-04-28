@@ -2555,10 +2555,21 @@ components:
     CreateLecturerRequest:
       type: object
       properties:
-        userId:
+        name:
           type: string
-          format: uuid
-          description: Opsional — link ke user yang sudah ada
+          minLength: 2
+          maxLength: 100
+          description: Nama lengkap dosen
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          description: Email untuk login
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          description: Password untuk login
         nidn:
           type: string
           minLength: 2
@@ -2580,7 +2591,7 @@ components:
         expertise:
           type: string
           maxLength: 500
-      required: [nidn, prodi, fakultas]
+      required: [name, email, password, nidn, prodi, fakultas]
 
     UpdateLecturerRequest:
       type: object
@@ -2659,10 +2670,21 @@ components:
     CreateStudentRequest:
       type: object
       properties:
-        userId:
+        name:
           type: string
-          format: uuid
-          description: Opsional — link ke user yang sudah ada
+          minLength: 2
+          maxLength: 100
+          description: Nama lengkap mahasiswa
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          description: Email untuk login
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          description: Password untuk login
         nim:
           type: string
           minLength: 2
@@ -2694,7 +2716,7 @@ components:
         address:
           type: string
           maxLength: 500
-      required: [nim, prodi, fakultas, angkatan]
+      required: [name, email, password, nim, prodi, fakultas, angkatan]
 
     UpdateStudentRequest:
       type: object
