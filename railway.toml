@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install -g pnpm@9 && pnpm install --frozen-lockfile && NODE_ENV=production pnpm --filter @workspace/tanya-unpra-dashboard run build && pnpm --filter @workspace/api-server run build"
+buildCommand = "pnpm --filter @workspace/tanya-unpra-dashboard run build && pnpm --filter @workspace/api-server run build"
 
 [deploy]
 startCommand = "node artifacts/api-server/dist/index.mjs"
