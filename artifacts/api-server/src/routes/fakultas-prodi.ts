@@ -9,7 +9,7 @@ const router: IRouter = Router();
 
 // ─── FAKULTAS ───────────────────────────────────────────────────
 
-router.get("/fakultas", requireAuth(), async (req: Request, res: Response) => {
+router.get("/fakultas", async (req: Request, res: Response) => {
   try {
     const list = await db.select().from(fakultasTable).orderBy(asc(fakultasTable.name));
     res.json({ fakultas: list });
@@ -80,7 +80,7 @@ router.delete("/fakultas/:id", requireAuth(["admin"]), async (req: Request, res:
 
 // ─── PRODI ──────────────────────────────────────────────────────
 
-router.get("/prodi", requireAuth(), async (req: Request, res: Response) => {
+router.get("/prodi", async (req: Request, res: Response) => {
   try {
     const fakultasId = req.query.fakultasId as string | undefined;
     const list = await db
