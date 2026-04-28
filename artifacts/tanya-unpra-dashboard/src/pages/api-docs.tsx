@@ -20,6 +20,7 @@ export default function ApiDocs() {
         return res.json();
       })
       .then((data) => {
+        data.servers = [{ url: `${window.location.origin}/api`, description: "API Server" }];
         setSpec(data);
         setIsLoading(false);
       })
