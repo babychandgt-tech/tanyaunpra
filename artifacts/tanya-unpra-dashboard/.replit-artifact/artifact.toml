@@ -18,13 +18,7 @@ localPort = 22966
 run = "pnpm --filter @workspace/tanya-unpra-dashboard run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/tanya-unpra-dashboard", "run", "build" ]
-publicDir = "artifacts/tanya-unpra-dashboard/dist/public"
-serve = "static"
-
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+build = ["pnpm", "--filter", "@workspace/tanya-unpra-dashboard", "run", "build"]
 
 [services.env]
 PORT = "22966"
