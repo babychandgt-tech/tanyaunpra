@@ -16,6 +16,7 @@ import { Loader2, Plus, Edit, Trash2, Clock, Calendar, Filter, X } from "lucide-
 import { Badge } from "@/components/ui/badge";
 
 const HARI_LIST = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
+const SEMESTER_LIST = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
 
 const scheduleSchema = z.object({
   courseId: z.string().min(1, "Pilih mata kuliah"),
@@ -81,7 +82,7 @@ export default function Jadwal() {
 
   const form = useForm<z.infer<typeof scheduleSchema>>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", kelas: "", semester: "Ganjil", tahunAjaran: "2024/2025" },
+    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", kelas: "", semester: "1", tahunAjaran: "2024/2025" },
   });
 
   const onSubmit = (values: z.infer<typeof scheduleSchema>) => {
@@ -216,8 +217,8 @@ export default function Jadwal() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {["Ganjil", "Genap"].map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          {SEMESTER_LIST.map(s => (
+                            <SelectItem key={s} value={s}>Semester {s}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -255,13 +256,14 @@ export default function Jadwal() {
               className="sm:max-w-[200px]"
             />
             <Select value={filterSemester} onValueChange={(v) => { setFilterSemester(v === "all" ? "" : v); setPage(1); }}>
-              <SelectTrigger className="sm:max-w-[160px]">
+              <SelectTrigger className="sm:max-w-[170px]">
                 <SelectValue placeholder="Semua Semester" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Semester</SelectItem>
-                <SelectItem value="Ganjil">Ganjil</SelectItem>
-                <SelectItem value="Genap">Genap</SelectItem>
+                {SEMESTER_LIST.map(s => (
+                  <SelectItem key={s} value={s}>Semester {s}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={filterHari} onValueChange={(v) => { setFilterHari(v === "all" ? "" : v); setPage(1); }}>
@@ -318,7 +320,11 @@ export default function Jadwal() {
                       {s.kelas ? <Badge variant="secondary">{s.kelas}</Badge> : <span className="text-xs text-muted-foreground italic">—</span>}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">{s.semester}</div>
+                      <div className="text-sm">
+                        {SEMESTER_LIST.includes(s.semester as typeof SEMESTER_LIST[number])
+                          ? `Semester ${s.semester}`
+                          : s.semester}
+                      </div>
                       <div className="text-xs text-muted-foreground">{s.tahunAjaran}</div>
                     </TableCell>
                     <TableCell>
