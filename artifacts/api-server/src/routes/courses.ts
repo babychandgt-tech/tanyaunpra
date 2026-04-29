@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
 import { coursesTable, lecturersTable, usersTable } from "@workspace/db";
-import { eq, and, ilike, SQL, count, desc, asc } from "drizzle-orm";
+import { eq, and, ilike, SQL, count, desc, asc, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -45,13 +45,23 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
     if (search) conds.push(ilike(coursesTable.nama, `%${search}%`));
     const where = conds.length > 0 ? and(...conds) : undefined;
 
+    const kodeNumExpr = sql`COALESCE(NULLIF(regexp_replace(${coursesTable.kode}, '\D', '', 'g'), '')::bigint, 0)`;
+    const kodePrefixExpr = sql`regexp_replace(${coursesTable.kode}, '[0-9]+$', '')`;
     const sortCol =
       sortBy === "sks"
         ? coursesTable.sks
         : sortBy === "semester"
           ? coursesTable.semester
-          : coursesTable.kode;
-    const orderExpr = sortOrder === "desc" ? desc(sortCol) : asc(sortCol);
+          : null;
+
+    const orderExprs =
+      sortCol === null
+        ? sortOrder === "desc"
+          ? [desc(kodePrefixExpr), desc(kodeNumExpr), desc(coursesTable.kode)]
+          : [asc(kodePrefixExpr), asc(kodeNumExpr), asc(coursesTable.kode)]
+        : sortOrder === "desc"
+          ? [desc(sortCol), asc(kodePrefixExpr), asc(kodeNumExpr)]
+          : [asc(sortCol), asc(kodePrefixExpr), asc(kodeNumExpr)];
 
     const [courses, totalResult] = await Promise.all([
       db
@@ -72,7 +82,7 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
         .leftJoin(lecturersTable, eq(lecturersTable.id, coursesTable.lecturerId))
         .leftJoin(usersTable, eq(usersTable.id, lecturersTable.userId))
         .where(where)
-        .orderBy(orderExpr, asc(coursesTable.kode))
+        .orderBy(...orderExprs)
         .limit(limit)
         .offset(offset),
       db.select({ total: count() }).from(coursesTable).where(where),
