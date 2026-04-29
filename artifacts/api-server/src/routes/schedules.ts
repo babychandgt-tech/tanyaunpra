@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { schedulesTable, coursesTable, lecturersTable, usersTable, prodiTable, fakultasTable, studentsTable } from "@workspace/db";
 import { eq, and, SQL, count, inArray, asc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
-import { computeActiveAcademicTerm, INDONESIAN_DAYS, type IndonesianDay } from "../utils/academic-term";
+import { computeActiveAcademicTerm, getJakartaDayName } from "../utils/academic-term";
 
 const router: IRouter = Router();
 
@@ -142,8 +142,7 @@ router.get("/schedules/today", requireAuth(["mahasiswa"]), async (req: Request, 
   try {
     const now = new Date();
     const term = computeActiveAcademicTerm(now);
-    const dayIdx = now.getDay();
-    const namaHari = INDONESIAN_DAYS[dayIdx] as IndonesianDay | "Minggu";
+    const namaHari = getJakartaDayName(now);
 
     if (namaHari === "Minggu") {
       res.json({
@@ -157,7 +156,11 @@ router.get("/schedules/today", requireAuth(["mahasiswa"]), async (req: Request, 
     }
 
     const [student] = await db
-      .select({ prodi: studentsTable.prodi, semester: studentsTable.semester })
+      .select({
+        prodi: studentsTable.prodi,
+        semester: studentsTable.semester,
+        kelas: studentsTable.kelas,
+      })
       .from(studentsTable)
       .where(eq(studentsTable.userId, req.user!.userId));
 
@@ -171,8 +174,10 @@ router.get("/schedules/today", requireAuth(["mahasiswa"]), async (req: Request, 
       eq(schedulesTable.hari, namaHari),
       eq(coursesTable.prodi, student.prodi),
       eq(schedulesTable.semester, semesterStr),
-      eq(schedulesTable.tahunAjaran, term.tahunAjaran),
     ];
+    if (student.kelas && student.kelas.trim() !== "") {
+      conds.push(eq(schedulesTable.kelas, student.kelas));
+    }
     const where = and(...conds);
 
     const rows = await buildScheduleQuery(where).orderBy(asc(schedulesTable.jamMulai));
@@ -181,7 +186,7 @@ router.get("/schedules/today", requireAuth(["mahasiswa"]), async (req: Request, 
       hari: namaHari,
       tahunAjaran: term.tahunAjaran,
       semesterType: term.semesterType,
-      student: { prodi: student.prodi, semester: student.semester },
+      student: { prodi: student.prodi, semester: student.semester, kelas: student.kelas },
       schedules: rows.map(formatSchedule),
     });
   } catch (err) {
