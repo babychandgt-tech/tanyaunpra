@@ -425,6 +425,116 @@ export const ChatAskResponse = zod.object({
 });
 
 /**
+ * Mengembalikan semua sesi chat milik user (mahasiswa/dosen) yang sedang login, diurutkan dari yang terbaru. Dipakai Android app untuk restore riwayat setelah re-login.
+ * @summary List riwayat sesi chat milik user yang login
+ */
+export const listMyChatSessionsQueryPageDefault = 1;
+export const listMyChatSessionsQueryLimitDefault = 30;
+
+export const ListMyChatSessionsQueryParams = zod.object({
+  page: zod.coerce.number().default(listMyChatSessionsQueryPageDefault),
+  limit: zod.coerce.number().default(listMyChatSessionsQueryLimitDefault),
+});
+
+export const ListMyChatSessionsResponse = zod.object({
+  sessions: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      deviceInfo: zod.string().nullish(),
+      lastMessageAt: zod.coerce.date(),
+      createdAt: zod.coerce.date(),
+      messageCount: zod.number(),
+      lastUserMessage: zod
+        .string()
+        .nullish()
+        .describe("Preview pertanyaan terakhir user di sesi ini"),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * Menghapus seluruh sesi + pesan chat milik user. Aksi ini tidak bisa dibatalkan.
+ * @summary Hapus SEMUA riwayat chat milik user yang login
+ */
+export const ClearMyChatHistoryResponse = zod.object({
+  message: zod.string(),
+  deletedCount: zod.number(),
+});
+
+/**
+ * @summary Detail sesi chat milik user (beserta semua pesan)
+ */
+export const GetMyChatSessionParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetMyChatSessionResponse = zod.object({
+  session: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    deviceInfo: zod.string().nullish(),
+    lastMessageAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+    messageCount: zod.number(),
+    reviewCount: zod
+      .number()
+      .describe("Jumlah pesan dalam sesi ini yang perlu di-review"),
+    userName: zod
+      .string()
+      .nullish()
+      .describe("Nama pengguna terdaftar (jika sesi terhubung ke akun)"),
+    userEmail: zod
+      .string()
+      .nullish()
+      .describe("Email pengguna terdaftar (jika sesi terhubung ke akun)"),
+  }),
+  messages: zod.array(
+    zod.object({
+      id: zod.string(),
+      sessionId: zod.string(),
+      role: zod.enum(["user", "assistant"]),
+      content: zod.string(),
+      answerSource: zod.enum(["intent", "ai", "fallback"]).nullish(),
+      confidence: zod.number().nullish(),
+      needsReview: zod.boolean(),
+      reportReason: zod
+        .string()
+        .nullish()
+        .describe("Alasan pelaporan dari mahasiswa (jika ada)"),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Hapus satu sesi chat milik user (cascade hapus semua pesan)
+ */
+export const DeleteMyChatSessionParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteMyChatSessionResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Hapus satu pesan chat milik user
+ */
+export const DeleteMyChatMessageParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteMyChatMessageResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary List semua sesi percakapan (admin only)
  */
 export const listChatSessionsQueryPageDefault = 1;

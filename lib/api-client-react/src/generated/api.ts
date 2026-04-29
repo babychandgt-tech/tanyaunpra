@@ -28,6 +28,7 @@ import type {
   ChatSessionDetailResponse,
   ChatSessionsResponse,
   ChatStatsResponse,
+  ClearMyChatHistory200,
   CourseResponse,
   CoursesResponse,
   CreateAdminUser201,
@@ -47,6 +48,8 @@ import type {
   CreateStudentRequest,
   DashboardActivityResponse,
   DashboardSummaryResponse,
+  DeleteMyChatMessage200,
+  DeleteMyChatSession200,
   ErrorResponse,
   FakultasListResponse,
   FakultasResponse,
@@ -70,12 +73,14 @@ import type {
   ListForumsParams,
   ListIntentsParams,
   ListLecturersParams,
+  ListMyChatSessionsParams,
   ListProdiParams,
   ListSchedulesParams,
   ListStudentsParams,
   ListUsersParams,
   LoginRequest,
   MessageResponse,
+  MyChatSessionsResponse,
   PingResponse,
   ProdiListResponse,
   ProdiResponse,
@@ -1857,6 +1862,441 @@ export const useChatAsk = <
   TContext
 > => {
   return useMutation(getChatAskMutationOptions(options));
+};
+
+/**
+ * Mengembalikan semua sesi chat milik user (mahasiswa/dosen) yang sedang login, diurutkan dari yang terbaru. Dipakai Android app untuk restore riwayat setelah re-login.
+ * @summary List riwayat sesi chat milik user yang login
+ */
+export const getListMyChatSessionsUrl = (params?: ListMyChatSessionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/chat/my-sessions?${stringifiedParams}`
+    : `/api/chat/my-sessions`;
+};
+
+export const listMyChatSessions = async (
+  params?: ListMyChatSessionsParams,
+  options?: RequestInit,
+): Promise<MyChatSessionsResponse> => {
+  return customFetch<MyChatSessionsResponse>(getListMyChatSessionsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMyChatSessionsQueryKey = (
+  params?: ListMyChatSessionsParams,
+) => {
+  return [`/api/chat/my-sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMyChatSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyChatSessions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListMyChatSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMyChatSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListMyChatSessionsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listMyChatSessions>>
+  > = ({ signal }) => listMyChatSessions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyChatSessions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMyChatSessionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMyChatSessions>>
+>;
+export type ListMyChatSessionsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List riwayat sesi chat milik user yang login
+ */
+
+export function useListMyChatSessions<
+  TData = Awaited<ReturnType<typeof listMyChatSessions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: ListMyChatSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMyChatSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMyChatSessionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Menghapus seluruh sesi + pesan chat milik user. Aksi ini tidak bisa dibatalkan.
+ * @summary Hapus SEMUA riwayat chat milik user yang login
+ */
+export const getClearMyChatHistoryUrl = () => {
+  return `/api/chat/my-sessions`;
+};
+
+export const clearMyChatHistory = async (
+  options?: RequestInit,
+): Promise<ClearMyChatHistory200> => {
+  return customFetch<ClearMyChatHistory200>(getClearMyChatHistoryUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getClearMyChatHistoryMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearMyChatHistory>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clearMyChatHistory>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["clearMyChatHistory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clearMyChatHistory>>,
+    void
+  > = () => {
+    return clearMyChatHistory(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClearMyChatHistoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clearMyChatHistory>>
+>;
+
+export type ClearMyChatHistoryMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus SEMUA riwayat chat milik user yang login
+ */
+export const useClearMyChatHistory = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearMyChatHistory>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clearMyChatHistory>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getClearMyChatHistoryMutationOptions(options));
+};
+
+/**
+ * @summary Detail sesi chat milik user (beserta semua pesan)
+ */
+export const getGetMyChatSessionUrl = (id: string) => {
+  return `/api/chat/my-sessions/${id}`;
+};
+
+export const getMyChatSession = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ChatSessionDetailResponse> => {
+  return customFetch<ChatSessionDetailResponse>(getGetMyChatSessionUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyChatSessionQueryKey = (id: string) => {
+  return [`/api/chat/my-sessions/${id}`] as const;
+};
+
+export const getGetMyChatSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyChatSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyChatSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyChatSessionQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMyChatSession>>
+  > = ({ signal }) => getMyChatSession(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyChatSession>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyChatSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyChatSession>>
+>;
+export type GetMyChatSessionQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Detail sesi chat milik user (beserta semua pesan)
+ */
+
+export function useGetMyChatSession<
+  TData = Awaited<ReturnType<typeof getMyChatSession>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getMyChatSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyChatSessionQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Hapus satu sesi chat milik user (cascade hapus semua pesan)
+ */
+export const getDeleteMyChatSessionUrl = (id: string) => {
+  return `/api/chat/my-sessions/${id}`;
+};
+
+export const deleteMyChatSession = async (
+  id: string,
+  options?: RequestInit,
+): Promise<DeleteMyChatSession200> => {
+  return customFetch<DeleteMyChatSession200>(getDeleteMyChatSessionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMyChatSessionMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyChatSession>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMyChatSession>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteMyChatSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMyChatSession>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMyChatSession(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMyChatSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMyChatSession>>
+>;
+
+export type DeleteMyChatSessionMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus satu sesi chat milik user (cascade hapus semua pesan)
+ */
+export const useDeleteMyChatSession = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyChatSession>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMyChatSession>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteMyChatSessionMutationOptions(options));
+};
+
+/**
+ * @summary Hapus satu pesan chat milik user
+ */
+export const getDeleteMyChatMessageUrl = (id: string) => {
+  return `/api/chat/messages/${id}`;
+};
+
+export const deleteMyChatMessage = async (
+  id: string,
+  options?: RequestInit,
+): Promise<DeleteMyChatMessage200> => {
+  return customFetch<DeleteMyChatMessage200>(getDeleteMyChatMessageUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMyChatMessageMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyChatMessage>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMyChatMessage>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteMyChatMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMyChatMessage>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMyChatMessage(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMyChatMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMyChatMessage>>
+>;
+
+export type DeleteMyChatMessageMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus satu pesan chat milik user
+ */
+export const useDeleteMyChatMessage = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyChatMessage>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMyChatMessage>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteMyChatMessageMutationOptions(options));
 };
 
 /**

@@ -547,6 +547,151 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /chat/my-sessions:
+    get:
+      operationId: listMyChatSessions
+      tags: [chat]
+      summary: List riwayat sesi chat milik user yang login
+      description: Mengembalikan semua sesi chat milik user (mahasiswa/dosen) yang sedang login, diurutkan dari yang terbaru. Dipakai Android app untuk restore riwayat setelah re-login.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 30 }
+      responses:
+        "200":
+          description: Daftar riwayat sesi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyChatSessionsResponse"
+        "401":
+          description: Belum login
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      operationId: clearMyChatHistory
+      tags: [chat]
+      summary: Hapus SEMUA riwayat chat milik user yang login
+      description: Menghapus seluruh sesi + pesan chat milik user. Aksi ini tidak bisa dibatalkan.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Semua riwayat berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  deletedCount: { type: integer }
+                required: [message, deletedCount]
+        "401":
+          description: Belum login
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /chat/my-sessions/{id}:
+    get:
+      operationId: getMyChatSession
+      tags: [chat]
+      summary: Detail sesi chat milik user (beserta semua pesan)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail sesi dan pesan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSessionDetailResponse"
+        "403":
+          description: Sesi bukan milik user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Session tidak ditemukan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      operationId: deleteMyChatSession
+      tags: [chat]
+      summary: Hapus satu sesi chat milik user (cascade hapus semua pesan)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Sesi berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                required: [message]
+        "403":
+          description: Sesi bukan milik user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Session tidak ditemukan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /chat/messages/{id}:
+    delete:
+      operationId: deleteMyChatMessage
+      tags: [chat]
+      summary: Hapus satu pesan chat milik user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pesan berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                required: [message]
+        "403":
+          description: Pesan bukan milik user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "404":
+          description: Pesan tidak ditemukan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
   /chat/sessions:
     get:
       operationId: listChatSessions
@@ -2631,6 +2776,31 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ChatSession"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required: [sessions, pagination]
+
+    MyChatSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        deviceInfo: { type: string, nullable: true }
+        lastMessageAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        messageCount: { type: integer }
+        lastUserMessage:
+          type: string
+          nullable: true
+          description: Preview pertanyaan terakhir user di sesi ini
+      required: [id, lastMessageAt, createdAt, messageCount]
+
+    MyChatSessionsResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyChatSession"
         pagination:
           $ref: "#/components/schemas/Pagination"
       required: [sessions, pagination]

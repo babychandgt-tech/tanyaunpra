@@ -101,6 +101,14 @@ Tables:
 - `PATCH /chat/messages/:id/flag` — tandai untuk review (admin only)
 - `GET /chat/stats` — statistik hari ini/minggu (admin only)
 
+#### Riwayat chat user (mahasiswa/dosen) — JWT auth
+Sesi chat **otomatis ter-link ke `userId`** di `POST /chat/ask` saat request membawa JWT, sehingga riwayat **tidak hilang setelah re-login** (Android tinggal panggil endpoint berikut untuk restore):
+- `GET /chat/my-sessions` — list semua sesi milik user (paginated, urut terbaru, dengan `lastUserMessage` preview)
+- `GET /chat/my-sessions/:id` — detail sesi + semua pesan (404 jika tidak ada, 403 jika bukan milik user)
+- `DELETE /chat/my-sessions/:id` — hapus 1 sesi (cascade hapus pesan)
+- `DELETE /chat/my-sessions` — clear ALL riwayat user
+- `DELETE /chat/messages/:id` — hapus 1 pesan tertentu (kepemilikan diverifikasi via session.userId)
+
 ### Intents (`/api/intents/`) — JWT auth
 - `GET /intents` — list dengan filter (admin & dosen)
 - `POST /intents` — tambah intent baru (admin only)

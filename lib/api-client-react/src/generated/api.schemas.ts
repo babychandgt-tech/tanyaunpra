@@ -242,6 +242,21 @@ export interface ChatSessionsResponse {
   pagination: Pagination;
 }
 
+export interface MyChatSession {
+  id: string;
+  deviceInfo?: string | null;
+  lastMessageAt: string;
+  createdAt: string;
+  messageCount: number;
+  /** Preview pertanyaan terakhir user di sesi ini */
+  lastUserMessage?: string | null;
+}
+
+export interface MyChatSessionsResponse {
+  sessions: MyChatSession[];
+  pagination: Pagination;
+}
+
 export interface ChatSessionDetailResponse {
   session: ChatSession;
   messages: ChatMessage[];
@@ -1265,6 +1280,24 @@ export type GetMe200 = {
 
 export type ListApiKeys200 = {
   apiKeys: ApiKey[];
+};
+
+export type ListMyChatSessionsParams = {
+  page?: number;
+  limit?: number;
+};
+
+export type ClearMyChatHistory200 = {
+  message: string;
+  deletedCount: number;
+};
+
+export type DeleteMyChatSession200 = {
+  message: string;
+};
+
+export type DeleteMyChatMessage200 = {
+  message: string;
 };
 
 export type ListChatSessionsParams = {

@@ -37,10 +37,14 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
 
     if (currentSessionId) {
       const [existing] = await db
-        .select({ id: chatSessionsTable.id })
+        .select({ id: chatSessionsTable.id, userId: chatSessionsTable.userId })
         .from(chatSessionsTable)
         .where(eq(chatSessionsTable.id, currentSessionId));
-      if (!existing) currentSessionId = undefined;
+      if (!existing) {
+        currentSessionId = undefined;
+      } else if (req.user?.userId && existing.userId && existing.userId !== req.user.userId) {
+        currentSessionId = undefined;
+      }
     }
 
     const resolvedDeviceInfo =
@@ -49,9 +53,17 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
     if (!currentSessionId) {
       const [newSession] = await db
         .insert(chatSessionsTable)
-        .values({ deviceInfo: resolvedDeviceInfo })
+        .values({
+          deviceInfo: resolvedDeviceInfo,
+          userId: req.user?.userId ?? null,
+        })
         .returning({ id: chatSessionsTable.id });
       currentSessionId = newSession.id;
+    } else if (req.user?.userId) {
+      await db
+        .update(chatSessionsTable)
+        .set({ userId: req.user.userId })
+        .where(and(eq(chatSessionsTable.id, currentSessionId), sql`${chatSessionsTable.userId} IS NULL`));
     }
 
     const recentMessages = await db
@@ -157,6 +169,187 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+/* ------------------------------------------------------------------ */
+/* USER-SCOPED endpoints — mahasiswa/dosen kelola riwayat chat sendiri */
+/* ------------------------------------------------------------------ */
+
+router.get("/chat/my-sessions", requireAuth(), async (req: Request, res: Response) => {
+  const pageSchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(30),
+  });
+  const parsed = pageSchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
+    return;
+  }
+
+  const userId = req.user!.userId;
+  const { page, limit } = parsed.data;
+  const offset = (page - 1) * limit;
+
+  try {
+    const [sessions, totalRow] = await Promise.all([
+      db
+        .select({
+          id: chatSessionsTable.id,
+          deviceInfo: chatSessionsTable.deviceInfo,
+          lastMessageAt: chatSessionsTable.lastMessageAt,
+          createdAt: chatSessionsTable.createdAt,
+          messageCount: count(chatMessagesTable.id),
+          lastUserMessage: sql<string | null>`(
+            SELECT cm.content FROM chat_messages cm
+            WHERE cm.session_id = ${chatSessionsTable.id} AND cm.role = 'user'
+            ORDER BY cm.created_at DESC LIMIT 1
+          )`,
+        })
+        .from(chatSessionsTable)
+        .leftJoin(chatMessagesTable, eq(chatMessagesTable.sessionId, chatSessionsTable.id))
+        .where(eq(chatSessionsTable.userId, userId))
+        .groupBy(chatSessionsTable.id)
+        .orderBy(desc(chatSessionsTable.lastMessageAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ total: count() }).from(chatSessionsTable).where(eq(chatSessionsTable.userId, userId)),
+    ]);
+
+    res.json({
+      sessions,
+      pagination: {
+        page,
+        limit,
+        total: totalRow[0]?.total ?? 0,
+        totalPages: Math.ceil((totalRow[0]?.total ?? 0) / limit),
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "List my-sessions error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/chat/my-sessions/:id", requireAuth(), async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const userId = req.user!.userId;
+
+  try {
+    const [session] = await db
+      .select({
+        id: chatSessionsTable.id,
+        userId: chatSessionsTable.userId,
+        deviceInfo: chatSessionsTable.deviceInfo,
+        lastMessageAt: chatSessionsTable.lastMessageAt,
+        createdAt: chatSessionsTable.createdAt,
+      })
+      .from(chatSessionsTable)
+      .where(eq(chatSessionsTable.id, id))
+      .limit(1);
+
+    if (!session) {
+      res.status(404).json({ error: "Sesi chat tidak ditemukan" });
+      return;
+    }
+    if (session.userId !== userId) {
+      res.status(403).json({ error: "Sesi chat ini bukan milik Anda" });
+      return;
+    }
+
+    const messages = await db
+      .select()
+      .from(chatMessagesTable)
+      .where(eq(chatMessagesTable.sessionId, id))
+      .orderBy(chatMessagesTable.createdAt);
+
+    res.json({ session, messages });
+  } catch (err) {
+    req.log.error({ err }, "Get my-session detail error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/chat/my-sessions/:id", requireAuth(), async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const userId = req.user!.userId;
+
+  try {
+    const [session] = await db
+      .select({ id: chatSessionsTable.id, userId: chatSessionsTable.userId })
+      .from(chatSessionsTable)
+      .where(eq(chatSessionsTable.id, id))
+      .limit(1);
+
+    if (!session) {
+      res.status(404).json({ error: "Sesi chat tidak ditemukan" });
+      return;
+    }
+    if (session.userId !== userId) {
+      res.status(403).json({ error: "Sesi chat ini bukan milik Anda" });
+      return;
+    }
+
+    await db.delete(chatSessionsTable).where(eq(chatSessionsTable.id, id));
+    res.json({ message: "Sesi chat berhasil dihapus" });
+  } catch (err) {
+    req.log.error({ err }, "Delete my-session error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/chat/my-sessions", requireAuth(), async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+
+  try {
+    const result = await db
+      .delete(chatSessionsTable)
+      .where(eq(chatSessionsTable.userId, userId))
+      .returning({ id: chatSessionsTable.id });
+
+    res.json({
+      message: "Semua riwayat chat berhasil dihapus",
+      deletedCount: result.length,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Delete all my-sessions error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/chat/messages/:id", requireAuth(), async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  const userId = req.user!.userId;
+
+  try {
+    const [row] = await db
+      .select({
+        msgId: chatMessagesTable.id,
+        sessionUserId: chatSessionsTable.userId,
+      })
+      .from(chatMessagesTable)
+      .leftJoin(chatSessionsTable, eq(chatSessionsTable.id, chatMessagesTable.sessionId))
+      .where(eq(chatMessagesTable.id, id))
+      .limit(1);
+
+    if (!row) {
+      res.status(404).json({ error: "Pesan tidak ditemukan" });
+      return;
+    }
+    if (row.sessionUserId !== userId) {
+      res.status(403).json({ error: "Pesan ini bukan milik Anda" });
+      return;
+    }
+
+    await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, id));
+    res.json({ message: "Pesan berhasil dihapus" });
+  } catch (err) {
+    req.log.error({ err }, "Delete message error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* ADMIN endpoints                                                     */
+/* ------------------------------------------------------------------ */
 
 router.get("/chat/sessions", requireAuth(["admin"]), async (req: Request, res: Response) => {
   const pageSchema = z.object({
