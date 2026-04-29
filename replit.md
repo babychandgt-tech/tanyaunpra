@@ -38,7 +38,7 @@ Aplikasi Android  ←→  Backend API Server  ←→  Supabase PostgreSQL
 Tables:
 - `users` — akun semua role (mahasiswa, dosen, admin)
 - `students` — data mahasiswa (nim, prodi, fakultas, semester, angkatan)
-- `lecturers` — data dosen (nidn, prodi, jabatan, expertise)
+- `lecturers` — data dosen (nidn, prodi, jabatan, phone/WA, expertise, photoUrl)
 - `courses` — mata kuliah (kode, nama, sks, semester, prodi)
 - `schedules` — jadwal kuliah (hari, jam, ruangan, semester)
 - `academic_calendar` — kalender akademik (UTS, UAS, Libur, dll)

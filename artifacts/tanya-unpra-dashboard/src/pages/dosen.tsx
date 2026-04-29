@@ -19,6 +19,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Edit, Trash2, Search, Eye, EyeOff, Camera, UserCircle2 } from "lucide-react";
 
+const phoneRegex = /^[0-9+\-\s()]*$/;
+
 const createSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter").max(100),
   email: z.string().email("Email tidak valid").max(200),
@@ -27,6 +29,7 @@ const createSchema = z.object({
   prodi: z.string().min(2, "Pilih program studi").max(100),
   fakultas: z.string().min(2, "Pilih fakultas").max(100),
   jabatan: z.string().optional(),
+  phone: z.string().max(20, "Nomor telepon maksimal 20 karakter").regex(phoneRegex, "Hanya angka, +, -, spasi yang diperbolehkan").optional().or(z.literal("")),
   expertise: z.string().optional(),
 });
 
@@ -35,6 +38,7 @@ const updateSchema = z.object({
   prodi: z.string().min(2).max(100),
   fakultas: z.string().min(2).max(100),
   jabatan: z.string().optional(),
+  phone: z.string().max(20, "Nomor telepon maksimal 20 karakter").regex(phoneRegex, "Hanya angka, +, -, spasi yang diperbolehkan").optional().or(z.literal("")),
   expertise: z.string().optional(),
 });
 
@@ -137,12 +141,12 @@ export default function Dosen() {
 
   const createForm = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: { name: "", email: "", password: "", nidn: "", prodi: "", fakultas: "", jabatan: "", expertise: "" },
+    defaultValues: { name: "", email: "", password: "", nidn: "", prodi: "", fakultas: "", jabatan: "", phone: "", expertise: "" },
   });
 
   const editForm = useForm<UpdateValues>({
     resolver: zodResolver(updateSchema),
-    defaultValues: { nidn: "", prodi: "", fakultas: "", jabatan: "", expertise: "" },
+    defaultValues: { nidn: "", prodi: "", fakultas: "", jabatan: "", phone: "", expertise: "" },
   });
 
   const onCreateSubmit = (values: CreateValues) => {
@@ -256,6 +260,9 @@ export default function Dosen() {
                 <FormField control={createForm.control} name="jabatan" render={({ field }) => (
                   <FormItem><FormLabel>Jabatan <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="Dosen Tetap" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <FormField control={createForm.control} name="phone" render={({ field }) => (
+                  <FormItem><FormLabel>No. Telepon / WhatsApp <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input type="tel" placeholder="08123456789" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
                 <FormField control={createForm.control} name="expertise" render={({ field }) => (
                   <FormItem><FormLabel>Keahlian <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="Pemrograman Web, Basis Data" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -350,6 +357,9 @@ export default function Dosen() {
                 <FormField control={editForm.control} name="jabatan" render={({ field }) => (
                   <FormItem><FormLabel>Jabatan</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <FormField control={editForm.control} name="phone" render={({ field }) => (
+                  <FormItem><FormLabel>No. Telepon / WhatsApp</FormLabel><FormControl><Input type="tel" placeholder="08123456789" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
                 <FormField control={editForm.control} name="expertise" render={({ field }) => (
                   <FormItem><FormLabel>Keahlian</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -416,7 +426,7 @@ export default function Dosen() {
                           setEditingPhotoUrl(l.photoUrl ?? null);
                           setEditingName(l.name ?? null);
                           setEditSelectedFakultasId(matchFakultas?.id ?? "");
-                          editForm.reset({ nidn: l.nidn, prodi: l.prodi, fakultas: l.fakultas, jabatan: l.jabatan || '', expertise: l.expertise || '' });
+                          editForm.reset({ nidn: l.nidn, prodi: l.prodi, fakultas: l.fakultas, jabatan: l.jabatan || '', phone: l.phone || '', expertise: l.expertise || '' });
                         }}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Hapus dosen ini?") && remove.mutate({ id: l.id })}><Trash2 className="h-4 w-4" /></Button>
                       </div>
