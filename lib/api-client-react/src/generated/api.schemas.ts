@@ -418,6 +418,18 @@ export const ScheduleHari = {
   Sabtu: "Sabtu",
 } as const;
 
+/**
+ * Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)
+ */
+export type ScheduleTimezone =
+  (typeof ScheduleTimezone)[keyof typeof ScheduleTimezone];
+
+export const ScheduleTimezone = {
+  WIB: "WIB",
+  WITA: "WITA",
+  WIT: "WIT",
+} as const;
+
 export interface Schedule {
   id: string;
   courseId: string;
@@ -435,6 +447,8 @@ export interface Schedule {
   kelas?: string | null;
   semester: string;
   tahunAjaran: string;
+  /** Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9) */
+  timezone: ScheduleTimezone;
   createdAt: string;
   updatedAt: string;
 }
@@ -460,6 +474,15 @@ export const CreateScheduleRequestHari = {
   Sabtu: "Sabtu",
 } as const;
 
+export type CreateScheduleRequestTimezone =
+  (typeof CreateScheduleRequestTimezone)[keyof typeof CreateScheduleRequestTimezone];
+
+export const CreateScheduleRequestTimezone = {
+  WIB: "WIB",
+  WITA: "WITA",
+  WIT: "WIT",
+} as const;
+
 export interface CreateScheduleRequest {
   courseId: string;
   lecturerId?: string;
@@ -477,6 +500,7 @@ export interface CreateScheduleRequest {
   kelas?: string;
   semester: string;
   tahunAjaran: string;
+  timezone?: CreateScheduleRequestTimezone;
 }
 
 export type UpdateScheduleRequestHari =
@@ -491,6 +515,15 @@ export const UpdateScheduleRequestHari = {
   Sabtu: "Sabtu",
 } as const;
 
+export type UpdateScheduleRequestTimezone =
+  (typeof UpdateScheduleRequestTimezone)[keyof typeof UpdateScheduleRequestTimezone];
+
+export const UpdateScheduleRequestTimezone = {
+  WIB: "WIB",
+  WITA: "WITA",
+  WIT: "WIT",
+} as const;
+
 export interface UpdateScheduleRequest {
   courseId?: string;
   lecturerId?: string;
@@ -501,6 +534,7 @@ export interface UpdateScheduleRequest {
   kelas?: string | null;
   semester?: string;
   tahunAjaran?: string;
+  timezone?: UpdateScheduleRequestTimezone;
 }
 
 export interface Lecturer {

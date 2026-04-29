@@ -8,6 +8,9 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 const DAY_ENUM = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
+const TIMEZONE_ENUM = ["WIB", "WITA", "WIT"] as const;
+
+const trimTime = (t: string) => t.length > 5 ? t.substring(0, 5) : t;
 
 const listSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -25,12 +28,13 @@ const createSchema = z.object({
   courseId: z.string().uuid(),
   lecturerId: z.string().uuid().optional(),
   hari: z.enum(DAY_ENUM),
-  jamMulai: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
-  jamSelesai: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM"),
+  jamMulai: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM"),
+  jamSelesai: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM"),
   ruangan: z.string().min(1).max(50),
   kelas: z.string().max(10).optional(),
   semester: z.string().min(1).max(20),
   tahunAjaran: z.string().min(4).max(20),
+  timezone: z.enum(TIMEZONE_ENUM).default("WIB"),
 });
 
 const updateSchema = createSchema.partial();
@@ -51,6 +55,7 @@ const buildScheduleQuery = (where?: SQL) =>
       kelas: schedulesTable.kelas,
       semester: schedulesTable.semester,
       tahunAjaran: schedulesTable.tahunAjaran,
+      timezone: schedulesTable.timezone,
       createdAt: schedulesTable.createdAt,
       updatedAt: schedulesTable.updatedAt,
     })
@@ -59,6 +64,12 @@ const buildScheduleQuery = (where?: SQL) =>
     .leftJoin(lecturersTable, eq(lecturersTable.id, schedulesTable.lecturerId))
     .leftJoin(usersTable, eq(usersTable.id, lecturersTable.userId))
     .where(where);
+
+const formatSchedule = (s: Awaited<ReturnType<typeof buildScheduleQuery>>[number]) => ({
+  ...s,
+  jamMulai: trimTime(s.jamMulai),
+  jamSelesai: trimTime(s.jamSelesai),
+});
 
 router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
   const parsed = listSchema.safeParse(req.query);
@@ -89,7 +100,7 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
         .where(where),
     ]);
 
-    res.json({ schedules, pagination: { page, limit, total: totalResult[0]?.total ?? 0, totalPages: Math.ceil((totalResult[0]?.total ?? 0) / limit) } });
+    res.json({ schedules: schedules.map(formatSchedule), pagination: { page, limit, total: totalResult[0]?.total ?? 0, totalPages: Math.ceil((totalResult[0]?.total ?? 0) / limit) } });
   } catch (err) {
     req.log.error({ err }, "List schedules error");
     res.status(500).json({ error: "Internal server error" });
@@ -103,11 +114,12 @@ router.post("/schedules", requireAuth(["admin", "dosen"]), async (req: Request, 
     return;
   }
   try {
-    const [schedule] = await db
+    const [inserted] = await db
       .insert(schedulesTable)
       .values(parsed.data as typeof schedulesTable.$inferInsert)
-      .returning();
-    res.status(201).json({ schedule });
+      .returning({ id: schedulesTable.id });
+    const rows = await buildScheduleQuery(eq(schedulesTable.id, inserted.id));
+    res.status(201).json({ schedule: formatSchedule(rows[0]) });
   } catch (err) {
     req.log.error({ err }, "Create schedule error");
     res.status(500).json({ error: "Internal server error" });
@@ -118,7 +130,7 @@ router.get("/schedules/:id", requireAuth(), async (req: Request, res: Response) 
   try {
     const rows = await buildScheduleQuery(eq(schedulesTable.id, String(req.params.id)));
     if (!rows[0]) { res.status(404).json({ error: "Jadwal tidak ditemukan" }); return; }
-    res.json({ schedule: rows[0] });
+    res.json({ schedule: formatSchedule(rows[0]) });
   } catch (err) {
     req.log.error({ err }, "Get schedule error");
     res.status(500).json({ error: "Internal server error" });
@@ -132,13 +144,13 @@ router.put("/schedules/:id", requireAuth(["admin", "dosen"]), async (req: Reques
     return;
   }
   try {
-    const [updated] = await db
+    await db
       .update(schedulesTable)
       .set({ ...parsed.data, updatedAt: new Date() })
-      .where(eq(schedulesTable.id, String(req.params.id)))
-      .returning();
-    if (!updated) { res.status(404).json({ error: "Jadwal tidak ditemukan" }); return; }
-    res.json({ schedule: updated });
+      .where(eq(schedulesTable.id, String(req.params.id)));
+    const rows = await buildScheduleQuery(eq(schedulesTable.id, String(req.params.id)));
+    if (!rows[0]) { res.status(404).json({ error: "Jadwal tidak ditemukan" }); return; }
+    res.json({ schedule: formatSchedule(rows[0]) });
   } catch (err) {
     req.log.error({ err }, "Update schedule error");
     res.status(500).json({ error: "Internal server error" });

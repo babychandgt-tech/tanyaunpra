@@ -2696,13 +2696,18 @@ components:
           type: string
         tahunAjaran:
           type: string
+        timezone:
+          type: string
+          enum: [WIB, WITA, WIT]
+          description: "Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)"
+          default: WIB
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, courseId, hari, jamMulai, jamSelesai, ruangan, semester, tahunAjaran, createdAt, updatedAt]
+      required: [id, courseId, hari, jamMulai, jamSelesai, ruangan, semester, tahunAjaran, timezone, createdAt, updatedAt]
 
     ScheduleResponse:
       type: object
@@ -2751,6 +2756,10 @@ components:
           type: string
         tahunAjaran:
           type: string
+        timezone:
+          type: string
+          enum: [WIB, WITA, WIT]
+          default: WIB
       required: [courseId, hari, jamMulai, jamSelesai, ruangan, semester, tahunAjaran]
 
     UpdateScheduleRequest:
@@ -2778,6 +2787,9 @@ components:
           type: string
         tahunAjaran:
           type: string
+        timezone:
+          type: string
+          enum: [WIB, WITA, WIT]
 
     Lecturer:
       type: object

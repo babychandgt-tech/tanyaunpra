@@ -717,6 +717,8 @@ export const ListSchedulesQueryParams = zod.object({
     .optional(),
 });
 
+export const listSchedulesResponseSchedulesItemTimezoneDefault = `WIB`;
+
 export const ListSchedulesResponse = zod.object({
   schedules: zod.array(
     zod.object({
@@ -736,6 +738,10 @@ export const ListSchedulesResponse = zod.object({
         .describe("Kelas \/ rombel (contoh A, B, C)"),
       semester: zod.string(),
       tahunAjaran: zod.string(),
+      timezone: zod
+        .enum(["WIB", "WITA", "WIT"])
+        .default(listSchedulesResponseSchedulesItemTimezoneDefault)
+        .describe("Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     }),
@@ -755,6 +761,8 @@ export const createScheduleBodyRuanganMax = 50;
 
 export const createScheduleBodyKelasMax = 10;
 
+export const createScheduleBodyTimezoneDefault = `WIB`;
+
 export const CreateScheduleBody = zod.object({
   courseId: zod.string().uuid(),
   lecturerId: zod.string().uuid().optional(),
@@ -769,6 +777,9 @@ export const CreateScheduleBody = zod.object({
     .describe("Kelas \/ rombel (contoh A, B, C) — opsional"),
   semester: zod.string(),
   tahunAjaran: zod.string(),
+  timezone: zod
+    .enum(["WIB", "WITA", "WIT"])
+    .default(createScheduleBodyTimezoneDefault),
 });
 
 /**
@@ -777,6 +788,8 @@ export const CreateScheduleBody = zod.object({
 export const GetScheduleParams = zod.object({
   id: zod.coerce.string(),
 });
+
+export const getScheduleResponseScheduleTimezoneDefault = `WIB`;
 
 export const GetScheduleResponse = zod.object({
   schedule: zod.object({
@@ -793,6 +806,10 @@ export const GetScheduleResponse = zod.object({
     kelas: zod.string().nullish().describe("Kelas \/ rombel (contoh A, B, C)"),
     semester: zod.string(),
     tahunAjaran: zod.string(),
+    timezone: zod
+      .enum(["WIB", "WITA", "WIT"])
+      .default(getScheduleResponseScheduleTimezoneDefault)
+      .describe("Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)"),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
@@ -817,7 +834,10 @@ export const UpdateScheduleBody = zod.object({
   kelas: zod.string().nullish(),
   semester: zod.string().optional(),
   tahunAjaran: zod.string().optional(),
+  timezone: zod.enum(["WIB", "WITA", "WIT"]).optional(),
 });
+
+export const updateScheduleResponseScheduleTimezoneDefault = `WIB`;
 
 export const UpdateScheduleResponse = zod.object({
   schedule: zod.object({
@@ -834,6 +854,10 @@ export const UpdateScheduleResponse = zod.object({
     kelas: zod.string().nullish().describe("Kelas \/ rombel (contoh A, B, C)"),
     semester: zod.string(),
     tahunAjaran: zod.string(),
+    timezone: zod
+      .enum(["WIB", "WITA", "WIT"])
+      .default(updateScheduleResponseScheduleTimezoneDefault)
+      .describe("Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)"),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),

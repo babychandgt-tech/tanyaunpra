@@ -17,17 +17,19 @@ import { Badge } from "@/components/ui/badge";
 
 const HARI_LIST = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 const SEMESTER_LIST = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
+const TIMEZONE_LIST = ["WIB", "WITA", "WIT"] as const;
 
 const scheduleSchema = z.object({
   courseId: z.string().min(1, "Pilih mata kuliah"),
   lecturerId: z.string().optional(),
   hari: z.enum(HARI_LIST),
-  jamMulai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
-  jamSelesai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Format HH:MM"),
+  jamMulai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, "Format HH:MM"),
+  jamSelesai: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, "Format HH:MM"),
   ruangan: z.string().min(1, "Wajib diisi").max(50),
   kelas: z.string().max(10).optional(),
   semester: z.string().min(1, "Wajib diisi"),
   tahunAjaran: z.string().min(1, "Wajib diisi"),
+  timezone: z.enum(TIMEZONE_LIST).default("WIB"),
 });
 
 export default function Jadwal() {
@@ -82,7 +84,7 @@ export default function Jadwal() {
 
   const form = useForm<z.infer<typeof scheduleSchema>>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", kelas: "", semester: "1", tahunAjaran: "2024/2025" },
+    defaultValues: { courseId: "", hari: "Senin", jamMulai: "08:00", jamSelesai: "10:00", ruangan: "", kelas: "", semester: "1", tahunAjaran: "2024/2025", timezone: "WIB" },
   });
 
   const onSubmit = (values: z.infer<typeof scheduleSchema>) => {
@@ -99,12 +101,13 @@ export default function Jadwal() {
       courseId: schedule.courseId,
       lecturerId: schedule.lecturerId || "",
       hari: schedule.hari,
-      jamMulai: schedule.jamMulai,
-      jamSelesai: schedule.jamSelesai,
+      jamMulai: schedule.jamMulai.substring(0, 5),
+      jamSelesai: schedule.jamSelesai.substring(0, 5),
       ruangan: schedule.ruangan,
       kelas: schedule.kelas || "",
       semester: schedule.semester,
       tahunAjaran: schedule.tahunAjaran,
+      timezone: (schedule.timezone as typeof TIMEZONE_LIST[number]) || "WIB",
     });
   };
 
@@ -187,7 +190,7 @@ export default function Jadwal() {
                     </FormItem>
                   )} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <FormField control={form.control} name="jamMulai" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Jam Mulai</FormLabel>
@@ -199,6 +202,20 @@ export default function Jadwal() {
                     <FormItem>
                       <FormLabel>Jam Selesai</FormLabel>
                       <FormControl><Input {...field} type="time" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="timezone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Zona Waktu</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {TIMEZONE_LIST.map(tz => (
+                            <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -313,7 +330,10 @@ export default function Jadwal() {
                         <Badge variant="outline" className="text-xs">{s.hari}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm mt-1">
-                        <Clock className="h-3 w-3" /> {s.jamMulai} - {s.jamSelesai} | {s.ruangan}
+                        <Clock className="h-3 w-3" />
+                        {s.jamMulai.substring(0, 5)} - {s.jamSelesai.substring(0, 5)}
+                        <Badge variant="secondary" className="text-[10px] px-1 py-0">{s.timezone || "WIB"}</Badge>
+                        | {s.ruangan}
                       </div>
                     </TableCell>
                     <TableCell>
