@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Search, BookOpen } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 
 const schema = z.object({
   kode: z.string().min(2).max(20),
@@ -31,7 +31,7 @@ export default function Matkul() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
 
-  const { data, isLoading, isError } = useListCourses({ page, limit: 10, search: search || undefined });
+  const { data, isLoading, isError } = useListCourses({ page, limit: 15, search: search || undefined });
   const { data: lecturers } = useListLecturers({ limit: 100 });
   const { data: fData } = useListFakultas();
   const { data: pData } = useListProdi(selectedFakultasId ? { fakultasId: selectedFakultasId } : {});
@@ -186,7 +186,7 @@ export default function Matkul() {
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Search className="h-4 w-4 text-muted-foreground" />
-            <Input className="max-w-sm" placeholder="Cari Kode atau Nama..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input className="max-w-sm" placeholder="Cari Kode atau Nama..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -234,6 +234,31 @@ export default function Matkul() {
               )}
             </TableBody>
           </Table>
+          {data?.pagination && data.pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between space-x-2 px-4 py-4 border-t">
+              <span className="text-sm text-muted-foreground">
+                Halaman {data.pagination.page} dari {data.pagination.totalPages} · Total {data.pagination.total} matkul
+              </span>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(data.pagination.totalPages, p + 1))}
+                  disabled={page === data.pagination.totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
