@@ -45,7 +45,7 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
     if (search) conds.push(ilike(coursesTable.nama, `%${search}%`));
     const where = conds.length > 0 ? and(...conds) : undefined;
 
-    const kodeNumExpr = sql`COALESCE(NULLIF(regexp_replace(${coursesTable.kode}, '\D', '', 'g'), '')::bigint, 0)`;
+    const kodeNumExpr = sql`COALESCE(NULLIF(regexp_replace(${coursesTable.kode}, '[^0-9]', '', 'g'), '')::bigint, 0)`;
     const kodePrefixExpr = sql`regexp_replace(${coursesTable.kode}, '[0-9]+$', '')`;
     const sortCol =
       sortBy === "sks"
