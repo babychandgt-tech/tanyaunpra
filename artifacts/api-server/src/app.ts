@@ -8,6 +8,8 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.set("json spaces", 2);
+
 app.use(
   pinoHttp({
     logger,
