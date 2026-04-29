@@ -10,3 +10,4 @@ export * from "./chat_sessions";
 export * from "./chat_messages";
 export * from "./api_keys";
 export * from "./fakultas_prodi";
+export * from "./forums";

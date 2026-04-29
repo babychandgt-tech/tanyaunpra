@@ -23,6 +23,7 @@ import Users from "@/pages/users";
 import ApiDocs from "@/pages/api-docs";
 import ChatTest from "@/pages/chat-test";
 import FakultasProdi from "@/pages/fakultas-prodi";
+import Forum from "@/pages/forum";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +96,7 @@ function Router() {
       <Route path="/docs" component={() => <ProtectedRoute component={ApiDocs} allowedRoles={["admin"]} superAdminOnly />} />
       <Route path="/fakultas-prodi" component={() => <ProtectedRoute component={FakultasProdi} allowedRoles={["admin"]} />} />
       <Route path="/chat-test" component={() => <ProtectedRoute component={ChatTest} allowedRoles={["admin", "dosen", "mahasiswa"]} />} />
+      <Route path="/forum" component={() => <ProtectedRoute component={Forum} allowedRoles={["admin", "dosen", "mahasiswa"]} />} />
 
       <Route component={NotFound} />
     </Switch>

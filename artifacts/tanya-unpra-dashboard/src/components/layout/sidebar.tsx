@@ -16,7 +16,8 @@ import {
   Menu,
   FileText,
   Bot,
-  Building2
+  Building2,
+  MessagesSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -40,6 +41,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin"] },
       { title: "Test Chatbot", href: "/chat-test", icon: Bot, roles: ["admin", "dosen", "mahasiswa"] },
+      { title: "Forum Diskusi", href: "/forum", icon: MessagesSquare, roles: ["admin", "dosen", "mahasiswa"] },
     ],
   },
   {

@@ -34,8 +34,198 @@ tags:
     description: Manajemen data fakultas
   - name: prodi
     description: Manajemen data program studi
+  - name: forums
+    description: Forum diskusi per fakultas & prodi (real-time chat)
 
 paths:
+  /forums:
+    get:
+      operationId: listForums
+      tags: [forums]
+      summary: List forum diskusi (auto-filter by user fakultas/prodi)
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [mine, all]
+          description: "admin only — 'all' menampilkan semua forum, default 'mine' membatasi ke forum yang relevan"
+      responses:
+        "200":
+          description: Daftar forum
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumsListResponse"
+    post:
+      operationId: createForum
+      tags: [forums]
+      summary: Buat forum baru (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateForumRequest"
+      responses:
+        "201":
+          description: Forum berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumResponse"
+
+  /forums/{id}:
+    get:
+      operationId: getForum
+      tags: [forums]
+      summary: Detail forum
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detail forum
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumResponse"
+    put:
+      operationId: updateForum
+      tags: [forums]
+      summary: Update forum (admin & dosen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateForumRequest"
+      responses:
+        "200":
+          description: Forum berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumResponse"
+    delete:
+      operationId: deleteForum
+      tags: [forums]
+      summary: Hapus forum (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Forum berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /forums/{id}/messages:
+    get:
+      operationId: listForumMessages
+      tags: [forums]
+      summary: List pesan forum (history)
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: before
+          in: query
+          schema: { type: string, format: date-time }
+          description: Ambil pesan yang lebih lama dari timestamp ini (untuk infinite scroll)
+      responses:
+        "200":
+          description: Daftar pesan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumMessagesResponse"
+    post:
+      operationId: createForumMessage
+      tags: [forums]
+      summary: Kirim pesan ke forum (REST fallback — utamakan Socket.io)
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateForumMessageRequest"
+      responses:
+        "201":
+          description: Pesan terkirim
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumMessageResponse"
+
+  /forums/{forumId}/messages/{messageId}:
+    delete:
+      operationId: deleteForumMessage
+      tags: [forums]
+      summary: Hapus pesan forum (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: forumId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: messageId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pesan berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
   /healthz:
     get:
       operationId: healthCheck
@@ -3523,3 +3713,155 @@ components:
         sortOrder:
           type: integer
           minimum: 0
+
+    Forum:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [global, fakultas, prodi]
+        fakultas:
+          type: string
+          nullable: true
+        prodi:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+          nullable: true
+        createdByName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, type, isActive, createdAt, updatedAt]
+
+    ForumsListResponse:
+      type: object
+      properties:
+        forums:
+          type: array
+          items:
+            $ref: "#/components/schemas/Forum"
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+          required: [page, limit, total, totalPages]
+      required: [forums, pagination]
+
+    ForumResponse:
+      type: object
+      properties:
+        forum:
+          $ref: "#/components/schemas/Forum"
+      required: [forum]
+
+    CreateForumRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum: [global, fakultas, prodi]
+        fakultas:
+          type: string
+          nullable: true
+        prodi:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+          default: true
+      required: [name, type]
+
+    UpdateForumRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+
+    ForumMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        forumId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          nullable: true
+        userName:
+          type: string
+          nullable: true
+        userRole:
+          type: string
+          enum: [mahasiswa, dosen, admin]
+          nullable: true
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, forumId, content, createdAt]
+
+    ForumMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForumMessage"
+      required: [messages]
+
+    ForumMessageResponse:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/ForumMessage"
+      required: [message]
+
+    CreateForumMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required: [content]

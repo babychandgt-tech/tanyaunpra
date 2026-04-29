@@ -1063,6 +1063,138 @@ export interface UpdateProdiRequest {
   sortOrder?: number;
 }
 
+export type ForumType = (typeof ForumType)[keyof typeof ForumType];
+
+export const ForumType = {
+  global: "global",
+  fakultas: "fakultas",
+  prodi: "prodi",
+} as const;
+
+export interface Forum {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: ForumType;
+  fakultas?: string | null;
+  prodi?: string | null;
+  isActive: boolean;
+  createdBy?: string | null;
+  createdByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ForumsListResponsePagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export interface ForumsListResponse {
+  forums: Forum[];
+  pagination: ForumsListResponsePagination;
+}
+
+export interface ForumResponse {
+  forum: Forum;
+}
+
+export type CreateForumRequestType =
+  (typeof CreateForumRequestType)[keyof typeof CreateForumRequestType];
+
+export const CreateForumRequestType = {
+  global: "global",
+  fakultas: "fakultas",
+  prodi: "prodi",
+} as const;
+
+export interface CreateForumRequest {
+  /**
+   * @minLength 2
+   * @maxLength 150
+   */
+  name: string;
+  /** @maxLength 1000 */
+  description?: string;
+  type: CreateForumRequestType;
+  fakultas?: string | null;
+  prodi?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateForumRequest {
+  /**
+   * @minLength 2
+   * @maxLength 150
+   */
+  name?: string;
+  description?: string | null;
+  isActive?: boolean;
+}
+
+export type ForumMessageUserRole =
+  | (typeof ForumMessageUserRole)[keyof typeof ForumMessageUserRole]
+  | null;
+
+export const ForumMessageUserRole = {
+  mahasiswa: "mahasiswa",
+  dosen: "dosen",
+  admin: "admin",
+} as const;
+
+export interface ForumMessage {
+  id: string;
+  forumId: string;
+  userId?: string | null;
+  userName?: string | null;
+  userRole?: ForumMessageUserRole;
+  content: string;
+  createdAt: string;
+}
+
+export interface ForumMessagesResponse {
+  messages: ForumMessage[];
+}
+
+export interface ForumMessageResponse {
+  message: ForumMessage;
+}
+
+export interface CreateForumMessageRequest {
+  /**
+   * @minLength 1
+   * @maxLength 2000
+   */
+  content: string;
+}
+
+export type ListForumsParams = {
+  page?: number;
+  limit?: number;
+  /**
+   * admin only — 'all' menampilkan semua forum, default 'mine' membatasi ke forum yang relevan
+   */
+  scope?: ListForumsScope;
+};
+
+export type ListForumsScope =
+  (typeof ListForumsScope)[keyof typeof ListForumsScope];
+
+export const ListForumsScope = {
+  mine: "mine",
+  all: "all",
+} as const;
+
+export type ListForumMessagesParams = {
+  limit?: number;
+  /**
+   * Ambil pesan yang lebih lama dari timestamp ini (untuk infinite scroll)
+   */
+  before?: string;
+};
+
 export type GetMe200 = {
   user: UserProfile;
 };

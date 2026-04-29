@@ -8,6 +8,194 @@
 import * as zod from "zod";
 
 /**
+ * @summary List forum diskusi (auto-filter by user fakultas/prodi)
+ */
+export const listForumsQueryPageDefault = 1;
+export const listForumsQueryLimitDefault = 50;
+
+export const ListForumsQueryParams = zod.object({
+  page: zod.coerce.number().default(listForumsQueryPageDefault),
+  limit: zod.coerce.number().default(listForumsQueryLimitDefault),
+  scope: zod
+    .enum(["mine", "all"])
+    .optional()
+    .describe(
+      "admin only — 'all' menampilkan semua forum, default 'mine' membatasi ke forum yang relevan",
+    ),
+});
+
+export const ListForumsResponse = zod.object({
+  forums: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      name: zod.string(),
+      description: zod.string().nullish(),
+      type: zod.enum(["global", "fakultas", "prodi"]),
+      fakultas: zod.string().nullish(),
+      prodi: zod.string().nullish(),
+      isActive: zod.boolean(),
+      createdBy: zod.string().nullish(),
+      createdByName: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  pagination: zod.object({
+    page: zod.number(),
+    limit: zod.number(),
+    total: zod.number(),
+    totalPages: zod.number(),
+  }),
+});
+
+/**
+ * @summary Buat forum baru (admin only)
+ */
+export const createForumBodyNameMin = 2;
+export const createForumBodyNameMax = 150;
+
+export const createForumBodyDescriptionMax = 1000;
+
+export const createForumBodyIsActiveDefault = true;
+
+export const CreateForumBody = zod.object({
+  name: zod.string().min(createForumBodyNameMin).max(createForumBodyNameMax),
+  description: zod.string().max(createForumBodyDescriptionMax).optional(),
+  type: zod.enum(["global", "fakultas", "prodi"]),
+  fakultas: zod.string().nullish(),
+  prodi: zod.string().nullish(),
+  isActive: zod.boolean().default(createForumBodyIsActiveDefault),
+});
+
+/**
+ * @summary Detail forum
+ */
+export const GetForumParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetForumResponse = zod.object({
+  forum: zod.object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    description: zod.string().nullish(),
+    type: zod.enum(["global", "fakultas", "prodi"]),
+    fakultas: zod.string().nullish(),
+    prodi: zod.string().nullish(),
+    isActive: zod.boolean(),
+    createdBy: zod.string().nullish(),
+    createdByName: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Update forum (admin & dosen)
+ */
+export const UpdateForumParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const updateForumBodyNameMin = 2;
+export const updateForumBodyNameMax = 150;
+
+export const UpdateForumBody = zod.object({
+  name: zod
+    .string()
+    .min(updateForumBodyNameMin)
+    .max(updateForumBodyNameMax)
+    .optional(),
+  description: zod.string().nullish(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateForumResponse = zod.object({
+  forum: zod.object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    description: zod.string().nullish(),
+    type: zod.enum(["global", "fakultas", "prodi"]),
+    fakultas: zod.string().nullish(),
+    prodi: zod.string().nullish(),
+    isActive: zod.boolean(),
+    createdBy: zod.string().nullish(),
+    createdByName: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Hapus forum (admin only)
+ */
+export const DeleteForumParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteForumResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List pesan forum (history)
+ */
+export const ListForumMessagesParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const listForumMessagesQueryLimitDefault = 50;
+
+export const ListForumMessagesQueryParams = zod.object({
+  limit: zod.coerce.number().default(listForumMessagesQueryLimitDefault),
+  before: zod
+    .date()
+    .optional()
+    .describe(
+      "Ambil pesan yang lebih lama dari timestamp ini (untuk infinite scroll)",
+    ),
+});
+
+export const ListForumMessagesResponse = zod.object({
+  messages: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      forumId: zod.string().uuid(),
+      userId: zod.string().nullish(),
+      userName: zod.string().nullish(),
+      userRole: zod.enum(["mahasiswa", "dosen", "admin"]).nullish(),
+      content: zod.string(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Kirim pesan ke forum (REST fallback — utamakan Socket.io)
+ */
+export const CreateForumMessageParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const createForumMessageBodyContentMax = 2000;
+
+export const CreateForumMessageBody = zod.object({
+  content: zod.string().min(1).max(createForumMessageBodyContentMax),
+});
+
+/**
+ * @summary Hapus pesan forum (admin only)
+ */
+export const DeleteForumMessageParams = zod.object({
+  forumId: zod.coerce.string(),
+  messageId: zod.coerce.string(),
+});
+
+export const DeleteForumMessageResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

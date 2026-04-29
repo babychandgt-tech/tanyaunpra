@@ -14,6 +14,7 @@ import dashboardRouter from "./dashboard";
 import usersRouter from "./users";
 import apiDocsRouter from "./api-docs";
 import fakultasProdiRouter from "./fakultas-prodi";
+import forumsRouter from "./forums";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(dashboardRouter);
 router.use(usersRouter);
 router.use(apiDocsRouter);
 router.use(fakultasProdiRouter);
+router.use(forumsRouter);
 
 export default router;

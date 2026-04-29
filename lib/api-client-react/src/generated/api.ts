@@ -37,6 +37,8 @@ import type {
   CreateCalendarEventRequest,
   CreateCourseRequest,
   CreateFakultasRequest,
+  CreateForumMessageRequest,
+  CreateForumRequest,
   CreateIntentRequest,
   CreateLecturerRequest,
   CreateProdiRequest,
@@ -48,6 +50,10 @@ import type {
   FakultasListResponse,
   FakultasResponse,
   FlagChatMessageBody,
+  ForumMessageResponse,
+  ForumMessagesResponse,
+  ForumResponse,
+  ForumsListResponse,
   GetMe200,
   HealthStatus,
   IntentResponse,
@@ -59,6 +65,8 @@ import type {
   ListApiKeys200,
   ListChatSessionsParams,
   ListCoursesParams,
+  ListForumMessagesParams,
+  ListForumsParams,
   ListIntentsParams,
   ListLecturersParams,
   ListProdiParams,
@@ -81,6 +89,7 @@ import type {
   UpdateCalendarEventRequest,
   UpdateCourseRequest,
   UpdateFakultasRequest,
+  UpdateForumRequest,
   UpdateIntentRequest,
   UpdateLecturerRequest,
   UpdateMyStudentRequest,
@@ -99,6 +108,734 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary List forum diskusi (auto-filter by user fakultas/prodi)
+ */
+export const getListForumsUrl = (params?: ListForumsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forums?${stringifiedParams}`
+    : `/api/forums`;
+};
+
+export const listForums = async (
+  params?: ListForumsParams,
+  options?: RequestInit,
+): Promise<ForumsListResponse> => {
+  return customFetch<ForumsListResponse>(getListForumsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListForumsQueryKey = (params?: ListForumsParams) => {
+  return [`/api/forums`, ...(params ? [params] : [])] as const;
+};
+
+export const getListForumsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForums>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListForumsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForums>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListForumsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listForums>>> = ({
+    signal,
+  }) => listForums(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForums>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForumsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForums>>
+>;
+export type ListForumsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List forum diskusi (auto-filter by user fakultas/prodi)
+ */
+
+export function useListForums<
+  TData = Awaited<ReturnType<typeof listForums>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListForumsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForums>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForumsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Buat forum baru (admin only)
+ */
+export const getCreateForumUrl = () => {
+  return `/api/forums`;
+};
+
+export const createForum = async (
+  createForumRequest: CreateForumRequest,
+  options?: RequestInit,
+): Promise<ForumResponse> => {
+  return customFetch<ForumResponse>(getCreateForumUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createForumRequest),
+  });
+};
+
+export const getCreateForumMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForum>>,
+    TError,
+    { data: BodyType<CreateForumRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createForum>>,
+  TError,
+  { data: BodyType<CreateForumRequest> },
+  TContext
+> => {
+  const mutationKey = ["createForum"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createForum>>,
+    { data: BodyType<CreateForumRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createForum(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateForumMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createForum>>
+>;
+export type CreateForumMutationBody = BodyType<CreateForumRequest>;
+export type CreateForumMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Buat forum baru (admin only)
+ */
+export const useCreateForum = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForum>>,
+    TError,
+    { data: BodyType<CreateForumRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createForum>>,
+  TError,
+  { data: BodyType<CreateForumRequest> },
+  TContext
+> => {
+  return useMutation(getCreateForumMutationOptions(options));
+};
+
+/**
+ * @summary Detail forum
+ */
+export const getGetForumUrl = (id: string) => {
+  return `/api/forums/${id}`;
+};
+
+export const getForum = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ForumResponse> => {
+  return customFetch<ForumResponse>(getGetForumUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetForumQueryKey = (id: string) => {
+  return [`/api/forums/${id}`] as const;
+};
+
+export const getGetForumQueryOptions = <
+  TData = Awaited<ReturnType<typeof getForum>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForum>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetForumQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getForum>>> = ({
+    signal,
+  }) => getForum(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getForum>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetForumQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getForum>>
+>;
+export type GetForumQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Detail forum
+ */
+
+export function useGetForum<
+  TData = Awaited<ReturnType<typeof getForum>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForum>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetForumQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update forum (admin & dosen)
+ */
+export const getUpdateForumUrl = (id: string) => {
+  return `/api/forums/${id}`;
+};
+
+export const updateForum = async (
+  id: string,
+  updateForumRequest: UpdateForumRequest,
+  options?: RequestInit,
+): Promise<ForumResponse> => {
+  return customFetch<ForumResponse>(getUpdateForumUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateForumRequest),
+  });
+};
+
+export const getUpdateForumMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateForum>>,
+    TError,
+    { id: string; data: BodyType<UpdateForumRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateForum>>,
+  TError,
+  { id: string; data: BodyType<UpdateForumRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateForum"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateForum>>,
+    { id: string; data: BodyType<UpdateForumRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateForum(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateForumMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateForum>>
+>;
+export type UpdateForumMutationBody = BodyType<UpdateForumRequest>;
+export type UpdateForumMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update forum (admin & dosen)
+ */
+export const useUpdateForum = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateForum>>,
+    TError,
+    { id: string; data: BodyType<UpdateForumRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateForum>>,
+  TError,
+  { id: string; data: BodyType<UpdateForumRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateForumMutationOptions(options));
+};
+
+/**
+ * @summary Hapus forum (admin only)
+ */
+export const getDeleteForumUrl = (id: string) => {
+  return `/api/forums/${id}`;
+};
+
+export const deleteForum = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getDeleteForumUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteForumMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForum>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteForum>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteForum"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteForum>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteForum(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteForumMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteForum>>
+>;
+
+export type DeleteForumMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Hapus forum (admin only)
+ */
+export const useDeleteForum = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForum>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteForum>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteForumMutationOptions(options));
+};
+
+/**
+ * @summary List pesan forum (history)
+ */
+export const getListForumMessagesUrl = (
+  id: string,
+  params?: ListForumMessagesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forums/${id}/messages?${stringifiedParams}`
+    : `/api/forums/${id}/messages`;
+};
+
+export const listForumMessages = async (
+  id: string,
+  params?: ListForumMessagesParams,
+  options?: RequestInit,
+): Promise<ForumMessagesResponse> => {
+  return customFetch<ForumMessagesResponse>(
+    getListForumMessagesUrl(id, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListForumMessagesQueryKey = (
+  id: string,
+  params?: ListForumMessagesParams,
+) => {
+  return [`/api/forums/${id}/messages`, ...(params ? [params] : [])] as const;
+};
+
+export const getListForumMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForumMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: ListForumMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListForumMessagesQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listForumMessages>>
+  > = ({ signal }) =>
+    listForumMessages(id, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForumMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForumMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForumMessages>>
+>;
+export type ListForumMessagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List pesan forum (history)
+ */
+
+export function useListForumMessages<
+  TData = Awaited<ReturnType<typeof listForumMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  params?: ListForumMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForumMessagesQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Kirim pesan ke forum (REST fallback — utamakan Socket.io)
+ */
+export const getCreateForumMessageUrl = (id: string) => {
+  return `/api/forums/${id}/messages`;
+};
+
+export const createForumMessage = async (
+  id: string,
+  createForumMessageRequest: CreateForumMessageRequest,
+  options?: RequestInit,
+): Promise<ForumMessageResponse> => {
+  return customFetch<ForumMessageResponse>(getCreateForumMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createForumMessageRequest),
+  });
+};
+
+export const getCreateForumMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumMessage>>,
+    TError,
+    { id: string; data: BodyType<CreateForumMessageRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createForumMessage>>,
+  TError,
+  { id: string; data: BodyType<CreateForumMessageRequest> },
+  TContext
+> => {
+  const mutationKey = ["createForumMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createForumMessage>>,
+    { id: string; data: BodyType<CreateForumMessageRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createForumMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateForumMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createForumMessage>>
+>;
+export type CreateForumMessageMutationBody =
+  BodyType<CreateForumMessageRequest>;
+export type CreateForumMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Kirim pesan ke forum (REST fallback — utamakan Socket.io)
+ */
+export const useCreateForumMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumMessage>>,
+    TError,
+    { id: string; data: BodyType<CreateForumMessageRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createForumMessage>>,
+  TError,
+  { id: string; data: BodyType<CreateForumMessageRequest> },
+  TContext
+> => {
+  return useMutation(getCreateForumMessageMutationOptions(options));
+};
+
+/**
+ * @summary Hapus pesan forum (admin only)
+ */
+export const getDeleteForumMessageUrl = (
+  forumId: string,
+  messageId: string,
+) => {
+  return `/api/forums/${forumId}/messages/${messageId}`;
+};
+
+export const deleteForumMessage = async (
+  forumId: string,
+  messageId: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(
+    getDeleteForumMessageUrl(forumId, messageId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getDeleteForumMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumMessage>>,
+    TError,
+    { forumId: string; messageId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteForumMessage>>,
+  TError,
+  { forumId: string; messageId: string },
+  TContext
+> => {
+  const mutationKey = ["deleteForumMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteForumMessage>>,
+    { forumId: string; messageId: string }
+  > = (props) => {
+    const { forumId, messageId } = props ?? {};
+
+    return deleteForumMessage(forumId, messageId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteForumMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteForumMessage>>
+>;
+
+export type DeleteForumMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Hapus pesan forum (admin only)
+ */
+export const useDeleteForumMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteForumMessage>>,
+    TError,
+    { forumId: string; messageId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteForumMessage>>,
+  TError,
+  { forumId: string; messageId: string },
+  TContext
+> => {
+  return useMutation(getDeleteForumMessageMutationOptions(options));
+};
 
 /**
  * @summary Health check
