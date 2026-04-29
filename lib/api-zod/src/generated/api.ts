@@ -1797,6 +1797,8 @@ export const ListProdiQueryParams = zod.object({
     .describe("Filter by fakultas ID"),
 });
 
+export const listProdiResponseProdiItemSortOrderMin = 0;
+
 export const ListProdiResponse = zod.object({
   prodi: zod.array(
     zod.object({
@@ -1804,6 +1806,7 @@ export const ListProdiResponse = zod.object({
       name: zod.string(),
       singkatan: zod.string(),
       fakultasId: zod.string().uuid(),
+      sortOrder: zod.number().min(listProdiResponseProdiItemSortOrderMin),
       fakultasName: zod.string().nullish(),
       fakultasSingkatan: zod.string().nullish(),
       createdAt: zod.coerce.date(),
@@ -1838,6 +1841,8 @@ export const updateProdiBodyNameMax = 200;
 
 export const updateProdiBodySingkatanMax = 20;
 
+export const updateProdiBodySortOrderMin = 0;
+
 export const UpdateProdiBody = zod.object({
   name: zod
     .string()
@@ -1846,7 +1851,10 @@ export const UpdateProdiBody = zod.object({
     .optional(),
   singkatan: zod.string().min(1).max(updateProdiBodySingkatanMax).optional(),
   fakultasId: zod.string().uuid().optional(),
+  sortOrder: zod.number().min(updateProdiBodySortOrderMin).optional(),
 });
+
+export const updateProdiResponseProdiSortOrderMin = 0;
 
 export const UpdateProdiResponse = zod.object({
   prodi: zod.object({
@@ -1854,6 +1862,7 @@ export const UpdateProdiResponse = zod.object({
     name: zod.string(),
     singkatan: zod.string(),
     fakultasId: zod.string().uuid(),
+    sortOrder: zod.number().min(updateProdiResponseProdiSortOrderMin),
     fakultasName: zod.string().nullish(),
     fakultasSingkatan: zod.string().nullish(),
     createdAt: zod.coerce.date(),

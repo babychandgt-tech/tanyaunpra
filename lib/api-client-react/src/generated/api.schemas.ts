@@ -981,6 +981,8 @@ export interface ProdiItem {
   name: string;
   singkatan: string;
   fakultasId: string;
+  /** @minimum 0 */
+  sortOrder: number;
   fakultasName?: string | null;
   fakultasSingkatan?: string | null;
   createdAt: string;
@@ -1021,6 +1023,8 @@ export interface UpdateProdiRequest {
    */
   singkatan?: string;
   fakultasId?: string;
+  /** @minimum 0 */
+  sortOrder?: number;
 }
 
 export type GetMe200 = {

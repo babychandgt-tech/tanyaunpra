@@ -89,6 +89,7 @@ router.get("/prodi", async (req: Request, res: Response) => {
         name: prodiTable.name,
         singkatan: prodiTable.singkatan,
         fakultasId: prodiTable.fakultasId,
+        sortOrder: prodiTable.sortOrder,
         fakultasName: fakultasTable.name,
         fakultasSingkatan: fakultasTable.singkatan,
         createdAt: prodiTable.createdAt,
@@ -97,7 +98,7 @@ router.get("/prodi", async (req: Request, res: Response) => {
       .from(prodiTable)
       .leftJoin(fakultasTable, eq(prodiTable.fakultasId, fakultasTable.id))
       .where(fakultasId ? eq(prodiTable.fakultasId, fakultasId) : undefined)
-      .orderBy(asc(prodiTable.name));
+      .orderBy(asc(prodiTable.sortOrder), asc(prodiTable.name));
     res.json({ prodi: list });
   } catch (err) {
     req.log.error({ err }, "List prodi error");
@@ -133,6 +134,7 @@ router.put("/prodi/:id", requireAuth(["admin"]), async (req: Request, res: Respo
     name: z.string().min(2).max(200).optional(),
     singkatan: z.string().min(1).max(20).optional(),
     fakultasId: z.string().uuid().optional(),
+    sortOrder: z.number().int().min(0).optional(),
   });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) {

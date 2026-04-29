@@ -3358,6 +3358,9 @@ components:
         fakultasId:
           type: string
           format: uuid
+        sortOrder:
+          type: integer
+          minimum: 0
         fakultasName:
           type: string
           nullable: true
@@ -3370,7 +3373,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, name, singkatan, fakultasId, createdAt, updatedAt]
+      required: [id, name, singkatan, fakultasId, sortOrder, createdAt, updatedAt]
 
     ProdiListResponse:
       type: object
@@ -3418,3 +3421,6 @@ components:
         fakultasId:
           type: string
           format: uuid
+        sortOrder:
+          type: integer
+          minimum: 0
