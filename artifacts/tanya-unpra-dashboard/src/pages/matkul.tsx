@@ -27,6 +27,7 @@ const schema = z.object({
 export default function Matkul() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [filterSemester, setFilterSemester] = useState<string>("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
@@ -52,7 +53,14 @@ export default function Matkul() {
     );
   };
 
-  const { data, isLoading, isError } = useListCourses({ page, limit: 15, search: search || undefined, sortBy, sortOrder });
+  const { data, isLoading, isError } = useListCourses({
+    page,
+    limit: 15,
+    search: search || undefined,
+    semester: filterSemester ? Number(filterSemester) : undefined,
+    sortBy,
+    sortOrder,
+  });
   const { data: lecturers } = useListLecturers({ limit: 100 });
   const { data: fData } = useListFakultas();
   const { data: pData } = useListProdi(selectedFakultasId ? { fakultasId: selectedFakultasId } : {});
@@ -205,9 +213,25 @@ export default function Matkul() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input className="max-w-sm" placeholder="Cari Kode atau Nama..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex items-center space-x-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input className="max-w-sm" placeholder="Cari Kode atau Nama..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+            </div>
+            <Select
+              value={filterSemester || "all"}
+              onValueChange={(v) => { setFilterSemester(v === "all" ? "" : v); setPage(1); }}
+            >
+              <SelectTrigger className="sm:max-w-[180px]">
+                <SelectValue placeholder="Semua Semester" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Semester</SelectItem>
+                {Array.from({ length: 14 }, (_, i) => i + 1).map((s) => (
+                  <SelectItem key={s} value={String(s)}>Semester {s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
