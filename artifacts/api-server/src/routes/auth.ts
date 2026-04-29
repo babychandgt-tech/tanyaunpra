@@ -295,16 +295,31 @@ router.get("/auth/api-keys", requireAuth(["admin"]), async (req: Request, res: R
   }
 });
 
-router.delete("/auth/api-keys/:id", requireAuth(["admin"]), async (req: Request, res: Response) => {
+router.patch("/auth/api-keys/:id/revoke", requireAuth(["admin"]), async (req: Request, res: Response) => {
   try {
-    await db
+    const [updated] = await db
       .update(apiKeysTable)
       .set({ isActive: false })
-      .where(eq(apiKeysTable.id, String(req.params.id)));
-
-    res.json({ message: "API key berhasil dinonaktifkan" });
+      .where(eq(apiKeysTable.id, String(req.params.id)))
+      .returning({ id: apiKeysTable.id });
+    if (!updated) { res.status(404).json({ error: "API key tidak ditemukan" }); return; }
+    res.json({ message: "API key berhasil dicabut" });
   } catch (err) {
     req.log.error({ err }, "Revoke API key error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/auth/api-keys/:id", requireAuth(["admin"]), async (req: Request, res: Response) => {
+  try {
+    const [deleted] = await db
+      .delete(apiKeysTable)
+      .where(eq(apiKeysTable.id, String(req.params.id)))
+      .returning({ id: apiKeysTable.id });
+    if (!deleted) { res.status(404).json({ error: "API key tidak ditemukan" }); return; }
+    res.json({ message: "API key berhasil dihapus" });
+  } catch (err) {
+    req.log.error({ err }, "Delete API key error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

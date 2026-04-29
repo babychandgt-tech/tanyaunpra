@@ -657,10 +657,94 @@ export const useCreateApiKey = <
 };
 
 /**
- * @summary Nonaktifkan API key (admin only)
+ * @summary Hapus permanen API key (admin only)
+ */
+export const getDeleteApiKeyUrl = (id: string) => {
+  return `/api/auth/api-keys/${id}`;
+};
+
+export const deleteApiKey = async (
+  id: string,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getDeleteApiKeyUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteApiKeyMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteApiKey>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteApiKey>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteApiKey"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteApiKey>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteApiKey(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteApiKeyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteApiKey>>
+>;
+
+export type DeleteApiKeyMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Hapus permanen API key (admin only)
+ */
+export const useDeleteApiKey = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteApiKey>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteApiKey>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteApiKeyMutationOptions(options));
+};
+
+/**
+ * @summary Cabut (nonaktifkan) API key (admin only)
  */
 export const getRevokeApiKeyUrl = (id: string) => {
-  return `/api/auth/api-keys/${id}`;
+  return `/api/auth/api-keys/${id}/revoke`;
 };
 
 export const revokeApiKey = async (
@@ -669,7 +753,7 @@ export const revokeApiKey = async (
 ): Promise<MessageResponse> => {
   return customFetch<MessageResponse>(getRevokeApiKeyUrl(id), {
     ...options,
-    method: "DELETE",
+    method: "PATCH",
   });
 };
 
@@ -718,7 +802,7 @@ export type RevokeApiKeyMutationResult = NonNullable<
 export type RevokeApiKeyMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Nonaktifkan API key (admin only)
+ * @summary Cabut (nonaktifkan) API key (admin only)
  */
 export const useRevokeApiKey = <
   TError = ErrorType<ErrorResponse>,

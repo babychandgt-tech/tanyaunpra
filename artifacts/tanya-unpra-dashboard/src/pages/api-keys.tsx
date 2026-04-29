@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { useListApiKeys, useCreateApiKey, useRevokeApiKey, getListApiKeysQueryKey } from "@workspace/api-client-react";
+import { useListApiKeys, useCreateApiKey, useRevokeApiKey, useDeleteApiKey, getListApiKeysQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Key, Copy, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, Key, Copy, Check, Ban } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const schema = z.object({
@@ -44,6 +44,15 @@ export default function ApiKeys() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListApiKeysQueryKey() });
         toast({ title: "API Key berhasil dicabut" });
+      }
+    }
+  });
+
+  const remove = useDeleteApiKey({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListApiKeysQueryKey() });
+        toast({ title: "API Key berhasil dihapus" });
       }
     }
   });
@@ -124,7 +133,7 @@ export default function ApiKeys() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5 text-primary" />
-            Daftar API Keys Aktif
+            Daftar API Keys
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -137,7 +146,7 @@ export default function ApiKeys() {
                 <TableHead>Terakhir Digunakan</TableHead>
                 <TableHead>Berakhir</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Aksi</TableHead>
+                <TableHead className="w-[120px]">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -149,7 +158,7 @@ export default function ApiKeys() {
                 <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Belum ada API key</TableCell></TableRow>
               ) : (
                 data?.apiKeys?.map(k => (
-                  <TableRow key={k.id}>
+                  <TableRow key={k.id} className={!k.isActive ? "opacity-60" : ""}>
                     <TableCell className="font-medium">{k.name}</TableCell>
                     <TableCell><code className="bg-muted px-1.5 py-0.5 rounded text-xs">{k.keyPrefix}...</code></TableCell>
                     <TableCell className="text-sm">{format(new Date(k.createdAt), "dd MMM yyyy")}</TableCell>
@@ -158,14 +167,31 @@ export default function ApiKeys() {
                       {k.expiresAt ? format(new Date(k.expiresAt), "dd MMM yyyy") : 'Selamanya'}
                     </TableCell>
                     <TableCell>
-                      {k.isActive ? <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Aktif</Badge> : <Badge variant="destructive">Dicabut</Badge>}
+                      {k.isActive
+                        ? <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20">Aktif</Badge>
+                        : <Badge variant="destructive">Dicabut</Badge>}
                     </TableCell>
                     <TableCell>
-                      {k.isActive && (
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => confirm("Cabut key ini? Aplikasi yang menggunakannya akan kehilangan akses.") && revoke.mutate({ id: k.id })}>
+                      <div className="flex gap-1">
+                        {k.isActive && (
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-8 w-8 text-orange-500 hover:text-orange-600"
+                            title="Cabut (nonaktifkan)"
+                            onClick={() => confirm(`Cabut key "${k.name}"? Aplikasi yang menggunakannya akan kehilangan akses.`) && revoke.mutate({ id: k.id })}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          title="Hapus permanen"
+                          onClick={() => confirm(`Hapus permanen key "${k.name}"? Tindakan ini tidak bisa dibatalkan.`) && remove.mutate({ id: k.id })}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

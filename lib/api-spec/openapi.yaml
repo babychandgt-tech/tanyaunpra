@@ -209,9 +209,9 @@ paths:
 
   /auth/api-keys/{id}:
     delete:
-      operationId: revokeApiKey
+      operationId: deleteApiKey
       tags: [auth]
-      summary: Nonaktifkan API key (admin only)
+      summary: Hapus permanen API key (admin only)
       security:
         - bearerAuth: []
       parameters:
@@ -222,13 +222,40 @@ paths:
             type: string
       responses:
         "200":
-          description: API key berhasil dinonaktifkan
+          description: API key berhasil dihapus
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
-        "403":
-          description: Akses ditolak
+        "404":
+          description: API key tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/api-keys/{id}/revoke:
+    patch:
+      operationId: revokeApiKey
+      tags: [auth]
+      summary: Cabut (nonaktifkan) API key (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: API key berhasil dicabut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: API key tidak ditemukan
           content:
             application/json:
               schema:

@@ -138,7 +138,18 @@ export const CreateApiKeyBody = zod.object({
 });
 
 /**
- * @summary Nonaktifkan API key (admin only)
+ * @summary Hapus permanen API key (admin only)
+ */
+export const DeleteApiKeyParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteApiKeyResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Cabut (nonaktifkan) API key (admin only)
  */
 export const RevokeApiKeyParams = zod.object({
   id: zod.coerce.string(),
