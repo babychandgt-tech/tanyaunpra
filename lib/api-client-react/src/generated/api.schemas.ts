@@ -435,6 +435,8 @@ export interface Schedule {
   courseId: string;
   courseKode?: string | null;
   courseNama?: string | null;
+  /** Nama prodi dari mata kuliah terkait (untuk auto-fill form edit) */
+  courseProdi?: string | null;
   lecturerId?: string | null;
   lecturerName?: string | null;
   hari: ScheduleHari;
@@ -1256,6 +1258,10 @@ export type ListCoursesParams = {
   page?: number;
   limit?: number;
   prodi?: string;
+  /**
+   * Filter by nama fakultas (otomatis menyaring matkul pada semua prodi di fakultas tsb.)
+   */
+  fakultas?: string;
   semester?: number;
   search?: string;
   sortBy?: ListCoursesSortBy;
@@ -1283,6 +1289,10 @@ export type ListSchedulesParams = {
   page?: number;
   limit?: number;
   prodi?: string;
+  /**
+   * Filter by nama fakultas (otomatis menyaring jadwal pada semua prodi di fakultas tsb.)
+   */
+  fakultas?: string;
   semester?: string;
   tahunAjaran?: string;
   lecturerId?: string;

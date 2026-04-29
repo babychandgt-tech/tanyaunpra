@@ -902,6 +902,10 @@ paths:
         - name: prodi
           in: query
           schema: { type: string }
+        - name: fakultas
+          in: query
+          description: Filter by nama fakultas (otomatis menyaring matkul pada semua prodi di fakultas tsb.)
+          schema: { type: string }
         - name: semester
           in: query
           schema: { type: integer }
@@ -1067,6 +1071,10 @@ paths:
           schema: { type: integer, default: 20 }
         - name: prodi
           in: query
+          schema: { type: string }
+        - name: fakultas
+          in: query
+          description: Filter by nama fakultas (otomatis menyaring jadwal pada semua prodi di fakultas tsb.)
           schema: { type: string }
         - name: semester
           in: query
@@ -2873,6 +2881,10 @@ components:
         courseNama:
           type: string
           nullable: true
+        courseProdi:
+          type: string
+          nullable: true
+          description: Nama prodi dari mata kuliah terkait (untuk auto-fill form edit)
         lecturerId:
           type: string
           nullable: true

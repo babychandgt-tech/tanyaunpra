@@ -102,14 +102,14 @@ Tables:
 - `DELETE /intents/:id` — hapus intent (admin only)
 
 ### Courses (`/api/courses/`) — JWT auth
-- `GET /courses` — list dengan filter prodi/semester/search (semua role)
+- `GET /courses` — list dengan filter prodi/fakultas/semester/search (semua role)
 - `POST /courses` — tambah mata kuliah (admin & dosen)
 - `GET /courses/:id` — detail mata kuliah (semua role)
 - `PUT /courses/:id` — update mata kuliah (admin & dosen)
 - `DELETE /courses/:id` — hapus mata kuliah (admin only)
 
 ### Schedules (`/api/schedules/`) — JWT auth
-- `GET /schedules` — list dengan filter prodi/semester/hari/lecturerId (semua role)
+- `GET /schedules` — list dengan filter prodi/fakultas/semester/hari/lecturerId (semua role). Response Schedule juga membawa `courseProdi` untuk auto-fill form edit.
 - `POST /schedules` — tambah jadwal (admin & dosen)
 - `GET /schedules/:id` — detail jadwal (semua role)
 - `PUT /schedules/:id` — update jadwal (admin & dosen)

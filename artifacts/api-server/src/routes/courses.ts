@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
-import { coursesTable, lecturersTable, usersTable } from "@workspace/db";
-import { eq, and, ilike, SQL, count, desc, asc, sql } from "drizzle-orm";
+import { coursesTable, lecturersTable, usersTable, prodiTable, fakultasTable } from "@workspace/db";
+import { eq, and, ilike, SQL, count, desc, asc, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -11,6 +11,7 @@ const listSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(500).default(20),
   prodi: z.string().optional(),
+  fakultas: z.string().optional(),
   semester: z.coerce.number().int().min(1).max(14).optional(),
   search: z.string().optional(),
   sortBy: z.enum(["kode", "sks", "semester"]).default("kode"),
@@ -35,12 +36,20 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
     res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
-  const { page, limit, prodi, semester, search, sortBy, sortOrder } = parsed.data;
+  const { page, limit, prodi, fakultas, semester, search, sortBy, sortOrder } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
     const conds: SQL[] = [];
-    if (prodi) conds.push(ilike(coursesTable.prodi, `%${prodi}%`));
+    if (prodi) conds.push(eq(coursesTable.prodi, prodi));
+    if (fakultas) {
+      const prodiNamesByFakultas = db
+        .select({ name: prodiTable.name })
+        .from(prodiTable)
+        .innerJoin(fakultasTable, eq(prodiTable.fakultasId, fakultasTable.id))
+        .where(eq(fakultasTable.name, fakultas));
+      conds.push(inArray(coursesTable.prodi, prodiNamesByFakultas));
+    }
     if (semester) conds.push(eq(coursesTable.semester, semester));
     if (search) conds.push(ilike(coursesTable.nama, `%${search}%`));
     const where = conds.length > 0 ? and(...conds) : undefined;

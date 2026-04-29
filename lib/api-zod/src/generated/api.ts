@@ -762,6 +762,12 @@ export const ListCoursesQueryParams = zod.object({
   page: zod.coerce.number().default(listCoursesQueryPageDefault),
   limit: zod.coerce.number().default(listCoursesQueryLimitDefault),
   prodi: zod.coerce.string().optional(),
+  fakultas: zod.coerce
+    .string()
+    .optional()
+    .describe(
+      "Filter by nama fakultas (otomatis menyaring matkul pada semua prodi di fakultas tsb.)",
+    ),
   semester: zod.coerce.number().optional(),
   search: zod.coerce.string().optional(),
   sortBy: zod
@@ -904,6 +910,12 @@ export const ListSchedulesQueryParams = zod.object({
   page: zod.coerce.number().default(listSchedulesQueryPageDefault),
   limit: zod.coerce.number().default(listSchedulesQueryLimitDefault),
   prodi: zod.coerce.string().optional(),
+  fakultas: zod.coerce
+    .string()
+    .optional()
+    .describe(
+      "Filter by nama fakultas (otomatis menyaring jadwal pada semua prodi di fakultas tsb.)",
+    ),
   semester: zod.coerce.string().optional(),
   tahunAjaran: zod.coerce.string().optional(),
   lecturerId: zod.coerce.string().optional(),
@@ -922,6 +934,12 @@ export const ListSchedulesResponse = zod.object({
       courseId: zod.string(),
       courseKode: zod.string().nullish(),
       courseNama: zod.string().nullish(),
+      courseProdi: zod
+        .string()
+        .nullish()
+        .describe(
+          "Nama prodi dari mata kuliah terkait (untuk auto-fill form edit)",
+        ),
       lecturerId: zod.string().nullish(),
       lecturerName: zod.string().nullish(),
       hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
@@ -993,6 +1011,12 @@ export const GetScheduleResponse = zod.object({
     courseId: zod.string(),
     courseKode: zod.string().nullish(),
     courseNama: zod.string().nullish(),
+    courseProdi: zod
+      .string()
+      .nullish()
+      .describe(
+        "Nama prodi dari mata kuliah terkait (untuk auto-fill form edit)",
+      ),
     lecturerId: zod.string().nullish(),
     lecturerName: zod.string().nullish(),
     hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
@@ -1041,6 +1065,12 @@ export const UpdateScheduleResponse = zod.object({
     courseId: zod.string(),
     courseKode: zod.string().nullish(),
     courseNama: zod.string().nullish(),
+    courseProdi: zod
+      .string()
+      .nullish()
+      .describe(
+        "Nama prodi dari mata kuliah terkait (untuk auto-fill form edit)",
+      ),
     lecturerId: zod.string().nullish(),
     lecturerName: zod.string().nullish(),
     hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),

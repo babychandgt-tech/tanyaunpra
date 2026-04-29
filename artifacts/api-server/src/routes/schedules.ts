@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
-import { schedulesTable, coursesTable, lecturersTable, usersTable } from "@workspace/db";
-import { eq, and, SQL, count } from "drizzle-orm";
+import { schedulesTable, coursesTable, lecturersTable, usersTable, prodiTable, fakultasTable } from "@workspace/db";
+import { eq, and, SQL, count, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -16,6 +16,7 @@ const listSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   prodi: z.string().optional(),
+  fakultas: z.string().optional(),
   semester: z.string().optional(),
   tahunAjaran: z.string().optional(),
   lecturerId: z.string().uuid().optional(),
@@ -46,6 +47,7 @@ const buildScheduleQuery = (where?: SQL) =>
       courseId: schedulesTable.courseId,
       courseKode: coursesTable.kode,
       courseNama: coursesTable.nama,
+      courseProdi: coursesTable.prodi,
       lecturerId: schedulesTable.lecturerId,
       lecturerName: usersTable.name,
       hari: schedulesTable.hari,
@@ -77,7 +79,7 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
     res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
-  const { page, limit, prodi, semester, tahunAjaran, lecturerId, courseId, hari, kelas } = parsed.data;
+  const { page, limit, prodi, fakultas, semester, tahunAjaran, lecturerId, courseId, hari, kelas } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -89,6 +91,14 @@ router.get("/schedules", requireAuth(), async (req: Request, res: Response) => {
     if (hari) conds.push(eq(schedulesTable.hari, hari));
     if (kelas) conds.push(eq(schedulesTable.kelas, kelas));
     if (prodi) conds.push(eq(coursesTable.prodi, prodi));
+    if (fakultas) {
+      const prodiNamesByFakultas = db
+        .select({ name: prodiTable.name })
+        .from(prodiTable)
+        .innerJoin(fakultasTable, eq(prodiTable.fakultasId, fakultasTable.id))
+        .where(eq(fakultasTable.name, fakultas));
+      conds.push(inArray(coursesTable.prodi, prodiNamesByFakultas));
+    }
     const where = conds.length > 0 ? and(...conds) : undefined;
 
     const [schedules, totalResult] = await Promise.all([
