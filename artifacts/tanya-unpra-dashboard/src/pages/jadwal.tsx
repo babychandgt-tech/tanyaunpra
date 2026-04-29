@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, getListSchedulesQueryKey, useListCourses, Schedule } from "@workspace/api-client-react";
+import { useListSchedules, useCreateSchedule, useUpdateSchedule, useDeleteSchedule, getListSchedulesQueryKey, useListCourses, useListLecturers, Schedule } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,6 +49,7 @@ export default function Jadwal() {
     hari: (filterHari as (typeof HARI_LIST)[number]) || undefined,
   });
   const { data: courses } = useListCourses({ limit: 100 });
+  const { data: lecturers } = useListLecturers({ limit: 200 });
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -88,10 +89,12 @@ export default function Jadwal() {
   });
 
   const onSubmit = (values: z.infer<typeof scheduleSchema>) => {
+    const lecturerId = values.lecturerId && values.lecturerId !== "none" ? values.lecturerId : undefined;
+    const data = { ...values, lecturerId };
     if (editingId) {
-      updateSchedule.mutate({ id: editingId, data: values });
+      updateSchedule.mutate({ id: editingId, data });
     } else {
-      createSchedule.mutate({ data: values });
+      createSchedule.mutate({ data });
     }
   };
 
@@ -99,7 +102,7 @@ export default function Jadwal() {
     setEditingId(schedule.id);
     form.reset({
       courseId: schedule.courseId,
-      lecturerId: schedule.lecturerId || "",
+      lecturerId: schedule.lecturerId || "none",
       hari: schedule.hari,
       jamMulai: schedule.jamMulai.substring(0, 5),
       jamSelesai: schedule.jamSelesai.substring(0, 5),
@@ -160,6 +163,27 @@ export default function Jadwal() {
                         <SelectContent>
                           {courses?.courses.map(c => (
                             <SelectItem key={c.id} value={c.id}>{c.kode} - {c.nama}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lecturerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dosen <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Pilih Dosen" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">— Tanpa Dosen —</SelectItem>
+                          {lecturers?.lecturers.map(l => (
+                            <SelectItem key={l.id} value={l.id}>{l.name ?? l.email ?? l.id} ({l.nidn})</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
