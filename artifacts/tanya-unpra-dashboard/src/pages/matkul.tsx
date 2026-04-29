@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListCourses, useCreateCourse, useUpdateCourse, useDeleteCourse, getListCoursesQueryKey, useListLecturers } from "@workspace/api-client-react";
+import { useListCourses, useCreateCourse, useUpdateCourse, useDeleteCourse, getListCoursesQueryKey, useListLecturers, useListFakultas, useListProdi } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,9 +29,12 @@ export default function Matkul() {
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
 
   const { data, isLoading, isError } = useListCourses({ page, limit: 10, search: search || undefined });
   const { data: lecturers } = useListLecturers({ limit: 100 });
+  const { data: fData } = useListFakultas();
+  const { data: pData } = useListProdi(selectedFakultasId ? { fakultasId: selectedFakultasId } : {});
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -85,7 +88,7 @@ export default function Matkul() {
           <p className="text-muted-foreground">Kelola daftar mata kuliah universitas.</p>
         </div>
         <Dialog open={isCreateOpen || !!editingId} onOpenChange={(open) => {
-          if (!open) { setIsCreateOpen(false); setEditingId(null); form.reset(); }
+          if (!open) { setIsCreateOpen(false); setEditingId(null); form.reset(); setSelectedFakultasId(""); }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Tambah Matkul</Button>
@@ -112,9 +115,49 @@ export default function Matkul() {
                     <FormItem><FormLabel>Semester</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
-                <FormField control={form.control} name="prodi" render={({ field }) => (
-                  <FormItem><FormLabel>Program Studi</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-sm font-medium">Fakultas</label>
+                    <Select
+                      value={selectedFakultasId}
+                      onValueChange={(val) => {
+                        setSelectedFakultasId(val);
+                        form.setValue("prodi", "");
+                      }}
+                    >
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Pilih fakultas dulu..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fData?.fakultas.map(f => (
+                          <SelectItem key={f.id} value={f.id}>{f.name} ({f.singkatan})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <FormField control={form.control} name="prodi" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Program Studi</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={!selectedFakultasId && !editingId}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={!selectedFakultasId && !editingId ? "Pilih fakultas dulu" : pData?.prodi.length === 0 ? "Belum ada prodi" : "Pilih program studi..."} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {pData?.prodi.map(p => (
+                            <SelectItem key={p.id} value={p.name}>{p.name} ({p.singkatan})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
                 <FormField control={form.control} name="lecturerId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Dosen Pengampu (Opsional)</FormLabel>
