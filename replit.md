@@ -70,11 +70,18 @@ Tables:
 ## AI Chat Engine
 
 - **Qwen AI via Dashscope** (OpenAI-compatible endpoint): `qwen-turbo` model
-- **Hybrid matching**: intent DB lookup dulu (Jaccard + keyword, threshold 0.55), fallback ke Qwen
-- **System prompt**: dikonfigurasi sebagai "Tanya UNPRA" asisten akademik
+- **Hybrid matching**: intent DB lookup dulu (containment + keyword + tag, threshold 0.45), fallback ke Qwen + DB context
+- **System prompt**: dikonfigurasi sebagai "Tanya UNPRA" dengan **aturan mutlak anti-halusinasi** — dilarang mengarang nama orang/NIDN/NIM/jabatan/matkul. Jika data tidak ada di DB context, AI wajib jawab "informasi belum tersedia di sistem".
 - **Low confidence threshold**: < 0.4 → `needsReview: true`
 - Qwen service: `artifacts/api-server/src/lib/qwen.ts`
 - Intent matcher: `artifacts/api-server/src/lib/intentMatcher.ts`
+- Context retriever: `artifacts/api-server/src/lib/contextRetriever.ts`
+  - Topic detection berdasarkan keyword: `jadwal`, `pengumuman`, `kalender`, `matkul`, `dosen`, `mahasiswa`, `prodi`.
+  - Topik **dosen** mendeteksi jabatan spesifik di pertanyaan (`kaprodi`, `dekan`, `wakil dekan`, `rektor`, `wakil rektor`, `kasubag`, `ketua penelitian`) — `rektor` & `dekan` di-exclude `wakil` agar tidak salah label.
+  - Topik **dosen/matkul** juga mendeteksi nama prodi (Informatika, SI, dll.) & fakultas dari pertanyaan untuk filter SQL — hasil di-narrow agar AI tidak bingung memilih.
+  - Topik **prodi** menarik struktur lengkap fakultas+prodi dari tabel `fakultas`/`prodi`.
+  - Jika filter spesifik gagal cocok di DB → injeksi instruksi eksplisit ke context: "Jangan mengarang…sampaikan belum tersedia."
+  - Jadwal di-filter `prodi+semester+kelas` user, sesuai profil mahasiswa yang login.
 
 ## API Routes (implemented)
 

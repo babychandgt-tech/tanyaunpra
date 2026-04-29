@@ -101,7 +101,12 @@ router.post("/chat/ask", requireApiKeyOrAuth(), async (req: Request, res: Respon
       confidence = intentResult.confidence;
     } else {
       try {
-        const dbContext = await retrieveContext(question, userCtx).catch(() => "");
+        let dbContext = "";
+        try {
+          dbContext = await retrieveContext(question, userCtx);
+        } catch (ctxErr) {
+          req.log.error({ err: ctxErr }, "retrieveContext failed");
+        }
         const qwenResult = await askQwen(question, history, dbContext || undefined);
         answer = qwenResult.answer;
         answerSource = "ai";
