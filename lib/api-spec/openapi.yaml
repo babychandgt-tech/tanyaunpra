@@ -2424,7 +2424,15 @@ components:
           type: string
         angkatan:
           type: integer
-          description: Tahun angkatan (mahasiswa)
+          minimum: 2000
+          maximum: 2100
+          description: Tahun angkatan (mahasiswa) — default tahun sekarang
+        semester:
+          type: integer
+          minimum: 1
+          maximum: 14
+          default: 1
+          description: Semester aktif mahasiswa — default 1
         kelas:
           type: string
           maxLength: 10

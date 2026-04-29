@@ -67,8 +67,18 @@ export interface RegisterRequest {
   nidn?: string;
   prodi: string;
   fakultas: string;
-  /** Tahun angkatan (mahasiswa) */
+  /**
+   * Tahun angkatan (mahasiswa) — default tahun sekarang
+   * @minimum 2000
+   * @maximum 2100
+   */
   angkatan?: number;
+  /**
+   * Semester aktif mahasiswa — default 1
+   * @minimum 1
+   * @maximum 14
+   */
+  semester?: number;
   /**
    * Kelas / rombel mahasiswa (contoh A, B, C) — opsional
    * @maxLength 10

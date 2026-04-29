@@ -255,6 +255,12 @@ export const RefreshTokenResponse = zod.object({
  */
 export const registerBodyPasswordMin = 8;
 
+export const registerBodyAngkatanMin = 2000;
+export const registerBodyAngkatanMax = 2100;
+
+export const registerBodySemesterDefault = 1;
+export const registerBodySemesterMax = 14;
+
 export const registerBodyKelasMax = 10;
 
 export const RegisterBody = zod.object({
@@ -269,7 +275,18 @@ export const RegisterBody = zod.object({
   nidn: zod.string().optional().describe("Wajib jika role dosen"),
   prodi: zod.string(),
   fakultas: zod.string(),
-  angkatan: zod.number().optional().describe("Tahun angkatan (mahasiswa)"),
+  angkatan: zod
+    .number()
+    .min(registerBodyAngkatanMin)
+    .max(registerBodyAngkatanMax)
+    .optional()
+    .describe("Tahun angkatan (mahasiswa) — default tahun sekarang"),
+  semester: zod
+    .number()
+    .min(1)
+    .max(registerBodySemesterMax)
+    .default(registerBodySemesterDefault)
+    .describe("Semester aktif mahasiswa — default 1"),
   kelas: zod
     .string()
     .max(registerBodyKelasMax)
