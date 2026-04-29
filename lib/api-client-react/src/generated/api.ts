@@ -87,6 +87,7 @@ import type {
   UpdateProdiRequest,
   UpdateScheduleRequest,
   UpdateStudentRequest,
+  UploadLecturerPhotoBody,
   UsersListResponse,
 } from "./api.schemas";
 
@@ -3299,6 +3300,95 @@ export const useDeleteLecturer = <
   TContext
 > => {
   return useMutation(getDeleteLecturerMutationOptions(options));
+};
+
+/**
+ * @summary Upload foto dosen (admin atau dosen sendiri)
+ */
+export const getUploadLecturerPhotoUrl = (id: string) => {
+  return `/api/lecturers/${id}/photo`;
+};
+
+export const uploadLecturerPhoto = async (
+  id: string,
+  uploadLecturerPhotoBody: UploadLecturerPhotoBody,
+  options?: RequestInit,
+): Promise<LecturerResponse> => {
+  const formData = new FormData();
+  formData.append(`photo`, uploadLecturerPhotoBody.photo);
+
+  return customFetch<LecturerResponse>(getUploadLecturerPhotoUrl(id), {
+    ...options,
+    method: "PATCH",
+    body: formData,
+  });
+};
+
+export const getUploadLecturerPhotoMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadLecturerPhoto>>,
+    TError,
+    { id: string; data: BodyType<UploadLecturerPhotoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadLecturerPhoto>>,
+  TError,
+  { id: string; data: BodyType<UploadLecturerPhotoBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadLecturerPhoto"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadLecturerPhoto>>,
+    { id: string; data: BodyType<UploadLecturerPhotoBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return uploadLecturerPhoto(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadLecturerPhotoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadLecturerPhoto>>
+>;
+export type UploadLecturerPhotoMutationBody = BodyType<UploadLecturerPhotoBody>;
+export type UploadLecturerPhotoMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Upload foto dosen (admin atau dosen sendiri)
+ */
+export const useUploadLecturerPhoto = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadLecturerPhoto>>,
+    TError,
+    { id: string; data: BodyType<UploadLecturerPhotoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadLecturerPhoto>>,
+  TError,
+  { id: string; data: BodyType<UploadLecturerPhotoBody> },
+  TContext
+> => {
+  return useMutation(getUploadLecturerPhotoMutationOptions(options));
 };
 
 /**

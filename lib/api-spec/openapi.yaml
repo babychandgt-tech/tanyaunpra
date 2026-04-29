@@ -1150,6 +1150,50 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /lecturers/{id}/photo:
+    patch:
+      operationId: uploadLecturerPhoto
+      tags: [lecturers]
+      summary: Upload foto dosen (admin atau dosen sendiri)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: File foto (jpg/png/webp, maks 5MB)
+              required: [photo]
+      responses:
+        "200":
+          description: Foto berhasil diupload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LecturerResponse"
+        "400":
+          description: File tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Dosen tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /students:
     get:
       operationId: listStudents
@@ -2764,6 +2808,10 @@ components:
         expertise:
           type: string
           nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+          description: URL foto dosen
         createdAt:
           type: string
           format: date-time

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   useListLecturers, useCreateLecturer, useUpdateLecturer, useDeleteLecturer,
+  useUploadLecturerPhoto,
   getListLecturersQueryKey, useListFakultas, useListProdi,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Search, Eye, EyeOff, Camera, UserCircle2 } from "lucide-react";
 
 const createSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter").max(100),
@@ -40,12 +41,37 @@ const updateSchema = z.object({
 type CreateValues = z.infer<typeof createSchema>;
 type UpdateValues = z.infer<typeof updateSchema>;
 
+function DosenAvatar({ photoUrl, name, size = "sm" }: { photoUrl?: string | null; name?: string | null; size?: "sm" | "lg" }) {
+  const [imgError, setImgError] = useState(false);
+  const dim = size === "lg" ? "h-20 w-20" : "h-9 w-9";
+  const iconSize = size === "lg" ? "h-10 w-10" : "h-5 w-5";
+
+  if (photoUrl && !imgError) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name ?? "Foto dosen"}
+        className={`${dim} rounded-full object-cover border border-border flex-shrink-0`}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+  return (
+    <div className={`${dim} rounded-full bg-muted flex items-center justify-center flex-shrink-0 border border-border`}>
+      <UserCircle2 className={`${iconSize} text-muted-foreground`} />
+    </div>
+  );
+}
+
 export default function Dosen() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingPhotoUrl, setEditingPhotoUrl] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
   const [editSelectedFakultasId, setEditSelectedFakultasId] = useState<string>("");
@@ -96,6 +122,19 @@ export default function Dosen() {
     }
   });
 
+  const uploadPhoto = useUploadLecturerPhoto({
+    mutation: {
+      onSuccess: (res) => {
+        queryClient.invalidateQueries({ queryKey: getListLecturersQueryKey() });
+        setEditingPhotoUrl(res.lecturer.photoUrl ?? null);
+        toast({ title: "Foto berhasil diupload" });
+      },
+      onError: () => {
+        toast({ title: "Gagal upload foto", variant: "destructive" });
+      },
+    }
+  });
+
   const createForm = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
     defaultValues: { name: "", email: "", password: "", nidn: "", prodi: "", fakultas: "", jabatan: "", expertise: "" },
@@ -112,6 +151,13 @@ export default function Dosen() {
 
   const onUpdateSubmit = (values: UpdateValues) => {
     if (editingId) update.mutate({ id: editingId, data: values });
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingId) return;
+    uploadPhoto.mutate({ id: editingId, data: { photo: file } });
+    e.target.value = "";
   };
 
   return (
@@ -213,6 +259,7 @@ export default function Dosen() {
                 <FormField control={createForm.control} name="expertise" render={({ field }) => (
                   <FormItem><FormLabel>Keahlian <span className="text-muted-foreground font-normal">(opsional)</span></FormLabel><FormControl><Input placeholder="Pemrograman Web, Basis Data" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <p className="text-xs text-muted-foreground">Foto dosen bisa ditambahkan setelah dosen berhasil disimpan melalui tombol Edit.</p>
                 <Button type="submit" className="w-full" disabled={create.isPending}>
                   {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Simpan Dosen
@@ -223,11 +270,41 @@ export default function Dosen() {
         </Dialog>
 
         {/* Dialog Edit Dosen */}
-        <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) { setEditingId(null); setEditSelectedFakultasId(""); } }}>
-          <DialogContent className="sm:max-w-[500px]">
+        <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) { setEditingId(null); setEditSelectedFakultasId(""); setEditingPhotoUrl(null); setEditingName(null); } }}>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Data Dosen</DialogTitle>
             </DialogHeader>
+
+            {/* Foto Section */}
+            <div className="flex flex-col items-center gap-3 py-2">
+              <DosenAvatar photoUrl={editingPhotoUrl} name={editingName} size="lg" />
+              <div className="text-center">
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadPhoto.isPending}
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  {uploadPhoto.isPending
+                    ? <><Loader2 className="mr-2 h-3 w-3 animate-spin" /> Mengupload...</>
+                    : <><Camera className="mr-2 h-3 w-3" /> {editingPhotoUrl ? "Ganti Foto" : "Upload Foto"}</>
+                  }
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · maks 5MB · opsional</p>
+              </div>
+            </div>
+
+            <Separator />
+
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(onUpdateSubmit)} className="space-y-4">
                 <FormField control={editForm.control} name="nidn" render={({ field }) => (
@@ -297,6 +374,7 @@ export default function Dosen() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[52px]"></TableHead>
                 <TableHead>NIDN</TableHead>
                 <TableHead>Nama / Email</TableHead>
                 <TableHead>Prodi / Fakultas</TableHead>
@@ -306,14 +384,17 @@ export default function Dosen() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center"><Loader2 className="mx-auto animate-spin" /></TableCell></TableRow>
               ) : isError ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-destructive">Gagal memuat data dosen. Coba refresh halaman.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center text-destructive">Gagal memuat data dosen. Coba refresh halaman.</TableCell></TableRow>
               ) : data?.lecturers.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Kosong</TableCell></TableRow>
               ) : (
                 data?.lecturers.map(l => (
                   <TableRow key={l.id}>
+                    <TableCell className="pl-4">
+                      <DosenAvatar photoUrl={l.photoUrl} name={l.name} size="sm" />
+                    </TableCell>
                     <TableCell className="font-medium">{l.nidn}</TableCell>
                     <TableCell>
                       <div className="font-medium">{l.name || '-'}</div>
@@ -332,6 +413,8 @@ export default function Dosen() {
                         <Button variant="ghost" size="icon" onClick={() => {
                           const matchFakultas = fakultasList.find(f => f.name === l.fakultas);
                           setEditingId(l.id);
+                          setEditingPhotoUrl(l.photoUrl ?? null);
+                          setEditingName(l.name ?? null);
                           setEditSelectedFakultasId(matchFakultas?.id ?? "");
                           editForm.reset({ nidn: l.nidn, prodi: l.prodi, fakultas: l.fakultas, jabatan: l.jabatan || '', expertise: l.expertise || '' });
                         }}><Edit className="h-4 w-4" /></Button>

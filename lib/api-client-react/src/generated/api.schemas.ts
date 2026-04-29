@@ -514,6 +514,8 @@ export interface Lecturer {
   jabatan?: string | null;
   phone?: string | null;
   expertise?: string | null;
+  /** URL foto dosen */
+  photoUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1121,6 +1123,11 @@ export type ListLecturersParams = {
   prodi?: string;
   fakultas?: string;
   search?: string;
+};
+
+export type UploadLecturerPhotoBody = {
+  /** File foto (jpg/png/webp, maks 5MB) */
+  photo: Blob;
 };
 
 export type ListStudentsParams = {

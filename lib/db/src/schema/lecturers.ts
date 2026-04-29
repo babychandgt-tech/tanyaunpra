@@ -12,6 +12,7 @@ export const lecturersTable = pgTable("lecturers", {
   jabatan: text("jabatan"),
   phone: text("phone"),
   expertise: text("expertise"),
+  photoUrl: text("photo_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

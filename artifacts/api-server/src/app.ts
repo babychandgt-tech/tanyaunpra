@@ -35,6 +35,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+const uploadsPath = path.resolve(process.cwd(), "uploads");
+fs.mkdirSync(uploadsPath, { recursive: true });
+app.use("/uploads", express.static(uploadsPath));
+
 const staticPath = path.resolve(
   process.cwd(),
   "artifacts/tanya-unpra-dashboard/dist/public"

@@ -877,6 +877,7 @@ export const ListLecturersResponse = zod.object({
       jabatan: zod.string().nullish(),
       phone: zod.string().nullish(),
       expertise: zod.string().nullish(),
+      photoUrl: zod.string().nullish().describe("URL foto dosen"),
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
     }),
@@ -967,6 +968,7 @@ export const GetLecturerResponse = zod.object({
     jabatan: zod.string().nullish(),
     phone: zod.string().nullish(),
     expertise: zod.string().nullish(),
+    photoUrl: zod.string().nullish().describe("URL foto dosen"),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
@@ -999,6 +1001,7 @@ export const UpdateLecturerResponse = zod.object({
     jabatan: zod.string().nullish(),
     phone: zod.string().nullish(),
     expertise: zod.string().nullish(),
+    photoUrl: zod.string().nullish().describe("URL foto dosen"),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
@@ -1013,6 +1016,35 @@ export const DeleteLecturerParams = zod.object({
 
 export const DeleteLecturerResponse = zod.object({
   message: zod.string(),
+});
+
+/**
+ * @summary Upload foto dosen (admin atau dosen sendiri)
+ */
+export const UploadLecturerPhotoParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UploadLecturerPhotoBody = zod.object({
+  photo: zod.instanceof(File).describe("File foto (jpg\/png\/webp, maks 5MB)"),
+});
+
+export const UploadLecturerPhotoResponse = zod.object({
+  lecturer: zod.object({
+    id: zod.string(),
+    userId: zod.string().nullish(),
+    name: zod.string().nullish(),
+    email: zod.string().nullish(),
+    nidn: zod.string(),
+    prodi: zod.string(),
+    fakultas: zod.string(),
+    jabatan: zod.string().nullish(),
+    phone: zod.string().nullish(),
+    expertise: zod.string().nullish(),
+    photoUrl: zod.string().nullish().describe("URL foto dosen"),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
 });
 
 /**

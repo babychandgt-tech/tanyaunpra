@@ -5,6 +5,28 @@ import { lecturersTable, usersTable } from "@workspace/db";
 import { eq, ilike, and, SQL, count } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import bcrypt from "bcryptjs";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadsDir = path.resolve(process.cwd(), "uploads/photos");
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
 
 const router: IRouter = Router();
 
@@ -37,6 +59,7 @@ const lecturerWithUser = (where?: SQL) =>
       jabatan: lecturersTable.jabatan,
       phone: lecturersTable.phone,
       expertise: lecturersTable.expertise,
+      photoUrl: lecturersTable.photoUrl,
       createdAt: lecturersTable.createdAt,
       updatedAt: lecturersTable.updatedAt,
     })
@@ -156,6 +179,33 @@ router.put("/lecturers/:id", requireAuth(["admin", "dosen"]), async (req: Reques
     res.json({ lecturer: updated });
   } catch (err) {
     req.log.error({ err }, "Update lecturer error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.patch("/lecturers/:id/photo", requireAuth(["admin", "dosen"]), upload.single("photo"), async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  try {
+    const [target] = await db.select({ id: lecturersTable.id, userId: lecturersTable.userId, photoUrl: lecturersTable.photoUrl }).from(lecturersTable).where(eq(lecturersTable.id, id));
+    if (!target) { res.status(404).json({ error: "Dosen tidak ditemukan" }); return; }
+
+    if (req.user!.role === "dosen" && target.userId !== req.user!.userId) {
+      res.status(403).json({ error: "Anda hanya dapat mengedit profil sendiri" });
+      return;
+    }
+
+    if (!req.file) { res.status(400).json({ error: "File foto tidak ditemukan atau format tidak didukung (jpg, png, webp, gif)" }); return; }
+
+    if (target.photoUrl) {
+      const oldFile = path.join(uploadsDir, path.basename(target.photoUrl));
+      if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+    }
+
+    const photoUrl = `/uploads/photos/${req.file.filename}`;
+    const [updated] = await db.update(lecturersTable).set({ photoUrl, updatedAt: new Date() }).where(eq(lecturersTable.id, id)).returning();
+    res.json({ lecturer: updated });
+  } catch (err) {
+    req.log.error({ err }, "Upload photo error");
     res.status(500).json({ error: "Internal server error" });
   }
 });
