@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, Search, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Search, BookOpen, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 const schema = z.object({
   kode: z.string().min(2).max(20),
@@ -30,8 +30,29 @@ export default function Matkul() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedFakultasId, setSelectedFakultasId] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"kode" | "sks">("kode");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  const { data, isLoading, isError } = useListCourses({ page, limit: 15, search: search || undefined });
+  const toggleSort = (col: "kode" | "sks") => {
+    if (sortBy === col) {
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(col);
+      setSortOrder("asc");
+    }
+    setPage(1);
+  };
+
+  const SortIcon = ({ col }: { col: "kode" | "sks" }) => {
+    if (sortBy !== col) return <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/50" />;
+    return sortOrder === "asc" ? (
+      <ArrowUp className="h-3.5 w-3.5" />
+    ) : (
+      <ArrowDown className="h-3.5 w-3.5" />
+    );
+  };
+
+  const { data, isLoading, isError } = useListCourses({ page, limit: 15, search: search || undefined, sortBy, sortOrder });
   const { data: lecturers } = useListLecturers({ limit: 100 });
   const { data: fData } = useListFakultas();
   const { data: pData } = useListProdi(selectedFakultasId ? { fakultasId: selectedFakultasId } : {});
@@ -193,8 +214,26 @@ export default function Matkul() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kode / Matkul</TableHead>
-                <TableHead>SKS / Smt</TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("kode")}
+                    className="inline-flex items-center gap-1.5 font-medium hover:text-foreground transition-colors"
+                  >
+                    Kode / Matkul
+                    <SortIcon col="kode" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("sks")}
+                    className="inline-flex items-center gap-1.5 font-medium hover:text-foreground transition-colors"
+                  >
+                    SKS / Smt
+                    <SortIcon col="sks" />
+                  </button>
+                </TableHead>
                 <TableHead>Program Studi</TableHead>
                 <TableHead>Dosen</TableHead>
                 <TableHead className="w-[100px]">Aksi</TableHead>

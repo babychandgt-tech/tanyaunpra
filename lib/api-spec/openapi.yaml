@@ -718,6 +718,18 @@ paths:
         - name: search
           in: query
           schema: { type: string }
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [kode, sks, semester]
+            default: kode
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
       responses:
         "200":
           description: Daftar mata kuliah

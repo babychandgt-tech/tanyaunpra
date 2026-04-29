@@ -567,6 +567,8 @@ export const DeleteIntentResponse = zod.object({
  */
 export const listCoursesQueryPageDefault = 1;
 export const listCoursesQueryLimitDefault = 20;
+export const listCoursesQuerySortByDefault = `kode`;
+export const listCoursesQuerySortOrderDefault = `asc`;
 
 export const ListCoursesQueryParams = zod.object({
   page: zod.coerce.number().default(listCoursesQueryPageDefault),
@@ -574,6 +576,12 @@ export const ListCoursesQueryParams = zod.object({
   prodi: zod.coerce.string().optional(),
   semester: zod.coerce.number().optional(),
   search: zod.coerce.string().optional(),
+  sortBy: zod
+    .enum(["kode", "sks", "semester"])
+    .default(listCoursesQuerySortByDefault),
+  sortOrder: zod
+    .enum(["asc", "desc"])
+    .default(listCoursesQuerySortOrderDefault),
 });
 
 export const ListCoursesResponse = zod.object({

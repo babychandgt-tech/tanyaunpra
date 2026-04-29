@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
 import { coursesTable, lecturersTable, usersTable } from "@workspace/db";
-import { eq, and, ilike, SQL, count, desc } from "drizzle-orm";
+import { eq, and, ilike, SQL, count, desc, asc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -13,6 +13,8 @@ const listSchema = z.object({
   prodi: z.string().optional(),
   semester: z.coerce.number().int().min(1).max(14).optional(),
   search: z.string().optional(),
+  sortBy: z.enum(["kode", "sks", "semester"]).default("kode"),
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
 });
 
 const createSchema = z.object({
@@ -33,7 +35,7 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
     res.status(400).json({ error: "Parameter tidak valid", details: parsed.error.flatten().fieldErrors });
     return;
   }
-  const { page, limit, prodi, semester, search } = parsed.data;
+  const { page, limit, prodi, semester, search, sortBy, sortOrder } = parsed.data;
   const offset = (page - 1) * limit;
 
   try {
@@ -42,6 +44,14 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
     if (semester) conds.push(eq(coursesTable.semester, semester));
     if (search) conds.push(ilike(coursesTable.nama, `%${search}%`));
     const where = conds.length > 0 ? and(...conds) : undefined;
+
+    const sortCol =
+      sortBy === "sks"
+        ? coursesTable.sks
+        : sortBy === "semester"
+          ? coursesTable.semester
+          : coursesTable.kode;
+    const orderExpr = sortOrder === "desc" ? desc(sortCol) : asc(sortCol);
 
     const [courses, totalResult] = await Promise.all([
       db
@@ -62,7 +72,7 @@ router.get("/courses", requireAuth(), async (req: Request, res: Response) => {
         .leftJoin(lecturersTable, eq(lecturersTable.id, coursesTable.lecturerId))
         .leftJoin(usersTable, eq(usersTable.id, lecturersTable.userId))
         .where(where)
-        .orderBy(coursesTable.kode)
+        .orderBy(orderExpr, asc(coursesTable.kode))
         .limit(limit)
         .offset(offset),
       db.select({ total: count() }).from(coursesTable).where(where),

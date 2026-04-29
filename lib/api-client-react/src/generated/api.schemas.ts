@@ -1126,7 +1126,26 @@ export type ListCoursesParams = {
   prodi?: string;
   semester?: number;
   search?: string;
+  sortBy?: ListCoursesSortBy;
+  sortOrder?: ListCoursesSortOrder;
 };
+
+export type ListCoursesSortBy =
+  (typeof ListCoursesSortBy)[keyof typeof ListCoursesSortBy];
+
+export const ListCoursesSortBy = {
+  kode: "kode",
+  sks: "sks",
+  semester: "semester",
+} as const;
+
+export type ListCoursesSortOrder =
+  (typeof ListCoursesSortOrder)[keyof typeof ListCoursesSortOrder];
+
+export const ListCoursesSortOrder = {
+  asc: "asc",
+  desc: "desc",
+} as const;
 
 export type ListSchedulesParams = {
   page?: number;
