@@ -1,14 +1,16 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod";
 import { db } from "@workspace/db";
-import { schedulesTable, coursesTable, lecturersTable, usersTable, prodiTable, fakultasTable } from "@workspace/db";
-import { eq, and, SQL, count, inArray } from "drizzle-orm";
+import { schedulesTable, coursesTable, lecturersTable, usersTable, prodiTable, fakultasTable, studentsTable } from "@workspace/db";
+import { eq, and, SQL, count, inArray, asc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { computeActiveAcademicTerm, INDONESIAN_DAYS, type IndonesianDay } from "../utils/academic-term";
 
 const router: IRouter = Router();
 
 const DAY_ENUM = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 const TIMEZONE_ENUM = ["WIB", "WITA", "WIT"] as const;
+const SEMESTER_REGEX = /^[1-8]$/;
 
 const trimTime = (t: string) => t.length > 5 ? t.substring(0, 5) : t;
 
@@ -33,8 +35,8 @@ const createSchema = z.object({
   jamSelesai: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM"),
   ruangan: z.string().min(1).max(50),
   kelas: z.string().max(10).optional(),
-  semester: z.string().min(1).max(20),
-  tahunAjaran: z.string().min(4).max(20),
+  semester: z.string().regex(SEMESTER_REGEX, "Semester wajib angka 1-8"),
+  tahunAjaran: z.string().regex(/^\d{4}\/\d{4}$/, "Format tahun ajaran wajib YYYY/YYYY (contoh: 2024/2025)"),
   timezone: z.enum(TIMEZONE_ENUM).default("WIB"),
 });
 
@@ -132,6 +134,58 @@ router.post("/schedules", requireAuth(["admin", "dosen"]), async (req: Request, 
     res.status(201).json({ schedule: formatSchedule(rows[0]) });
   } catch (err) {
     req.log.error({ err }, "Create schedule error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/schedules/today", requireAuth(["mahasiswa"]), async (req: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const term = computeActiveAcademicTerm(now);
+    const dayIdx = now.getDay();
+    const namaHari = INDONESIAN_DAYS[dayIdx] as IndonesianDay | "Minggu";
+
+    if (namaHari === "Minggu") {
+      res.json({
+        hari: "Minggu",
+        tahunAjaran: term.tahunAjaran,
+        semesterType: term.semesterType,
+        schedules: [],
+        message: "Hari ini hari Minggu, tidak ada jadwal kuliah.",
+      });
+      return;
+    }
+
+    const [student] = await db
+      .select({ prodi: studentsTable.prodi, semester: studentsTable.semester })
+      .from(studentsTable)
+      .where(eq(studentsTable.userId, req.user!.userId));
+
+    if (!student) {
+      res.status(404).json({ error: "Profil mahasiswa tidak ditemukan. Hubungi admin." });
+      return;
+    }
+
+    const semesterStr = String(student.semester);
+    const conds: SQL[] = [
+      eq(schedulesTable.hari, namaHari),
+      eq(coursesTable.prodi, student.prodi),
+      eq(schedulesTable.semester, semesterStr),
+      eq(schedulesTable.tahunAjaran, term.tahunAjaran),
+    ];
+    const where = and(...conds);
+
+    const rows = await buildScheduleQuery(where).orderBy(asc(schedulesTable.jamMulai));
+
+    res.json({
+      hari: namaHari,
+      tahunAjaran: term.tahunAjaran,
+      semesterType: term.semesterType,
+      student: { prodi: student.prodi, semester: student.semester },
+      schedules: rows.map(formatSchedule),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Get today schedules error");
     res.status(500).json({ error: "Internal server error" });
   }
 });

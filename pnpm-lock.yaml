@@ -685,6 +685,9 @@ importers:
 
   scripts:
     dependencies:
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
       '@workspace/db':
         specifier: workspace:*
         version: link:../lib/db
@@ -694,6 +697,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.18.0)(pg@8.20.0)
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
     devDependencies:
       '@types/bcryptjs':
         specifier: ^2.4.6

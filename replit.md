@@ -110,7 +110,8 @@ Tables:
 
 ### Schedules (`/api/schedules/`) — JWT auth
 - `GET /schedules` — list dengan filter prodi/fakultas/semester/hari/lecturerId (semua role). Response Schedule juga membawa `courseProdi` untuk auto-fill form edit.
-- `POST /schedules` — tambah jadwal (admin & dosen)
+- `GET /schedules/today` — jadwal hari ini untuk mahasiswa login (auto-detect hari, prodi, semester, TA aktif). Response sudah di-sort by jamMulai.
+- `POST /schedules` — tambah jadwal (admin & dosen). Validasi: `semester` wajib `"1"`–`"8"`, `tahunAjaran` format `YYYY/YYYY`.
 - `GET /schedules/:id` — detail jadwal (semua role)
 - `PUT /schedules/:id` — update jadwal (admin & dosen)
 - `DELETE /schedules/:id` — hapus jadwal (admin & dosen)
@@ -138,6 +139,7 @@ Tables:
 
 ### Academic Calendar (`/api/academic-calendar/`) — JWT auth
 - `GET /academic-calendar` — list dengan filter tahunAjaran/tipe/from/to (semua role)
+- `GET /academic-calendar/active` — TA & semester aktif berdasarkan tanggal server (Aug–Jan = Ganjil, Feb–Jul = Genap)
 - `POST /academic-calendar` — tambah event (admin only)
 - `GET /academic-calendar/:id` — detail event (semua role)
 - `PUT /academic-calendar/:id` — update event (admin only)

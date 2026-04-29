@@ -9,9 +9,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@workspace/db": "workspace:*",
     "bcryptjs": "^2.4.3",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

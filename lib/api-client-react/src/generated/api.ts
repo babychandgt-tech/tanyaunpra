@@ -18,6 +18,7 @@ import type {
 
 import type {
   AcademicCalendarListResponse,
+  ActiveAcademicTermResponse,
   AnnouncementResponse,
   AnnouncementsResponse,
   AuthResponse,
@@ -83,6 +84,7 @@ import type {
   ReportChatMessageBody,
   ScheduleResponse,
   SchedulesResponse,
+  SchedulesTodayResponse,
   StudentResponse,
   StudentsResponse,
   UpdateAnnouncementRequest,
@@ -3344,6 +3346,88 @@ export const useCreateSchedule = <
 };
 
 /**
+ * Endpoint khusus mahasiswa. Backend otomatis:
+1. Deteksi nama hari Indonesia dari tanggal server
+2. Ambil prodi & semester dari profil mahasiswa login
+3. Hitung tahun ajaran aktif (Ganjil/Genap) dari tanggal server
+4. Return jadwal yang sudah di-sort by jamMulai
+Kalau hari Minggu, response akan kosong dengan field `message`.
+
+ * @summary Jadwal hari ini untuk mahasiswa login (auto-detect prodi/semester/TA aktif)
+ */
+export const getGetSchedulesTodayUrl = () => {
+  return `/api/schedules/today`;
+};
+
+export const getSchedulesToday = async (
+  options?: RequestInit,
+): Promise<SchedulesTodayResponse> => {
+  return customFetch<SchedulesTodayResponse>(getGetSchedulesTodayUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSchedulesTodayQueryKey = () => {
+  return [`/api/schedules/today`] as const;
+};
+
+export const getGetSchedulesTodayQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSchedulesToday>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getSchedulesToday>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSchedulesTodayQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSchedulesToday>>
+  > = ({ signal }) => getSchedulesToday({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSchedulesToday>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSchedulesTodayQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSchedulesToday>>
+>;
+export type GetSchedulesTodayQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Jadwal hari ini untuk mahasiswa login (auto-detect prodi/semester/TA aktif)
+ */
+
+export function useGetSchedulesToday<
+  TData = Awaited<ReturnType<typeof getSchedulesToday>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getSchedulesToday>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSchedulesTodayQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Detail jadwal kuliah (semua role)
  */
 export const getGetScheduleUrl = (id: string) => {
@@ -5360,6 +5444,89 @@ export const useCreateCalendarEvent = <
 > => {
   return useMutation(getCreateCalendarEventMutationOptions(options));
 };
+
+/**
+ * Hitung otomatis tahun ajaran aktif dan tipe semester (Ganjil/Genap) dari tanggal server saat ini.
+Aturan:
+- Agustus s/d Januari → Ganjil
+- Februari s/d Juli → Genap
+
+ * @summary Tahun ajaran & semester aktif berdasarkan tanggal server
+ */
+export const getGetActiveAcademicTermUrl = () => {
+  return `/api/academic-calendar/active`;
+};
+
+export const getActiveAcademicTerm = async (
+  options?: RequestInit,
+): Promise<ActiveAcademicTermResponse> => {
+  return customFetch<ActiveAcademicTermResponse>(
+    getGetActiveAcademicTermUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetActiveAcademicTermQueryKey = () => {
+  return [`/api/academic-calendar/active`] as const;
+};
+
+export const getGetActiveAcademicTermQueryOptions = <
+  TData = Awaited<ReturnType<typeof getActiveAcademicTerm>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getActiveAcademicTerm>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetActiveAcademicTermQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getActiveAcademicTerm>>
+  > = ({ signal }) => getActiveAcademicTerm({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getActiveAcademicTerm>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetActiveAcademicTermQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getActiveAcademicTerm>>
+>;
+export type GetActiveAcademicTermQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Tahun ajaran & semester aktif berdasarkan tanggal server
+ */
+
+export function useGetActiveAcademicTerm<
+  TData = Awaited<ReturnType<typeof getActiveAcademicTerm>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getActiveAcademicTerm>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetActiveAcademicTermQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Detail event kalender (semua role)

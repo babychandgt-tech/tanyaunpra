@@ -828,6 +828,58 @@ export interface AcademicCalendarListResponse {
   pagination: Pagination;
 }
 
+export type ActiveAcademicTermResponseSemesterType =
+  (typeof ActiveAcademicTermResponseSemesterType)[keyof typeof ActiveAcademicTermResponseSemesterType];
+
+export const ActiveAcademicTermResponseSemesterType = {
+  Ganjil: "Ganjil",
+  Genap: "Genap",
+} as const;
+
+export interface ActiveAcademicTermResponse {
+  tahunAjaran: string;
+  semesterType: ActiveAcademicTermResponseSemesterType;
+  startDate: string;
+  endDate: string;
+  serverDate: string;
+}
+
+export type SchedulesTodayResponseHari =
+  (typeof SchedulesTodayResponseHari)[keyof typeof SchedulesTodayResponseHari];
+
+export const SchedulesTodayResponseHari = {
+  Senin: "Senin",
+  Selasa: "Selasa",
+  Rabu: "Rabu",
+  Kamis: "Kamis",
+  Jumat: "Jumat",
+  Sabtu: "Sabtu",
+  Minggu: "Minggu",
+} as const;
+
+export type SchedulesTodayResponseSemesterType =
+  (typeof SchedulesTodayResponseSemesterType)[keyof typeof SchedulesTodayResponseSemesterType];
+
+export const SchedulesTodayResponseSemesterType = {
+  Ganjil: "Ganjil",
+  Genap: "Genap",
+} as const;
+
+export type SchedulesTodayResponseStudent = {
+  prodi: string;
+  semester: number;
+} | null;
+
+export interface SchedulesTodayResponse {
+  hari: SchedulesTodayResponseHari;
+  tahunAjaran: string;
+  semesterType: SchedulesTodayResponseSemesterType;
+  student?: SchedulesTodayResponseStudent;
+  schedules: Schedule[];
+  /** Hadir hanya saat hari Minggu */
+  message?: string | null;
+}
+
 export type CreateCalendarEventRequestTipe =
   (typeof CreateCalendarEventRequestTipe)[keyof typeof CreateCalendarEventRequestTipe];
 

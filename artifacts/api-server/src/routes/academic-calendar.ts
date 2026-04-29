@@ -4,6 +4,7 @@ import { db } from "@workspace/db";
 import { academicCalendarTable } from "@workspace/db";
 import { eq, and, gte, lte, SQL, count, asc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { computeActiveAcademicTerm } from "../utils/academic-term";
 
 const router: IRouter = Router();
 
@@ -71,6 +72,18 @@ router.post("/academic-calendar", requireAuth(["admin"]), async (req: Request, r
     req.log.error({ err }, "Create calendar event error");
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+router.get("/academic-calendar/active", requireAuth(), async (_req: Request, res: Response) => {
+  const now = new Date();
+  const term = computeActiveAcademicTerm(now);
+  res.json({
+    tahunAjaran: term.tahunAjaran,
+    semesterType: term.semesterType,
+    startDate: term.startDate,
+    endDate: term.endDate,
+    serverDate: now.toISOString(),
+  });
 });
 
 router.get("/academic-calendar/:id", requireAuth(), async (req: Request, res: Response) => {

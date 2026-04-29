@@ -997,6 +997,71 @@ export const CreateScheduleBody = zod.object({
 });
 
 /**
+ * Endpoint khusus mahasiswa. Backend otomatis:
+1. Deteksi nama hari Indonesia dari tanggal server
+2. Ambil prodi & semester dari profil mahasiswa login
+3. Hitung tahun ajaran aktif (Ganjil/Genap) dari tanggal server
+4. Return jadwal yang sudah di-sort by jamMulai
+Kalau hari Minggu, response akan kosong dengan field `message`.
+
+ * @summary Jadwal hari ini untuk mahasiswa login (auto-detect prodi/semester/TA aktif)
+ */
+export const getSchedulesTodayResponseSchedulesItemTimezoneDefault = `WIB`;
+
+export const GetSchedulesTodayResponse = zod.object({
+  hari: zod.enum([
+    "Senin",
+    "Selasa",
+    "Rabu",
+    "Kamis",
+    "Jumat",
+    "Sabtu",
+    "Minggu",
+  ]),
+  tahunAjaran: zod.string(),
+  semesterType: zod.enum(["Ganjil", "Genap"]),
+  student: zod
+    .object({
+      prodi: zod.string(),
+      semester: zod.number(),
+    })
+    .nullish(),
+  schedules: zod.array(
+    zod.object({
+      id: zod.string(),
+      courseId: zod.string(),
+      courseKode: zod.string().nullish(),
+      courseNama: zod.string().nullish(),
+      courseProdi: zod
+        .string()
+        .nullish()
+        .describe(
+          "Nama prodi dari mata kuliah terkait (untuk auto-fill form edit)",
+        ),
+      lecturerId: zod.string().nullish(),
+      lecturerName: zod.string().nullish(),
+      hari: zod.enum(["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]),
+      jamMulai: zod.string().describe("Format HH:MM"),
+      jamSelesai: zod.string().describe("Format HH:MM"),
+      ruangan: zod.string(),
+      kelas: zod
+        .string()
+        .nullish()
+        .describe("Kelas \/ rombel (contoh A, B, C)"),
+      semester: zod.string(),
+      tahunAjaran: zod.string(),
+      timezone: zod
+        .enum(["WIB", "WITA", "WIT"])
+        .default(getSchedulesTodayResponseSchedulesItemTimezoneDefault)
+        .describe("Zona waktu: WIB (UTC+7), WITA (UTC+8), WIT (UTC+9)"),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  message: zod.string().nullish().describe("Hadir hanya saat hari Minggu"),
+});
+
+/**
  * @summary Detail jadwal kuliah (semua role)
  */
 export const GetScheduleParams = zod.object({
@@ -1785,6 +1850,22 @@ export const CreateCalendarEventBody = zod.object({
   ]),
   deskripsi: zod.string().max(createCalendarEventBodyDeskripsiMax).optional(),
   tahunAjaran: zod.string(),
+});
+
+/**
+ * Hitung otomatis tahun ajaran aktif dan tipe semester (Ganjil/Genap) dari tanggal server saat ini.
+Aturan:
+- Agustus s/d Januari → Ganjil
+- Februari s/d Juli → Genap
+
+ * @summary Tahun ajaran & semester aktif berdasarkan tanggal server
+ */
+export const GetActiveAcademicTermResponse = zod.object({
+  tahunAjaran: zod.string(),
+  semesterType: zod.enum(["Ganjil", "Genap"]),
+  startDate: zod.coerce.date(),
+  endDate: zod.coerce.date(),
+  serverDate: zod.coerce.date(),
 });
 
 /**
